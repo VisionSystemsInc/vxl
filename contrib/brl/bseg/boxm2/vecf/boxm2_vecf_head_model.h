@@ -29,6 +29,9 @@ class boxm2_vecf_head_model : public boxm2_vecf_articulated_scene
 
   virtual bool set_params(boxm2_vecf_articulated_params const& params){return true;} //blank for now
 
+  //: refine target cells to match the refinement level of the source block
+  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
+  
 friend class boxm2_vecf_appearance_extractor; //the appearance extractor needs to signal a change to the original model when its apm is updated
  protected:
   bool intrinsic_change_;

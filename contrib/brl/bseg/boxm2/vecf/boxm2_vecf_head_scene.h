@@ -83,8 +83,6 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   void cache_neighbors();
   // pre-refine the target scene
   void prerefine_target(boxm2_scene_sptr target_scene);
-  //: refine target cells to match the refinement level of the source block
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
  // ============   cranium methods ================
  //: construct manidble from parameters
  void create_cranium();

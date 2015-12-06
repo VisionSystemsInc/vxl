@@ -175,7 +175,8 @@ plane_coord_vectors(vgl_vector_3d<T>& uvec, vgl_vector_3d<T>& vvec) const
 {
   vgl_vector_3d<T> Y((T)0, (T)1, (T)0);
   vgl_vector_3d<T> n = this->normal();
-  T dp = (T)1 - vcl_fabs(dot_product(n, Y));
+  double dpd = static_cast<double>(dot_product(n, Y));
+  T dp = (T)1 - static_cast<T>(vcl_fabs(dpd));
   T tol = ((T)1)/((T)10);
   if (dp>tol)//ok to use the Y axis to form the coordinate system
   {

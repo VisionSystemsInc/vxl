@@ -83,7 +83,8 @@ friend class boxm2_vecf_ocl_appearance_extractor; //the appearance extractor nee
   //: construct from scene file specification, use exising database unless initialize == true
   // otherwise scan a spherical shell to define the voxel surface
   boxm2_vecf_ocl_orbit_scene(vcl_string const& scene_file, bocl_device_sptr device, boxm2_opencl_cache_sptr opencl_cache, bool is_single_instance = true, bool is_right = false);
-
+    //: refine target cells to match the refinement level of the source block
+  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
   bool map_orbit_to_target_single_pass(boxm2_scene_sptr target_scene);
   //: map eye data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);

@@ -1,6 +1,11 @@
 #include "boxm2_vecf_articulated_scene.h"
 #include <boxm2/io/boxm2_lru_cache.h>
-
+#include <boxm2/cpp/algo/boxm2_refine_block_multi_data.h>
+#include <boxm2/cpp/algo/boxm2_surface_distance_refine.h>
+#include <boct/boct_bit_tree.h>
+#include <vnl/vnl_vector_fixed.h>
+#include <vul/vul_timer.h>
+#include <vbl/vbl_array_3d.h>
 double boxm2_vecf_articulated_scene::gauss(double d, double sigma){
   return vcl_exp((-0.5*d*d)/(sigma*sigma));
 }
@@ -50,3 +55,96 @@ void boxm2_vecf_articulated_scene::clear_target(boxm2_scene_sptr target_scene){
   return dxyz;
 
 }
+void boxm2_vecf_articulated_scene::extract_source_block_data(){
+
+  vcl_vector<boxm2_block_id> blocks = base_model_->get_block_ids();
+  vcl_vector<boxm2_block_id>::iterator iter_blk = blocks.begin();
+  blk_id_ = *iter_blk;
+  blk_ = boxm2_cache::instance()->get_block(base_model_, blk_id_);
+  if(!blk_){
+    vcl_cout << "FATAL! - NULL source block for id " << blk_id_ << '\n';
+    return;
+  }
+  source_bb_ = blk_->bounding_box_global();
+  n_= blk_->sub_block_num();
+  dims_= blk_->sub_block_dim();
+  origin_ = blk_->local_origin();
+  vcl_cout << "Extracting from block with " << blk_->num_cells() << " cells\n";
+  sigma_ = static_cast<float>(dims_.x());
+  // somewhat dangerous but as long as trees_ is treated as read only we are safe
+  trees_ = const_cast<boxm2_array_3d<uchar16>&>(blk_->trees());
+  alpha_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
+  alpha_base_->enable_write();
+  alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(alpha_base_->data_buffer());
+
+  app_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_MOG3_GREY>::prefix());
+  app_base_->enable_write();
+  app_data_= reinterpret_cast<boxm2_data_traits<BOXM2_MOG3_GREY>::datatype*>(app_base_->data_buffer());
+
+  nobs_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_NUM_OBS>::prefix());
+  nobs_base_->enable_write();
+  nobs_data_=reinterpret_cast<boxm2_data_traits<BOXM2_NUM_OBS>::datatype*>(nobs_base_->data_buffer());
+}
+
+void boxm2_vecf_articulated_scene::extract_target_block_data(boxm2_scene_sptr target_scene){
+  vcl_vector<boxm2_block_id> blocks = target_scene->get_block_ids();
+  vcl_vector<boxm2_block_id>::iterator iter_blk = blocks.begin();
+  target_blk_ = boxm2_cache::instance()->get_block(target_scene, *iter_blk);
+  targ_n_= target_blk_->sub_block_num();
+  targ_dims_= target_blk_->sub_block_dim();
+  targ_origin_ = target_blk_->local_origin();
+  target_alpha_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
+  target_alpha_base_->enable_write();
+  target_alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(target_alpha_base_->data_buffer());
+
+  target_app_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_MOG3_GREY>::prefix());
+  target_app_base_->enable_write();
+  target_app_data_=reinterpret_cast<boxm2_data_traits<BOXM2_MOG3_GREY>::datatype*>(target_app_base_->data_buffer());
+
+  target_nobs_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_NUM_OBS>::prefix());
+  target_nobs_base_->enable_write();
+  target_nobs_data_= reinterpret_cast<boxm2_data_traits<BOXM2_NUM_OBS>::datatype*>(target_nobs_base_->data_buffer());
+#if 0
+  // caution fill target block only works for unrefined target scenes
+  // should not be used after refinement!!!!
+  if(has_background_){
+    vcl_cout<< " Darkening background "<<vcl_endl;
+    this->fill_target_block();
+  }
+#endif
+}
+
+void boxm2_vecf_articulated_scene::prerefine_target(boxm2_scene_sptr target_scene){
+  if(!target_blk_){
+    vcl_cout << "FATAL! - NULL target block\n";
+    return;
+  }
+  vul_timer t;
+  int deepest_cell_depth = 0;
+
+  // the array of depths found in the source intersecting the inversely transformed sub_block (tree) bounding box.
+  vbl_array_3d<int> depths_to_match(targ_n_.x(), targ_n_.y(), targ_n_.z());
+  depths_to_match.fill(0);
+
+  //iterate through the trees of the target. At this point they are unrefined
+   for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
+        //record the deepest tree found
+        int max_depth = this->prerefine_target_sub_block(vgl_point_3d<int>(ix, iy, iz));
+                depths_to_match(ix, iy, iz) = max_depth;
+        if(max_depth>deepest_cell_depth){
+          deepest_cell_depth = max_depth;
+        }
+      }
+    }
+  }
+  vcl_cout << "deepest cell depth in prerefine_target " << deepest_cell_depth << '\n';
+
+  //fully refine the target trees to the required depth
+  vcl_vector<vcl_string> prefixes;
+  prefixes.push_back("alpha");  prefixes.push_back("boxm2_mog3_grey"); prefixes.push_back("boxm2_num_obs");
+  boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
+  vcl_cout << "prefine in " << t.real() << " msec\n";
+}
+

@@ -8,6 +8,7 @@ typedef vnl_vector_fixed<unsigned char, 16> uchar16;
 
 #define COPY_PARENT_DATA 1
 
+// return the tree bits corresponding to full refinement for a given tree depth
 uchar16 boxm2_refine_block_multi_data::fully_refined(int depth, int& data_size){
   uchar16 ret; data_size = 0;
   ret.fill((unsigned char)(0));
@@ -335,9 +336,9 @@ bool boxm2_refine_block_multi_data::match_refine(vcl_vector<vcl_string> const& p
 // if the symbol COPY_PARENT_DATA is defined as non-zero the parent data will be copied
 // otherwise the cell data is set to zero
 int boxm2_refine_block_multi_data::move_data(boct_bit_tree& unrefined_tree,
-                                                      boct_bit_tree& refined_tree,
-                                                      vcl_vector<vcl_size_t> const& type_sizes,
-                                                      vcl_vector<char*>& new_bufs)
+                                             boct_bit_tree& refined_tree,
+                                             vcl_vector<vcl_size_t> const& type_sizes,
+                                             vcl_vector<char*>& new_bufs)
 {
   vcl_size_t n = type_sizes.size();
   if(n != old_bufs_.size()||n!=new_bufs.size()){
@@ -373,6 +374,12 @@ int boxm2_refine_block_multi_data::move_data(boct_bit_tree& unrefined_tree,
         //for each database type (ptr_inc)
         char* old_byte_ptr = old_buf + oldDataPtr*ptr_inc;
         char* new_byte_ptr = new_buf + newDataPtr*ptr_inc;
+        if(i==3&&newDataPtr == 839){
+          float alpha = alpha = *(reinterpret_cast<float*>(old_byte_ptr));
+          unsigned char skinc = *(reinterpret_cast<unsigned char*>(old_byte_ptr));
+          bool skin = skinc>(unsigned char)(0);
+          vcl_cout << " di839 " << alpha << ' ' << skin << '\n';
+        }
         vcl_memcpy(new_byte_ptr, old_byte_ptr, ptr_inc);
       }
       //increment data pointers

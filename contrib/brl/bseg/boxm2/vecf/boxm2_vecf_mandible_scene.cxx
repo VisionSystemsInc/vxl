@@ -18,21 +18,16 @@
 #include <vcl_limits.h>
 #include <vcl_set.h>
 #include <vul/vul_timer.h>
-
 typedef boxm2_data_traits<BOXM2_PIXEL>::datatype pixtype;
-typedef vnl_vector_fixed<unsigned char, 16> uchar16;
 // fill the background alpha and intensity values to be slightly dark
 // !!!!!this method only works for unrefined trees!!!
 void boxm2_vecf_mandible_scene::fill_block(){
-  vgl_point_3d<double> orig = blk_->local_origin();
-  vgl_vector_3d<double> dims = blk_->sub_block_dim();
-  vgl_vector_3d<unsigned int> nums = blk_->sub_block_num();
-  for(unsigned iz = 0; iz<nums.z(); ++iz){
-    double z = orig.z() + iz*dims.z();
-    for(unsigned iy = 0; iy<nums.y(); ++iy){
-      double y = orig.y() + iy*dims.y();
-      for(unsigned ix = 0; ix<nums.x(); ++ix){
-        double x = orig.x() + ix*dims.x();
+  for(unsigned iz = 0; iz<n_.z(); ++iz){
+    double z = origin_.z() + iz*dims_.z();
+    for(unsigned iy = 0; iy<n_.y(); ++iy){
+      double y = origin_.y() + iy*dims_.y();
+      for(unsigned ix = 0; ix<n_.x(); ++ix){
+        double x = origin_.x() + ix*dims_.x();
         vgl_point_3d<double> p(x, y, z);
         unsigned indx;
         if(!blk_->data_index(p, indx))
@@ -56,15 +51,12 @@ void boxm2_vecf_mandible_scene::fill_target_block(){
   boxm2_data_traits<BOXM2_NUM_OBS>::datatype nobs;
   nobs.fill(0);
   // replace datavalues
-  vgl_point_3d<double> orig = target_blk_->local_origin();
-  vgl_vector_3d<double> dims = target_blk_->sub_block_dim();
-  vgl_vector_3d<unsigned int> nums = target_blk_->sub_block_num();
-  for(unsigned iz = 0; iz<nums.z(); ++iz){
-    double z = orig.z() + iz*dims.z();
-    for(unsigned iy = 0; iy<nums.y(); ++iy){
-      double y = orig.y() + iy*dims.y();
-      for(unsigned ix = 0; ix<nums.x(); ++ix){
-        double x = orig.x() + ix*dims.x();
+  for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
+    double z = targ_origin_.z() + iz*targ_dims_.z();
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      double y = targ_origin_.y() + iy*targ_dims_.y();
+      for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+        double x = targ_origin_.x() + ix*targ_dims_.x();
         vgl_point_3d<double> p(x, y, z);
         unsigned indx;
         if(!target_blk_->data_index(p, indx))
@@ -79,81 +71,16 @@ void boxm2_vecf_mandible_scene::fill_target_block(){
 
 
 void boxm2_vecf_mandible_scene::extract_block_data(){
-
-  vcl_vector<boxm2_block_id> blocks = base_model_->get_block_ids();
-
-  vcl_vector<boxm2_block_id>::iterator iter_blk = blocks.begin();
-  blk_ = boxm2_cache::instance()->get_block(base_model_, *iter_blk);
-  vcl_cout << "Extracting from block with " << blk_->num_cells() << " cells\n";
-  sigma_ = static_cast<float>(blk_->sub_block_dim().x());
-
-  alpha_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
-  alpha_base_->enable_write();
-  alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(alpha_base_->data_buffer());
-
-  app_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_MOG3_GREY>::prefix());
-  app_base_->enable_write();
-  app_data_= reinterpret_cast<boxm2_data_traits<BOXM2_MOG3_GREY>::datatype*>(app_base_->data_buffer());
-
-  nobs_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_NUM_OBS>::prefix());
-  nobs_base_->enable_write();
-  nobs_data_=reinterpret_cast<boxm2_data_traits<BOXM2_NUM_OBS>::datatype*>(nobs_base_->data_buffer());
-
-  mandible_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("mandible"));
+  boxm2_vecf_articulated_scene::extract_source_block_data();
+  mandible_base_  = boxm2_cache::instance()->get_data_base(base_model_,blk_id_,boxm2_data_traits<BOXM2_PIXEL>::prefix("mandible"));
   mandible_base_->enable_write();
   mandible_data_ = reinterpret_cast<boxm2_data_traits<BOXM2_PIXEL>::datatype*>(mandible_base_->data_buffer());
   mandible_size_ = static_cast<int>(mandible_base_->buffer_length());
-#if 0  
-  boxm2_data_base *  left_ramus_base  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("left_ramus"));
-  left_ramus_base->enable_write();
-  left_ramus_=new boxm2_data<BOXM2_PIXEL>(left_ramus_base->data_buffer(),left_ramus_base->buffer_length(),left_ramus_base->block_id());
-
-  boxm2_data_base *  left_angle_base  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("left_angle"));
-  left_angle_base->enable_write();
-  left_angle_=new boxm2_data<BOXM2_PIXEL>(left_angle_base->data_buffer(),left_angle_base->buffer_length(),left_angle_base->block_id());
-
-  boxm2_data_base *  body_base  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("body"));
-  body_base->enable_write();
-  body_=new boxm2_data<BOXM2_PIXEL>(body_base->data_buffer(),body_base->buffer_length(),body_base->block_id());
-
-  boxm2_data_base *  right_angle_base = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("right_angle"));
-  right_angle_base->enable_write();
-  right_angle_=new boxm2_data<BOXM2_PIXEL>(right_angle_base->data_buffer(),right_angle_base->buffer_length(),right_angle_base->block_id());
-
-  boxm2_data_base *  right_ramus_base = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("right_ramus"));
-  right_ramus_base->enable_write();
-  right_ramus_=new boxm2_data<BOXM2_PIXEL>(right_ramus_base->data_buffer(),right_ramus_base->buffer_length(),right_ramus_base->block_id());
-#endif
-}
-void boxm2_vecf_mandible_scene::extract_target_block_data(boxm2_scene_sptr target_scene){
-
-  vcl_vector<boxm2_block_id> blocks = target_scene->get_block_ids();
-  vcl_vector<boxm2_block_id>::iterator iter_blk = blocks.begin();
-  target_blk_ = boxm2_cache::instance()->get_block(target_scene, *iter_blk);
-
-  target_alpha_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
-  target_alpha_base_->enable_write();
-  target_alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(target_alpha_base_->data_buffer());
-
-  target_app_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_MOG3_GREY>::prefix());
-  target_app_base_->enable_write();
-  target_app_data_=reinterpret_cast<boxm2_data_traits<BOXM2_MOG3_GREY>::datatype*>(target_app_base_->data_buffer());
-
-  target_nobs_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_NUM_OBS>::prefix());
-  target_nobs_base_->enable_write();
-  target_nobs_data_= reinterpret_cast<boxm2_data_traits<BOXM2_NUM_OBS>::datatype*>(target_nobs_base_->data_buffer());
-  // caution fill target block only works for unrefined target scenes
-  // should not be used after refinement!!!!
-  if(has_background_){
-    vcl_cout<< " Darkening background "<<vcl_endl;
-    this->fill_target_block();
-  }
 }
 
 // after loading the block initialize all the cell indices from the block labels, e.g., cell == LEFT_RAMUS, cell == LEFT_ANGLE, etc.
 void boxm2_vecf_mandible_scene::cache_cell_centers_from_anatomy_labels(){
-  vgl_box_3d<double> source_box = blk_->bounding_box_global();
-  vcl_vector<cell_info> source_cell_centers = blk_->cells_in_box(source_box);
+  vcl_vector<cell_info> source_cell_centers = blk_->cells_in_box(source_bb_);
   for(vcl_vector<cell_info>::iterator cit = source_cell_centers.begin();
       cit != source_cell_centers.end(); ++cit){
     unsigned dindx = cit->data_index_;
@@ -212,8 +139,8 @@ void boxm2_vecf_mandible_scene::cache_cell_centers_from_anatomy_labels(){
 }
 // main constructor
 boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file):
-  boxm2_vecf_articulated_scene(scene_file),alpha_base_(0), app_base_(0), nobs_base_(0), mandible_base_(0), target_alpha_base_(0), target_app_base_(0),
-  target_nobs_base_(0),left_ramus_(0), left_angle_(0), body_(0), right_angle_(0), right_ramus_(0), intrinsic_change_(false)
+  boxm2_vecf_articulated_scene(scene_file),mandible_base_(0), 
+  left_ramus_(0), left_angle_(0), body_(0), right_angle_(0), right_ramus_(0), intrinsic_change_(false)
 {
   mandible_geo_ = boxm2_vecf_mandible(geometry_file);
   this->extrinsic_only_ = true;
@@ -236,8 +163,7 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_fil
  }
 
 boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file_name):
-  boxm2_vecf_articulated_scene(scene_file),alpha_base_(0), app_base_(0), nobs_base_(0),target_alpha_base_(0), target_app_base_(0), target_nobs_base_(0),
-  left_ramus_(0), left_angle_(0), body_(0), right_angle_(0), right_ramus_(0){
+  boxm2_vecf_articulated_scene(scene_file),left_ramus_(0), left_angle_(0), body_(0), right_angle_(0), right_ramus_(0){
 
   vcl_ifstream params_file(params_file_name.c_str());
   if (!params_file){
@@ -286,7 +212,7 @@ void boxm2_vecf_mandible_scene::cache_neighbors(){
 }
 
 void boxm2_vecf_mandible_scene::build_mandible(){
-  double len = vcl_sqrt(3.0)*blk_->sub_block_dim().x();//was 3xblk_->...
+  double len = vcl_sqrt(3.0)*dims_.x();//was 3xblk_->...
   double d_thresh = len;//sqrt(3)/2 x len, diagonal distance
   vgl_box_3d<double> bb = mandible_geo_.bounding_box();
    // cell in a box centers are in global coordinates
@@ -429,24 +355,18 @@ bool boxm2_vecf_mandible_scene::is_type_global(vgl_point_3d<double> const& globa
    found_depth = depth_min;
    return true;
 }
-void  boxm2_vecf_mandible_scene::inverse_vector_field(vgl_rotation_3d<double> const& rot, vcl_vector<vgl_vector_3d<double> >& vf,
-                                                      vcl_vector<bool>& valid) const{
+void  boxm2_vecf_mandible_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf, vcl_vector<bool>& valid) const{
 
   vul_timer t;
-  //really has to be the whole scene to take into account max rotation
-  vgl_box_3d<double> bb = blk_->bounding_box_global();
-
   //the target cell centers. the vector field could potentially be defined at all target points
   unsigned nt = static_cast<unsigned>(box_cell_centers_.size());
   vf.resize(nt);// initialized to 0
   valid.resize(nt, false);
-
-  vgl_rotation_3d<double> inv_rot = rot.inverse();
   unsigned box_cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
     vgl_point_3d<double> p = (box_cell_centers_[i].cell_center_)-params_.offset_;
-    vgl_point_3d<double> rp = inv_rot * p;// rotated point
-    if(!bb.contains(rp))
+    vgl_point_3d<double> rp = inv_rot_ * p;// rotated point
+    if(!source_bb_.contains(rp))
       continue;
     //rp is inside source bounding box so define vector field
     box_cnt++;
@@ -493,7 +413,7 @@ void boxm2_vecf_mandible_scene::find_left_ramus_cell_neigborhoods(){
 }
 
 void boxm2_vecf_mandible_scene::build_left_ramus(){
-  double len = 4 * blk_->sub_block_dim().x();
+  double len = 4 * dims_.x();
   double d_thresh = params_.neighbor_radius()*len;
   double margin = 1.0;//For now
   vgl_box_3d<double> bb;// = mandible_geo_.left_ramus_bounding_box(margin);
@@ -625,99 +545,55 @@ void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vect
   }
   vcl_cout << "Apply mandible vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
-void boxm2_vecf_mandible_scene::prerefine_target(boxm2_scene_sptr target_scene, vgl_rotation_3d<double> const& rot){
-  if(!target_blk_){
-    vcl_cout << "FATAL! - NULL target block\n";
-    return;
-  }
-  vul_timer t;
-  int count0 = 0, count1 = 0, count2 = 0, count3 = 0;
-  vgl_rotation_3d<double> inv_rot = rot.inverse();
-  vgl_box_3d<double> bb = blk_->bounding_box_global();
+int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
-  int deepest_cell_depth = 0;
-
-  // don't copy the trees for efficiency
-  const boxm2_array_3d<uchar16>& trees = blk_->trees();
-
-  vgl_vector_3d<unsigned> n = target_blk_->sub_block_num();
-  // the array of depths found in the source intersecting the inversely transformed sub_block (tree) bounding box.
-  vbl_array_3d<int> depths_to_match(n.x(), n.y(), n.z());
-
-  //iterate through the trees of the target. At this point they are unrefined
-  vgl_point_3d<double> origin = target_blk_->local_origin();
-  vgl_vector_3d<double> dims = target_blk_->sub_block_dim();
-  double x=0.0, y=0.0, z=0.0;
-  for(unsigned ix = 0; ix<n.x(); ++ix){
-    x = origin.x()+ix*dims.x();
-    for(unsigned iy = 0; iy<n.y(); ++iy){
-      y = origin.y()+iy*dims.y();
-      for(unsigned iz = 0; iz<n.z(); ++iz){
-        z = origin.z()+iz*dims.z();
-
-        // the center of the sub_block (tree) at (ix, iy, iz)
-        vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
-
-        // map the origin back to source by the offset
-        vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
-        // rotate the target center back to source
-        vgl_point_3d<double> rot_center_in_source = inv_rot*center_in_source;
-        // sub_block axis-aligned corners in source
-        vgl_point_3d<double> sbc_min(rot_center_in_source.x()-0.5*dims.x(),
-                                     rot_center_in_source.y()-0.5*dims.y(),
-                                     rot_center_in_source.z()-0.5*dims.z());
+  // the center of the sub_block (tree) at (ix, iy, iz)
+  int ix = sub_block_index.x(), iy = sub_block_index.y(), iz = sub_block_index.z();
+  double x = targ_origin_.x() + ix*targ_dims_.x();
+  double y = targ_origin_.y() + iy*targ_dims_.y();
+  double z = targ_origin_.z() + iz*targ_dims_.z();
+  vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
+  
+  // map the origin back to source by the offset
+  vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
+  // rotate the target center back to source
+  vgl_point_3d<double> rot_center_in_source = inv_rot_*center_in_source;
+  // sub_block axis-aligned corners in source
+  vgl_point_3d<double> sbc_min(rot_center_in_source.x()-0.5*targ_dims_.x(),
+                               rot_center_in_source.y()-0.5*targ_dims_.y(),
+                               rot_center_in_source.z()-0.5*targ_dims_.z());
                                      
-        vgl_point_3d<double> sbc_max(rot_center_in_source.x()+0.5*dims.x(),
-                                     rot_center_in_source.y()+0.5*dims.y(),
-                                     rot_center_in_source.z()+0.5*dims.z());
+  vgl_point_3d<double> sbc_max(rot_center_in_source.x()+0.5*targ_dims_.x(),
+                               rot_center_in_source.y()+0.5*targ_dims_.y(),
+                               rot_center_in_source.z()+0.5*targ_dims_.z());
 
-        vgl_box_3d<double> target_box_in_source;
-        target_box_in_source.add(sbc_min);
-        target_box_in_source.add(sbc_max); 
+  vgl_box_3d<double> target_box_in_source;
+  target_box_in_source.add(sbc_min);
+  target_box_in_source.add(sbc_max); 
 
-        // rotate the target box in source by the inverse rotation
-        // the box is rotated about its centroid
-        vgl_orient_box_3d<double> target_obox(target_box_in_source, inv_rot.as_quaternion());
-        vgl_box_3d<double> rot_target_box_in_source = target_obox.enclosing_box();
+  // rotate the target box in source by the inverse rotation
+  // the box is rotated about its centroid
+  vgl_orient_box_3d<double> target_obox(target_box_in_source, inv_rot_.as_quaternion());
+  vgl_box_3d<double> rot_target_box_in_source = target_obox.enclosing_box();
 
-        // the source blocks intersecting the rotated target box
-        vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(rot_target_box_in_source);
+  // the source blocks intersecting the rotated target box
+  vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(rot_target_box_in_source);
 
-        // iterate through each intersecting source tree and find the maximum tree depth 
-        int max_depth = 0;
-        for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
-            bit != int_sblks.end(); ++bit){
-          const uchar16& tree_bits = trees(bit->x(), bit->y(), bit->z());
-          //safely cast since bit_tree is just temporary
-          uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
-          boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
-          int dpth = bit_tree.depth();
-          if(dpth>max_depth){
-            max_depth = dpth;
-          }
-        }
-        depths_to_match[ix][iy][iz]=max_depth;
-                if(max_depth == 0)      count0++;
-                else if(max_depth == 1) count1++;
-                else if(max_depth == 2) count2++;
-                else if(max_depth == 3) count3++;
-                  
-        //record the deepest tree found
-        if(max_depth>deepest_cell_depth){
-          deepest_cell_depth = max_depth;
-        }
-      }
+  // iterate through each intersecting source tree and find the maximum tree depth 
+  int max_depth = 0;
+  for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
+      bit != int_sblks.end(); ++bit){
+    const uchar16& tree_bits = trees_(bit->x(), bit->y(), bit->z());
+    //safely cast since bit_tree is just temporary
+    uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
+    boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
+    int dpth = bit_tree.depth();
+    if(dpth>max_depth){
+      max_depth = dpth;
     }
   }
-  vcl_cout << "deepest cell depth in prerefine_target " << deepest_cell_depth << '\n';
-  vcl_cout << "count0 " << count0 << " count1 " << count1 << " count2 " << count2 << " count3 " << count3 << '\n';
-
-  //fully refine the target trees to the required depth
-  vcl_vector<vcl_string> prefixes;
-  prefixes.push_back("alpha");  prefixes.push_back("boxm2_mog3_grey"); prefixes.push_back("boxm2_num_obs");
-  boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
-  vcl_cout << "prefine in " << t.real() << " msec\n";
- }
+  return max_depth;
+}
 
 void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
@@ -728,15 +604,16 @@ void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
   vnl_quaternion<double> Q(X,params_.jaw_opening_angle_rad_);
   vgl_rotation_3d<double> rot(Q);
+  inv_rot_ = rot.inverse();
   // refine the target to match the source tree refinement
-   this->prerefine_target(target_scene, rot);
+   this->prerefine_target(target_scene);
   // have to extract target data again to refresh data bases and buffers after refinement
   this->extract_target_block_data(target_scene);
   this->determine_target_box_cell_centers();
 
   vcl_vector<vgl_vector_3d<double> > invf;
   vcl_vector<bool> valid;
-  this->inverse_vector_field(rot, invf, valid);
+  this->inverse_vector_field(invf, valid);
   this->apply_vector_field_to_target(invf, valid);
   target_data_extracted_  = true;
   vcl_cout << "Map to target in " << t.real()/1000.0 << " secs\n";
@@ -836,10 +713,9 @@ void boxm2_vecf_mandible_scene::reset_buffers(){
 #if 0 //to do get reasonable bounds on the target cells to process
 // find the source cell locations in the target volume
 void boxm2_vecf_mandible_scene::determine_target_box_cell_centers(){
-  vgl_box_3d<double> source_box = blk_->bounding_box_global();
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
   vnl_quaternion<double> Q(X,params_.max_jaw_opening_angle_rad_);
-  vgl_orient_box_3d<double> obox(source_box, Q);
+  vgl_orient_box_3d<double> obox(source_bb_, Q);
   vgl_box_3d<double> rot_source_box = obox.enclosing_box();
   vcl_cout << "source box " << source_box << '\n' << "rotated source box " << rot_source_box << '\n';
   //  vgl_box_3d<double> offset_box(obox.centroid() + params_.offset_ ,obox.width(),obox.height(),obox.depth(),vgl_box_3d<double>::centre);
@@ -850,8 +726,7 @@ void boxm2_vecf_mandible_scene::determine_target_box_cell_centers(){
 #endif
 #if 1
 void boxm2_vecf_mandible_scene::determine_target_box_cell_centers(){
-  vgl_box_3d<double> source_box = blk_->bounding_box_global();
-  vgl_box_3d<double> offset_box(source_box.centroid() + params_.offset_ ,source_box.width(),source_box.height(),source_box.depth(),vgl_box_3d<double>::centre);
+  vgl_box_3d<double> offset_box(source_bb_.centroid() + params_.offset_ ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
     box_cell_centers_ = target_blk_->cells_in_box(offset_box);
   }

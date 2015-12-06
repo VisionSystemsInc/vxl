@@ -128,6 +128,9 @@ class boxm2_vecf_orbit_scene : public boxm2_vecf_articulated_scene
   // store the neigbors of each cell for each anatomical component in a vector;
   void cache_neighbors();
 
+  //: refine target cells to match the refinement level of the source block
+  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
+
  // ============   eye methods ================
  //: construct eye sphere, iris and pupil
  void create_eye();

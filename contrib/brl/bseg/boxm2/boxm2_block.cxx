@@ -370,10 +370,10 @@ vcl_vector<cell_info> boxm2_block::cells_in_box(vgl_box_3d<double> const& global
   int index_z_max=(int)vcl_floor(local_z_max);
   int nz = static_cast<int>(trees_.get_row3_count());
   if(index_z_max >=nz) index_z_max = nz-1;
-
   // iterate over sub_blocks
   vgl_point_3d<double> loc;
   for(int iz = index_z_min; iz<=index_z_max; ++iz){
+    //    vcl_cout << '.' << vcl_flush;
     for(int iy = index_y_min; iy<=index_y_max; ++iy){
       for(int ix = index_x_min; ix<=index_x_max; ++ix){
         cell_info ci;
@@ -404,6 +404,7 @@ vcl_vector<cell_info> boxm2_block::cells_in_box(vgl_box_3d<double> const& global
       }
     }
   }
+  //  vcl_cout << '\n';
   return temp;
 }
 

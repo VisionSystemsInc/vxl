@@ -54,6 +54,7 @@ bool bvgl_grid_index_3d::closest_point(vgl_point_3d<double> const& p, vgl_point_
   if(iz<(nz_-1)) ize = iz+1;
   double dmin = vcl_numeric_limits<double>::max();
   unsigned ixc = 0, iyc = 0,  izc = 0, ipc = 0;
+  bool found = false;
   for(unsigned i = ixs; i<=ixe; ++i)
     for(unsigned j = iys; j<=iye; ++j)
       for(unsigned k = izs; k<=ize; ++k){
@@ -63,10 +64,12 @@ bool bvgl_grid_index_3d::closest_point(vgl_point_3d<double> const& p, vgl_point_
           vgl_point_3d<double> pp = p_grid_[i][j][k][ip];
           double d = (pp-p).length();
           if(d<dmin){
-            dmin = d; ixc = i; iyc = j; izc = k; ipc = ip;
+            dmin = d; ixc = i; iyc = j; izc = k; ipc = ip; found = true;
           }
         }
       }
+  if(!found)
+    return false;
   vgl_point_3d<double> pmin = p_grid_[ixc][iyc][izc][ipc];
   if(!has_normals_){
     pc = pmin;

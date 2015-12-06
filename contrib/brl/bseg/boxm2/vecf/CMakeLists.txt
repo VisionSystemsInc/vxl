@@ -44,6 +44,9 @@ SET(boxm2_vecf_sources
     boxm2_vecf_skull_params.h               boxm2_vecf_skull_params.cxx
     boxm2_vecf_skull_scene.h                boxm2_vecf_skull_scene.cxx
     boxm2_vecf_skull_articulation.h         boxm2_vecf_skull_articulation.cxx
+    boxm2_vecf_skin.h                       boxm2_vecf_skin.cxx  
+    boxm2_vecf_skin_params.h                boxm2_vecf_skin_params.cxx
+    boxm2_vecf_skin_scene.h                 boxm2_vecf_skin_scene.cxx  
 )
 
 AUX_SOURCE_DIRECTORY(Templates boxm2_vecf_sources)

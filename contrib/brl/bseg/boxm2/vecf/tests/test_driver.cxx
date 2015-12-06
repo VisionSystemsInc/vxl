@@ -8,6 +8,7 @@ DECLARE( test_fit_margin );
 DECLARE( test_pc_viewer );
 DECLARE( test_mandible);
 DECLARE( test_cranium);
+DECLARE( test_skin);
 
 void register_tests()
 {
@@ -19,6 +20,7 @@ void register_tests()
   REGISTER( test_pc_viewer );
   REGISTER( test_mandible );
   REGISTER( test_cranium );
+  REGISTER( test_skin );
 }
 
 DEFINE_MAIN;
