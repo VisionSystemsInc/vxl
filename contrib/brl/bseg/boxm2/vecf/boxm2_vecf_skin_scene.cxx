@@ -65,29 +65,8 @@ void boxm2_vecf_skin_scene::fill_target_block(){
 
 
 void boxm2_vecf_skin_scene::extract_block_data(){
-
-  vcl_vector<boxm2_block_id> blocks = base_model_->get_block_ids();
-  vcl_vector<boxm2_block_id>::iterator iter_blk = blocks.begin();
-  blk_ = boxm2_cache::instance()->get_block(base_model_, *iter_blk);
-  boxm2_block_metadata& metad = base_model_->get_block_metadata(*iter_blk);
-  double p_init = metad.p_init_;
-  alpha_init_ = static_cast<float>(-vcl_log(1.0 - p_init));
-  vcl_cout << "Extracting from block with " << blk_->num_cells() << " cells\n";
-  sigma_ = static_cast<float>(blk_->sub_block_dim().x());
-
-  alpha_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
-  alpha_base_->enable_write();
-  alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(alpha_base_->data_buffer());
-
-  app_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_MOG3_GREY>::prefix());
-  app_base_->enable_write();
-  app_data_= reinterpret_cast<boxm2_data_traits<BOXM2_MOG3_GREY>::datatype*>(app_base_->data_buffer());
-
-  nobs_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_NUM_OBS>::prefix());
-  nobs_base_->enable_write();
-  nobs_data_=reinterpret_cast<boxm2_data_traits<BOXM2_NUM_OBS>::datatype*>(nobs_base_->data_buffer());
-
-  skin_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_PIXEL>::prefix("skin"));
+  boxm2_vecf_articulated_scene::extract_source_block_data();
+  skin_base_  = boxm2_cache::instance()->get_data_base(base_model_,blk_id_,boxm2_data_traits<BOXM2_PIXEL>::prefix("skin"));
   skin_base_->enable_write();
   skin_data_=reinterpret_cast<boxm2_data_traits<BOXM2_PIXEL>::datatype*>(skin_base_->data_buffer());
 }
@@ -113,6 +92,7 @@ void boxm2_vecf_skin_scene::create_anatomy_labels(){
   vcl_cout << "out of " << total << " cells " << skin_count <<  " are skin \n";
 }
 
+#if 0
 void boxm2_vecf_skin_scene::extract_target_block_data(boxm2_scene_sptr target_scene){
 
   vcl_vector<boxm2_block_id> blocks = target_scene->get_block_ids();
@@ -137,6 +117,7 @@ void boxm2_vecf_skin_scene::extract_target_block_data(boxm2_scene_sptr target_sc
     this->fill_target_block();
   }
 }
+#endif
 //retrieve cells with skin anatomy label
 void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
   int total = 0, skin_count = 0;
@@ -159,6 +140,9 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
       skin_cell_data_index_.push_back(dindx);
       data_index_to_cell_index_[dindx] = skin_index;
       // new cell that doesn't have appearance or anatomy data
+      // this condition can happen if an unrefined cell center is
+      // outside the distance tolerance to the geo surface, but when
+      // refined, a leaf cell is within tolerance
       if(!skin){
         params_.app_[0]=params_.skin_intensity_;
         app_data_[dindx]=params_.app_;
@@ -169,11 +153,9 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
   vcl_cout << "out of " << total << " cells " << skin_count <<  " are skin \n";
 }
 // constructors
-boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file): boxm2_vecf_articulated_scene(scene_file), source_model_exists_(true), alpha_data_(0), app_data_(0), nobs_data_(0), skin_data_(0), alpha_init_(0.0f){
-  this->extrinsic_only_ = true;
-  target_blk_ = 0;
-  target_data_extracted_ = false;
-  this->has_background_ = false;
+boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file): boxm2_vecf_articulated_scene(scene_file){
+  extrinsic_only_ = true;
+  source_model_exists_=true;
   boxm2_lru_cache::create(base_model_);
   vul_timer t;
   this->rebuild();
@@ -181,15 +163,12 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file): boxm
 }  
 
 boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file):
-  boxm2_vecf_articulated_scene(scene_file), source_model_exists_(false), alpha_data_(0), app_data_(0), nobs_data_(0), skin_data_(0),alpha_init_(0.0f)
-{
+  boxm2_vecf_articulated_scene(scene_file){
   skin_geo_ = boxm2_vecf_skin(geometry_file);
   this->extrinsic_only_ = false;
-  target_blk_ = 0;
-  target_data_extracted_ = false;
+  source_model_exists_=false;
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
-  this->has_background_ = false;
   this->build_skin();
   this->paint_skin();
   vcl_vector<vcl_string> prefixes;
@@ -483,6 +462,55 @@ void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3
   vcl_cout << "Apply skin vector field in " << t.real()/1000.0 << " sec.\n";
 }
 
+
+int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
+  int max_level = blk_->max_level();
+  // the center of the sub_block (tree) at (ix, iy, iz)
+  int ix = sub_block_index.x(), iy = sub_block_index.y(), iz = sub_block_index.z();
+  vcl_size_t lindex = trees_.linear_index(ix, iy, iz);
+  if(!valid_unrefined_[lindex])
+    return -1;
+  double x = targ_origin_.x() + ix*targ_dims_.x();
+  double y = targ_origin_.y() + iy*targ_dims_.y();
+  double z = targ_origin_.z() + iz*targ_dims_.z();
+  vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
+
+  // map the target back to source
+  vgl_point_3d<double> center_in_source = sub_block_center +  vfield_unrefined_[lindex];
+
+  // sub_block axis-aligned corners in source
+  vgl_point_3d<double> sbc_min(center_in_source.x()-0.5*targ_dims_.x(),
+                               center_in_source.y()-0.5*targ_dims_.y(),
+                               center_in_source.z()-0.5*targ_dims_.z());
+                                     
+  vgl_point_3d<double> sbc_max(center_in_source.x()+0.5*targ_dims_.x(),
+                               center_in_source.y()+0.5*targ_dims_.y(),
+                               center_in_source.z()+0.5*targ_dims_.z());
+
+  vgl_box_3d<double> target_box_in_source;
+  target_box_in_source.add(sbc_min);
+  target_box_in_source.add(sbc_max); 
+
+  // the source blocks intersecting the rotated target box
+  vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
+
+  // iterate through each intersecting source tree and find the maximum tree depth 
+  int max_depth = 0;
+  for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
+      bit != int_sblks.end(); ++bit){
+    const uchar16& tree_bits = trees_(bit->x(), bit->y(), bit->z());
+    //safely cast since bit_tree is just temporary
+    uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
+    boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
+    int dpth = bit_tree.depth();
+    if(dpth>max_depth){
+      max_depth = dpth;
+    }
+  }
+  return max_depth;
+}
+
+#if 0
 void boxm2_vecf_skin_scene::prerefine_target(boxm2_scene_sptr target_scene){
   if(!target_blk_){
     vcl_cout << "FATAL! - NULL target block\n";
@@ -567,12 +595,40 @@ void boxm2_vecf_skin_scene::prerefine_target(boxm2_scene_sptr target_scene){
   boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
   vcl_cout << "prefine in " << t.real() << " msec\n";
  }
+#endif
+// == the full inverse vector field  p_source = p_target + vf === 
+void boxm2_vecf_skin_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
+  unsigned ntrees = targ_n_.x()*targ_n_.y()*targ_n_.z();
+  vfield_unrefined_.resize(ntrees, vgl_vector_3d<double>(0.0, 0.0, 0.0));
+  valid_unrefined_.resize(ntrees, false);
+  unsigned vf_index = 0;
+  //iterate through the trees of the target. During this pass, only the sub_block locations are used
+   for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      for(unsigned iz = 0; iz<targ_n_.z(); ++iz, vf_index++){
+          double x = targ_origin_.x() + ix*targ_dims_.x();
+          double y = targ_origin_.y() + iy*targ_dims_.y();
+          double z = targ_origin_.z() + iz*targ_dims_.z();
+          vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
+          vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
+          if(!source_bb_.contains(center_in_source))
+            continue;
+          valid_unrefined_[vf_index] = true;
+          vfield_unrefined_[vf_index].set(center_in_source.x() - sub_block_center.x(),
+                                          center_in_source.y() - sub_block_center.y(),
+                                          center_in_source.z() - sub_block_center.z());
+      }
+    }
+   }
+}
 
 void boxm2_vecf_skin_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
   // initially extract unrefined target data 
   if(!target_data_extracted_)
     this->extract_target_block_data(target_scene);
+  // compute inverse vector field for prerefining the target
+  this->inverse_vector_field_unrefined(target_scene);
   // refine the target to match the source tree refinement
    this->prerefine_target(target_scene);
   // have to extract target data again to refresh data bases and buffers after refinement

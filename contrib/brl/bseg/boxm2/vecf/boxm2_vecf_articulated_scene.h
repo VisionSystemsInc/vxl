@@ -34,13 +34,14 @@ typedef vbl_smart_ptr<boxm2_vecf_articulated_scene> boxm2_vecf_articulated_scene
 
 class boxm2_vecf_articulated_scene : public vbl_ref_count{
  public:
- boxm2_vecf_articulated_scene(): blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),trees_(tree_init),sigma_(0.5f){
+ boxm2_vecf_articulated_scene(): blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),trees_(tree_init),sigma_(0.5f),
+    source_model_exists_(false){
     base_model_ = 0; has_background_ = false; is_single_instance_ = false;
     color_apm_id_ = "frontalized"; target_data_extracted_=false;
   }
 
  boxm2_vecf_articulated_scene(vcl_string scene_file,vcl_string color_apm_id = "frontalized"):
-  blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),trees_(tree_init),sigma_(0.5f){
+  blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),trees_(tree_init),sigma_(0.5f),source_model_exists_(false){
     base_model_ = new boxm2_scene(scene_file);
     has_background_ = false;
     color_apm_id_=color_apm_id;
@@ -73,8 +74,10 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
 
   // functions required by the sub classes
   virtual bool set_params(boxm2_vecf_articulated_params const& params)=0;
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index) = 0;
   virtual void map_to_target(boxm2_scene_sptr target_scene)=0;
+  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index) = 0;
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene) = 0;
+  // functions that may be implemented by subclass or by *this
   virtual void set_target_background(bool has_background){ has_background_ = has_background;}
   virtual void clear_target(boxm2_scene_sptr target_scene);
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
@@ -85,8 +88,10 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   static double gauss(double d, double sigma);
   bool has_background_;
   bool is_single_instance_;
+  bool source_model_exists_;
   boxm2_scene_sptr base_model_;
   vcl_string color_apm_id_;
+
   // source block information
   boxm2_block_sptr blk_;              // the source block
   boxm2_block_id blk_id_;
@@ -98,6 +103,7 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   ////////
 
   // block meta info
+  float alpha_init_;
   vgl_vector_3d<unsigned> n_;
   vgl_vector_3d<double> dims_;
   vgl_point_3d<double> origin_;
@@ -123,4 +129,8 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   boxm2_data<BOXM2_ALPHA>::datatype* target_alpha_data_;   //target alpha data
   boxm2_data<BOXM2_MOG3_GREY>::datatype* target_app_data_; //target appearance data
   boxm2_data<BOXM2_NUM_OBS>::datatype* target_nobs_data_;  //target nobs data
+  // vector field info
+  vcl_vector<vgl_vector_3d<double> > vfield_unrefined_;
+  vcl_vector<bool> valid_unrefined_;
+
 };

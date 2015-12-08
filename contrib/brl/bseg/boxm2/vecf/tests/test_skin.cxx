@@ -31,12 +31,12 @@ void test_skin()
       vcl_cout<<"skin geo file does not exist"<<vcl_endl;
       return;
     }
-  // boxm2_vecf_skin_scene skscene(skin_scene_path, skin_geo_path);
-  boxm2_vecf_skin_scene skscene(skin_scene_path);
+  boxm2_vecf_skin_scene skscene(skin_scene_path, skin_geo_path);
+  //boxm2_vecf_skin_scene skscene(skin_scene_path);
   boxm2_scene_sptr scene = skscene.scene();
   if(!scene)
     return;
-   boxm2_cache::instance()->write_to_disk();
+  boxm2_cache::instance()->write_to_disk();
 
 
 #if 0  

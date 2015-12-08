@@ -27,7 +27,7 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 {
  public:
   enum anat_type { SKIN, NO_TYPE};
- boxm2_vecf_skin_scene(): source_model_exists_(false), alpha_data_(0), app_data_(0), nobs_data_(0), skin_data_(0),target_alpha_data_(0),target_app_data_(0), target_nobs_data_(0), extrinsic_only_(false),target_blk_(0),target_data_extracted_(false),boxm2_vecf_articulated_scene(),sigma_(0.5f){}
+ boxm2_vecf_skin_scene(): skin_data_(0), extrinsic_only_(false),boxm2_vecf_articulated_scene(){}
 
   //: set parameters
   bool set_params(boxm2_vecf_articulated_params const& params);
@@ -41,8 +41,11 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 #if 0 //currently only a pre-built skin is used
   boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file);
 #endif
+  //: find the inverse vector field for unrefined target block centers
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
+
   //: refine target cells to match the refinement level of the source block
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIX ME
+  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
 
   //: map skin data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);
@@ -60,8 +63,10 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
   //: set up pointers to source block databases
  void extract_block_data();
+#if 0
   //: set up pointers to target block databases
  void extract_target_block_data(boxm2_scene_sptr target_scene);
+#endif
  //: initialize the source block data
  void fill_block();
  //: initialize the full target block (not currently used )
@@ -85,9 +90,10 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
   bool vfield_params_change_check(const boxm2_vecf_skin_params& params);
   // store the neigbors of each cell for each anatomical component in a vector;
   void cache_neighbors();
+#if 0
   // pre-refine the target scene
   void prerefine_target(boxm2_scene_sptr target_scene);
-
+#endif
   void create_anatomy_labels();
   void export_point_cloud(vcl_ostream& ostr) const;
 
@@ -112,35 +118,16 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  void reset_buffers();
 #endif
   //: members
- float alpha_init_;
-  boxm2_block_sptr blk_;                     // the source block
-  boxm2_block_sptr target_blk_;              // the target block
-  // cached databases
-  // source dbs
-  boxm2_data_base* alpha_base_;
-  boxm2_data_base* app_base_;
-  boxm2_data_base* nobs_base_;
+  // =============  skin ===============
   boxm2_data_base* skin_base_;
-
-  // target dbs
-  boxm2_data_base* target_alpha_base_;
-  boxm2_data_base* target_app_base_;
-  boxm2_data_base* target_nobs_base_;
-
-  boxm2_data<BOXM2_ALPHA>::datatype* alpha_data_;  // source alpha database
-  boxm2_data<BOXM2_MOG3_GREY>::datatype* app_data_;// source appearance database
-  boxm2_data<BOXM2_NUM_OBS>::datatype* nobs_data_;         // source nobs database
-  boxm2_data<BOXM2_ALPHA>::datatype* target_alpha_data_;   //target alpha database
-  boxm2_data<BOXM2_MOG3_GREY>::datatype* target_app_data_; //target appearance database
-  boxm2_data<BOXM2_NUM_OBS>::datatype* target_nobs_data_;  //target nobs
   boxm2_data<BOXM2_PIXEL>::datatype* skin_data_;        // is voxel a skin point
 
   vcl_vector<cell_info> box_cell_centers_;       // cell centers in the target block
 
   boxm2_vecf_skin_params params_;               // parameter struct
-  // =============  skin ===============
   
-boxm2_vecf_skin skin_geo_;
+  boxm2_vecf_skin skin_geo_;
+
   vcl_vector<vgl_point_3d<double> > skin_cell_centers_; // centers of skin cells
   vcl_vector<unsigned> skin_cell_data_index_;           // corresponding data indices
   //      cell_index          cell_index
@@ -152,10 +139,7 @@ boxm2_vecf_skin skin_geo_;
 
 private:
   void extract_scene_metadata();
-  bool source_model_exists_;
   bool extrinsic_only_;
-  bool target_data_extracted_;
-  float sigma_;
 
  //: assign target cell centers that map to the source scene bounding box
   void determine_target_box_cell_centers();

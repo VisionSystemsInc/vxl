@@ -130,7 +130,8 @@ class boxm2_vecf_orbit_scene : public boxm2_vecf_articulated_scene
 
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
-
+  //: compute inverse vector field for unrefined sub_block centers
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){}//FIXME
  // ============   eye methods ================
  //: construct eye sphere, iris and pupil
  void create_eye();

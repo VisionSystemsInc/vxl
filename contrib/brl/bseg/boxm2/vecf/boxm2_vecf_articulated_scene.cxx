@@ -65,6 +65,12 @@ void boxm2_vecf_articulated_scene::extract_source_block_data(){
     vcl_cout << "FATAL! - NULL source block for id " << blk_id_ << '\n';
     return;
   }
+  // get block metadata items
+  boxm2_block_metadata& metad = base_model_->get_block_metadata(blk_id_);
+  double p_init = metad.p_init_;
+  //the default alpha value
+  alpha_init_ = static_cast<float>(-vcl_log(1.0 - p_init));
+
   source_bb_ = blk_->bounding_box_global();
   n_= blk_->sub_block_num();
   dims_= blk_->sub_block_dim();
@@ -132,7 +138,9 @@ void boxm2_vecf_articulated_scene::prerefine_target(boxm2_scene_sptr target_scen
       for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
         //record the deepest tree found
         int max_depth = this->prerefine_target_sub_block(vgl_point_3d<int>(ix, iy, iz));
-                depths_to_match(ix, iy, iz) = max_depth;
+        // if max_depth == -1  then don't change the refinement level
+        // since the target didn't map to a valid source position
+        depths_to_match(ix, iy, iz) = max_depth;
         if(max_depth>deepest_cell_depth){
           deepest_cell_depth = max_depth;
         }
@@ -147,4 +155,3 @@ void boxm2_vecf_articulated_scene::prerefine_target(boxm2_scene_sptr target_scen
   boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
   vcl_cout << "prefine in " << t.real() << " msec\n";
 }
-

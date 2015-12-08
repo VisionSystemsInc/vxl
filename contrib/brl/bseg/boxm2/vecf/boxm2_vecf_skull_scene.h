@@ -22,6 +22,8 @@ public:
   boxm2_vecf_skull_params const& get_params() const {return params_;}
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
+  //: compute inverse vector field for unrefined sub_block centers
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){}//FIXME
 private:
   bool target_data_extracted_;
   boxm2_vecf_skull_params params_;

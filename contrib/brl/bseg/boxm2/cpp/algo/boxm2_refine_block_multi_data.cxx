@@ -274,7 +274,7 @@ bool boxm2_refine_block_multi_data::match_refine(vcl_vector<vcl_string> const& p
         int required_depth = depths_to_match(ix, iy, iz);
         int cur_depth = cur_tree.depth();
         //if the tree refinement is the same,just update the data pointer bits
-        if(cur_depth == required_depth){
+        if(required_depth <0 || cur_depth == required_depth){
           cur_tree.set_data_ptr(dataIndex, false);
           vcl_memcpy(tree_bits.data_block(), cur_tree.get_bits(), 16);
           dataSize += cur_tree.num_cells();
@@ -374,12 +374,6 @@ int boxm2_refine_block_multi_data::move_data(boct_bit_tree& unrefined_tree,
         //for each database type (ptr_inc)
         char* old_byte_ptr = old_buf + oldDataPtr*ptr_inc;
         char* new_byte_ptr = new_buf + newDataPtr*ptr_inc;
-        if(i==3&&newDataPtr == 839){
-          float alpha = alpha = *(reinterpret_cast<float*>(old_byte_ptr));
-          unsigned char skinc = *(reinterpret_cast<unsigned char*>(old_byte_ptr));
-          bool skin = skinc>(unsigned char)(0);
-          vcl_cout << " di839 " << alpha << ' ' << skin << '\n';
-        }
         vcl_memcpy(new_byte_ptr, old_byte_ptr, ptr_inc);
       }
       //increment data pointers

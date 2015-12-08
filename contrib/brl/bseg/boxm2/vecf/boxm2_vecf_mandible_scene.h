@@ -39,10 +39,12 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
 
   boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file);
 
+  //: compute inverse vector field for unrefined target cells
+  void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
 
   //: map mandible data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);
-
+  
   //: compute an inverse vector field for rotation of mandible
   void inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<bool>& valid) const;
 
@@ -141,15 +143,12 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
   //: members
  boxm2_vecf_mandible mandible_geo_;
  vgl_rotation_3d<double> inv_rot_;
-  // cached databases
-  // source dbs
- boxm2_data_base* mandible_base_;
- 
  vcl_vector<cell_info> box_cell_centers_;       // cell centers in the target block
 
  boxm2_vecf_mandible_params params_;               // parameter struct
  // =============  mandible ===============
  int mandible_size_; // used for debug
+ boxm2_data_base* mandible_base_;
  boxm2_data<BOXM2_PIXEL>::datatype* mandible_data_;        // is voxel a mandible point
  boxm2_data<BOXM2_PIXEL>* left_ramus_;      // is voxel a left_ramus point
  boxm2_data<BOXM2_PIXEL>* left_angle_;      // is voxel a left_angle point

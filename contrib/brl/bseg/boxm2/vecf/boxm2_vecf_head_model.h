@@ -31,7 +31,8 @@ class boxm2_vecf_head_model : public boxm2_vecf_articulated_scene
 
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
-  
+    //: compute inverse vector field for unrefined sub_block centers
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){}//FIXME
 friend class boxm2_vecf_appearance_extractor; //the appearance extractor needs to signal a change to the original model when its apm is updated
  protected:
   bool intrinsic_change_;

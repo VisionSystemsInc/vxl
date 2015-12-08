@@ -84,12 +84,22 @@ void boxm2_vecf_mandible_scene::cache_cell_centers_from_anatomy_labels(){
   for(vcl_vector<cell_info>::iterator cit = source_cell_centers.begin();
       cit != source_cell_centers.end(); ++cit){
     unsigned dindx = cit->data_index_;
+    float alpha = static_cast<float>(alpha_data_[dindx]);
     bool mandible = mandible_data_[dindx]   > pixtype(0);
-    if(mandible){
+    if(mandible||alpha>alpha_init_){
       unsigned mandible_index  = static_cast<unsigned>(mandible_cell_centers_.size());
       mandible_cell_centers_.push_back(cit->cell_center_);
       mandible_cell_data_index_.push_back(dindx);
       data_index_to_cell_index_[dindx] = mandible_index;
+      // new cell that doesn't have appearance or anatomy data
+      // this condition can happen if an unrefined cell center is
+      // outside the distance tolerance to the geo surface, but when
+      // refined, a leaf cell is within tolerance
+      if(!mandible){
+        params_.app_[0]=params_.mandible_intensity_;
+        app_data_[dindx]=params_.app_;
+        mandible_data_[dindx] = static_cast<pixtype>(true);
+      }
     }
 #if 0
         unsigned left_ramus_index  = static_cast<unsigned>(left_ramus_cell_centers_.size());
@@ -448,7 +458,33 @@ void boxm2_vecf_mandible_scene::paint_left_ramus(){
   }
 }
 ///  <========  End of stuff to be used later===========
-//
+// == the full inverse vector field  p_source = p_target + vf === 
+void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
+  unsigned ntrees = targ_n_.x()*targ_n_.y()*targ_n_.z();
+  vfield_unrefined_.resize(ntrees, vgl_vector_3d<double>(0.0, 0.0, 0.0));
+  valid_unrefined_.resize(ntrees, false);
+  unsigned vf_index = 0;
+  //iterate through the trees of the target. During this pass, only the sub_block locations are used
+   for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      for(unsigned iz = 0; iz<targ_n_.z(); ++iz, vf_index++){
+          double x = targ_origin_.x() + ix*targ_dims_.x();
+          double y = targ_origin_.y() + iy*targ_dims_.y();
+          double z = targ_origin_.z() + iz*targ_dims_.z();
+          vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
+          vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
+          // rotate the target center back to source
+          vgl_point_3d<double> rot_center_in_source = inv_rot_*center_in_source;
+          if(!source_bb_.contains(rot_center_in_source))
+            continue;
+          valid_unrefined_[vf_index] = true;
+          vfield_unrefined_[vf_index].set(rot_center_in_source.x() - sub_block_center.x(),
+                                          rot_center_in_source.y() - sub_block_center.y(),
+                                          rot_center_in_source.z() - sub_block_center.z());
+      }
+    }
+   }
+}
 
 // interpolate data around the inverted position of the target in the source reference frame. Interpolation weights are based
 // on a Gaussian distribution with respect to distance from the source location
@@ -545,19 +581,22 @@ void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vect
   }
   vcl_cout << "Apply mandible vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
+
 int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
   int ix = sub_block_index.x(), iy = sub_block_index.y(), iz = sub_block_index.z();
+  vcl_size_t lindex = trees_.linear_index(ix, iy, iz);
+  if(!valid_unrefined_[lindex])
+    return -1;
   double x = targ_origin_.x() + ix*targ_dims_.x();
   double y = targ_origin_.y() + iy*targ_dims_.y();
   double z = targ_origin_.z() + iz*targ_dims_.z();
   vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
-  
-  // map the origin back to source by the offset
-  vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
-  // rotate the target center back to source
-  vgl_point_3d<double> rot_center_in_source = inv_rot_*center_in_source;
+
+  // map the target back to source
+  vgl_point_3d<double> rot_center_in_source = sub_block_center +  vfield_unrefined_[lindex];
+
   // sub_block axis-aligned corners in source
   vgl_point_3d<double> sbc_min(rot_center_in_source.x()-0.5*targ_dims_.x(),
                                rot_center_in_source.y()-0.5*targ_dims_.y(),
@@ -605,6 +644,8 @@ void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
   vnl_quaternion<double> Q(X,params_.jaw_opening_angle_rad_);
   vgl_rotation_3d<double> rot(Q);
   inv_rot_ = rot.inverse();
+  // compute inverse vector field for prerefining the target
+  this->inverse_vector_field_unrefined(target_scene);
   // refine the target to match the source tree refinement
    this->prerefine_target(target_scene);
   // have to extract target data again to refresh data bases and buffers after refinement
