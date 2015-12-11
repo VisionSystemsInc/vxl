@@ -31,12 +31,12 @@ void test_skin()
       vcl_cout<<"skin geo file does not exist"<<vcl_endl;
       return;
     }
-  boxm2_vecf_skin_scene skscene(skin_scene_path, skin_geo_path);
-  //boxm2_vecf_skin_scene skscene(skin_scene_path);
+  //boxm2_vecf_skin_scene skscene(skin_scene_path, skin_geo_path);
+  boxm2_vecf_skin_scene skscene(skin_scene_path);
   boxm2_scene_sptr scene = skscene.scene();
   if(!scene)
     return;
-  boxm2_cache::instance()->write_to_disk();
+  //boxm2_cache::instance()->write_to_disk();
 
 
 #if 0  
@@ -48,8 +48,8 @@ void test_skin()
   }
   skscene.export_point_cloud(ostr);
   ostr.close();
-
-  vcl_string target_scene_path = scene_dir + "target_skin_8.xml";
+#endif
+  vcl_string target_scene_path = scene_dir + "target_skin.xml";
 
   if(!vul_file::exists(target_scene_path))
     {
@@ -59,11 +59,11 @@ void test_skin()
   boxm2_scene_sptr target = new boxm2_scene(target_scene_path);
   if(!target)
     return;
-  crscene.map_to_target(target);
+  skscene.map_to_target(target);
 
   boxm2_cache::instance()->write_to_disk();
-#endif
+
 #endif
 }
 TESTMAIN( test_skin );
- 
+

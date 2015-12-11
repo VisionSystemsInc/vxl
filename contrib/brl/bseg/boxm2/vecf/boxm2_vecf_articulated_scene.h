@@ -45,6 +45,7 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
     base_model_ = new boxm2_scene(scene_file);
     has_background_ = false;
     color_apm_id_=color_apm_id;
+    target_data_extracted_=false;
   }
 
   // need to define the assigment operator to intialize the  trees_ reference
@@ -82,6 +83,8 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   virtual void clear_target(boxm2_scene_sptr target_scene);
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
 
+ //: tree subblock size in mm
+ double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
 
  protected:
   float sigma_;

@@ -333,6 +333,7 @@ bool boxm2_block::data_index(vgl_point_3d<double> const& global_pt, unsigned& in
 }
 
 vcl_vector<cell_info> boxm2_block::cells_in_box(vgl_box_3d<double> const& global_box){
+  int max_depth = 0;
   vcl_vector<cell_info> temp;
   vgl_box_3d<double> bbox = this->bounding_box_global();
   vgl_box_3d<double> inter = vgl_intersection<double>(global_box, bbox);
@@ -373,7 +374,6 @@ vcl_vector<cell_info> boxm2_block::cells_in_box(vgl_box_3d<double> const& global
   // iterate over sub_blocks
   vgl_point_3d<double> loc;
   for(int iz = index_z_min; iz<=index_z_max; ++iz){
-    //    vcl_cout << '.' << vcl_flush;
     for(int iy = index_y_min; iy<=index_y_max; ++iy){
       for(int ix = index_x_min; ix<=index_x_max; ++ix){
         cell_info ci;
@@ -395,6 +395,10 @@ vcl_vector<cell_info> boxm2_block::cells_in_box(vgl_box_3d<double> const& global
              continue;
 
            int curr_depth = tree.depth_at(currBitIndex);
+           //debug
+           if(curr_depth > max_depth)
+             max_depth = curr_depth;
+           // end debug
            ci.depth_= curr_depth;
            int currIdx = tree.get_data_index(currBitIndex); //data index
            ci.data_index_=currIdx;
@@ -404,7 +408,7 @@ vcl_vector<cell_info> boxm2_block::cells_in_box(vgl_box_3d<double> const& global
       }
     }
   }
-  //  vcl_cout << '\n';
+  //  vcl_cout << "In cells in box max depth is " << max_depth << '\n';
   return temp;
 }
 

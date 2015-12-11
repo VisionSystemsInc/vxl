@@ -179,16 +179,16 @@ bool boxm2_ocl_articulated_render_tableau::handle(vgui_event const &e)
       if(nsa == 1){//no need to map to target after the first articulation
         if(play_index_ == 0){
           articulated_scene_->set_params((*scene_articulation_)[play_index_]);
-           vcl_cout<<"apply vector field"<<vcl_endl;
+          vcl_cout<<"apply vector field"<<vcl_endl;
           articulated_scene_->map_to_target(target_scene_);        
           play_index_=1;
         }
       }else{
-                articulated_scene_->set_params((*scene_articulation_)[play_index_]);
-                 vcl_cout<<"apply vector field"<<vcl_endl;
-            articulated_scene_->map_to_target(target_scene_);          
-            play_index_++;
-          }
+        articulated_scene_->set_params((*scene_articulation_)[play_index_]);
+        vcl_cout<<"apply vector field"<<vcl_endl;
+        articulated_scene_->map_to_target(target_scene_);          
+        play_index_++;
+      }
      if(nsa>1&&play_index_ == nsa)
         play_index_ = 0;
      post_redraw();

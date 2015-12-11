@@ -92,41 +92,12 @@ void boxm2_vecf_skin_scene::create_anatomy_labels(){
   vcl_cout << "out of " << total << " cells " << skin_count <<  " are skin \n";
 }
 
-#if 0
-void boxm2_vecf_skin_scene::extract_target_block_data(boxm2_scene_sptr target_scene){
 
-  vcl_vector<boxm2_block_id> blocks = target_scene->get_block_ids();
-  vcl_vector<boxm2_block_id>::iterator iter_blk = blocks.begin();
-  target_blk_ = boxm2_cache::instance()->get_block(target_scene, *iter_blk);
-
-  target_alpha_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
-  target_alpha_base_->enable_write();
-  target_alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(target_alpha_base_->data_buffer());
-
-  target_app_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_MOG3_GREY>::prefix());
-  target_app_base_->enable_write();
-  target_app_data_=reinterpret_cast<boxm2_data_traits<BOXM2_MOG3_GREY>::datatype*>(target_app_base_->data_buffer());
-
-  target_nobs_base_  = boxm2_cache::instance()->get_data_base(target_scene,*iter_blk,boxm2_data_traits<BOXM2_NUM_OBS>::prefix());
-  target_nobs_base_->enable_write();
-  target_nobs_data_= reinterpret_cast<boxm2_data_traits<BOXM2_NUM_OBS>::datatype*>(target_nobs_base_->data_buffer());
-  // caution fill target block only works for unrefined target scenes
-  // should not be used after refinement!!!!
-  if(has_background_){
-    vcl_cout<< " Darkening background "<<vcl_endl;
-    this->fill_target_block();
-  }
-}
-#endif
 //retrieve cells with skin anatomy label
 void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
   int total = 0, skin_count = 0;
-  if(!blk_) 
-    return;
-  vcl_cout << "BLOCK " << *blk_ << '\n';
 
-  vgl_box_3d<double> source_box = blk_->bounding_box_global();
-  vcl_vector<cell_info> source_cell_centers = blk_->cells_in_box(source_box);
+  vcl_vector<cell_info> source_cell_centers = blk_->cells_in_box(source_bb_);
   
   for(vcl_vector<cell_info>::iterator cit = source_cell_centers.begin();
       cit != source_cell_centers.end(); ++cit, total++){
@@ -147,7 +118,7 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
         params_.app_[0]=params_.skin_intensity_;
         app_data_[dindx]=params_.app_;
         skin_data_[dindx] = static_cast<pixtype>(true);
-      }        
+      }
     }
   }
   vcl_cout << "out of " << total << " cells " << skin_count <<  " are skin \n";
@@ -208,7 +179,7 @@ void boxm2_vecf_skin_scene::cache_neighbors(){
 
 
 void boxm2_vecf_skin_scene::build_skin(){
-  double len_coef = params_.neighbor_radius()* blk_->sub_block_dim().x();
+  double len_coef = params_.neighbor_radius();
   vgl_box_3d<double> bb = skin_geo_.bounding_box();
    // cell in a box centers are in global coordinates
   vcl_vector<cell_info> ccs = blk_->cells_in_box(bb);
@@ -223,8 +194,8 @@ void boxm2_vecf_skin_scene::build_skin(){
         skin_cell_centers_.push_back(cell_center);
         skin_cell_data_index_.push_back(indx);
         data_index_to_cell_index_[indx]=static_cast<unsigned>(skin_cell_centers_.size())-1;
-        float blending_factor = static_cast<float>(gauss(d,sigma_));
-        alpha_data_[indx]= - vcl_log(1.0f - ( 0.95f ))/ static_cast<float>(this->subblock_len()) * blending_factor;
+        //float blending_factor = static_cast<float>(gauss(d,sigma_));
+        alpha_data_[indx]= - vcl_log(1.0f - ( 0.95f ))/ static_cast<float>(this->subblock_len());// * blending_factor;
         skin_data_[indx] = static_cast<pixtype>(true);
       }
     }else{
@@ -288,14 +259,14 @@ void boxm2_vecf_skin_scene::paint_skin(){
   }
 }
 
- bool boxm2_vecf_skin_scene::is_type_data_index(unsigned data_index, boxm2_vecf_skin_scene::anat_type type) const{
+bool boxm2_vecf_skin_scene::is_type_data_index(unsigned data_index, boxm2_vecf_skin_scene::anat_type type) const{
 
    if(type == SKIN){
      unsigned char skin = static_cast<unsigned char>(skin_data_[data_index]);
-     return skin>0;
+     return skin > static_cast<unsigned char>(0);
    }
    return false;
- }
+}
 
 bool boxm2_vecf_skin_scene::is_type_global(vgl_point_3d<double> const& global_pt, boxm2_vecf_skin_scene::anat_type  type) const{
   unsigned indx;
@@ -311,43 +282,44 @@ bool boxm2_vecf_skin_scene::is_type_global(vgl_point_3d<double> const& global_pt
 
 bool boxm2_vecf_skin_scene::find_nearest_data_index(boxm2_vecf_skin_scene::anat_type type, vgl_point_3d<double> const& probe, double cell_len, unsigned& data_indx, int& found_depth) const{
    //form a box around the probe with a radius of 1/2 the cell diagonal
-    double r = 0.5*cell_len*params_.neighbor_radius();
-   vgl_point_3d<double> pmin(probe.x()-r, probe.y()-r, probe.z()-r);
-   vgl_point_3d<double> pmax(probe.x()+r, probe.y()+r, probe.z()+r);
-   vgl_box_3d<double> probe_box;
-   probe_box.add(pmin);  probe_box.add(pmax);
-   vcl_vector<cell_info> ccs = blk_->cells_in_box(probe_box);
-   unsigned dindx = 0;
-   int depth_min = 0;
-   double dmin = vcl_numeric_limits<double>::max();
-   unsigned data_index_min = 0;
-   for(vcl_vector<cell_info>::iterator cit = ccs.begin();
-       cit != ccs.end(); ++cit){
-     dindx = cit->data_index_;
-     if(!is_type_data_index(dindx, type))
-       continue;
-     int depth = cit->depth_;
-     double d = vgl_distance(probe, cit->cell_center_);
-     if(d<dmin){
-       dmin = d;
-       data_index_min =dindx;
-       depth_min = depth;
-     }
-   }
-   if(dmin>r)
-     return false;
-   data_indx = data_index_min;
-   found_depth = depth_min;
-   return true;
+  double r = 0.5*cell_len*params_.neighbor_radius();
+  vgl_point_3d<double> pmin(probe.x()-r, probe.y()-r, probe.z()-r);
+  vgl_point_3d<double> pmax(probe.x()+r, probe.y()+r, probe.z()+r);
+  vgl_box_3d<double> probe_box;
+  probe_box.add(pmin);  probe_box.add(pmax);
+  vcl_vector<cell_info> ccs = blk_->cells_in_box(probe_box);
+  unsigned dindx = 0;
+  int depth_min = 0;
+  double dmin = vcl_numeric_limits<double>::max();
+  unsigned data_index_min = 0;
+  for(vcl_vector<cell_info>::iterator cit = ccs.begin();
+      cit != ccs.end(); ++cit){
+    dindx = cit->data_index_;
+    if(!is_type_data_index(dindx, type))
+      continue;
+    int depth = cit->depth_;
+    double d = vgl_distance(probe, cit->cell_center_);
+    if(d<dmin){
+      dmin = d;
+      data_index_min =dindx;
+      depth_min = depth;
+    }
+  }
+  if(dmin>r)
+    return false;
+  data_indx = data_index_min;
+  found_depth = depth_min;
+  return true;
 }
-
 
 void  boxm2_vecf_skin_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf,
                                                       vcl_vector<bool>& valid) const{
   vul_timer t;
+#if 0
   vgl_box_3d<double> bb;
   if(source_model_exists_)
     bb = blk_->bounding_box_global();
+#endif
   unsigned nt = static_cast<unsigned>(box_cell_centers_.size());
   vf.resize(nt);// initialized to 0
   valid.resize(nt, false);
@@ -355,7 +327,7 @@ void  boxm2_vecf_skin_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<doubl
   for(unsigned i = 0; i<nt; ++i){
     vgl_point_3d<double> p = (box_cell_centers_[i].cell_center_)-params_.offset_;
     vgl_point_3d<double> rp = p; //for later transformations 
-    if(!bb.contains(p))
+    if(!source_bb_.contains(p))
       continue;
     cnt++;
     // vf only defined for cells on the skin
@@ -424,8 +396,13 @@ void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3
   vul_timer t;
   // iterate over the target cells and interpolate info from source
   for(int j = 0; j<n; ++j){
-    if(!valid[j])
+    if(!valid[j]){
+      unsigned indxt = box_cell_centers_[j].data_index_;
+      /// this assignment cannot be done when applying multiple anatomical components FIXME!
+      // it runs the risk of wiping out valid data from other components
+      target_alpha_data_[indxt] = 0.0f;
       continue;
+    }
     // target cell center is translated back to source box
     // the source cell is found by appplying the inverse vector
     vgl_point_3d<double> trg_cent_in_source = box_cell_centers_[j].cell_center_-params_.offset_;
@@ -510,92 +487,6 @@ int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<int> const& s
   return max_depth;
 }
 
-#if 0
-void boxm2_vecf_skin_scene::prerefine_target(boxm2_scene_sptr target_scene){
-  if(!target_blk_){
-    vcl_cout << "FATAL! - NULL target block\n";
-    return;
-  }
-  vul_timer t;
-  int count0 = 0, count1 = 0, count2 = 0, count3 = 0;
-  vgl_box_3d<double> bb = blk_->bounding_box_global();
-  int max_level = blk_->max_level();
-  int deepest_cell_depth = 0;
-
-  // don't copy the trees for efficiency
-  const boxm2_array_3d<uchar16>& trees = blk_->trees();
-
-  vgl_vector_3d<unsigned> n = target_blk_->sub_block_num();
-  // the array of depths found in the source intersecting the inversely transformed sub_block (tree) bounding box.
-  vbl_array_3d<int> depths_to_match(n.x(), n.y(), n.z());
-
-  //iterate through the trees of the target. At this point they are unrefined
-  vgl_point_3d<double> origin = target_blk_->local_origin();
-  vgl_vector_3d<double> dims = target_blk_->sub_block_dim();
-  double x=0.0, y=0.0, z=0.0;
-  for(unsigned ix = 0; ix<n.x(); ++ix){
-    x = origin.x()+ix*dims.x();
-    for(unsigned iy = 0; iy<n.y(); ++iy){
-      y = origin.y()+iy*dims.y();
-      for(unsigned iz = 0; iz<n.z(); ++iz){
-        z = origin.z()+iz*dims.z();
-
-        // the center of the sub_block (tree) at (ix, iy, iz)
-        vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
-
-        // map the origin back to source by the offset
-        vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
-        vgl_point_3d<double> sbc_min(center_in_source.x()-0.5*dims.x(),
-                                     center_in_source.y()-0.5*dims.y(),
-                                     center_in_source.z()-0.5*dims.z());
-                                     
-        vgl_point_3d<double> sbc_max(center_in_source.x()+0.5*dims.x(),
-                                     center_in_source.y()+0.5*dims.y(),
-                                     center_in_source.z()+0.5*dims.z());
-
-        vgl_box_3d<double> target_box_in_source;
-        target_box_in_source.add(sbc_min);
-        target_box_in_source.add(sbc_max); 
-
-        // the source blocks intersecting the rotated target box
-        vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
-
-        // iterate through each intersecting source tree and find the maximum tree depth 
-        int max_depth = 0;
-        for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
-            bit != int_sblks.end(); ++bit){
-          const uchar16& tree_bits = trees(bit->x(), bit->y(), bit->z());
-          //safely cast since bit_tree is just temporary
-          uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
-          boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
-          int dpth = bit_tree.depth();
-          if(dpth>max_depth){
-            max_depth = dpth;
-          }
-        }
-        depths_to_match[ix][iy][iz]=max_depth;
-                if(max_depth == 0)      count0++;
-                else if(max_depth == 1) count1++;
-                else if(max_depth == 2) count2++;
-                else if(max_depth == 3) count3++;
-                  
-        //record the deepest tree found
-        if(max_depth>deepest_cell_depth){
-          deepest_cell_depth = max_depth;
-        }
-      }
-    }
-  }
-  vcl_cout << "deepest cell depth in prerefine_target " << deepest_cell_depth << '\n';
-  vcl_cout << "count0 " << count0 << " count1 " << count1 << " count2 " << count2 << " count3 " << count3 << '\n';
-
-  //fully refine the target trees to the required depth
-  vcl_vector<vcl_string> prefixes;
-  prefixes.push_back("alpha");  prefixes.push_back("boxm2_mog3_grey"); prefixes.push_back("boxm2_num_obs");
-  boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
-  vcl_cout << "prefine in " << t.real() << " msec\n";
- }
-#endif
 // == the full inverse vector field  p_source = p_target + vf === 
 void boxm2_vecf_skin_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
   unsigned ntrees = targ_n_.x()*targ_n_.y()*targ_n_.z();
@@ -683,8 +574,11 @@ void boxm2_vecf_skin_scene::determine_target_box_cell_centers(){
     return;
   }
     
+#if 0
   vgl_box_3d<double> source_box = blk_->bounding_box_global();
   vgl_box_3d<double> offset_box(source_box.centroid() + params_.offset_ ,source_box.width(),source_box.height(),source_box.depth(),vgl_box_3d<double>::centre);
+#endif
+vgl_box_3d<double> offset_box(source_bb_.centroid() + params_.offset_ ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
     box_cell_centers_ = target_blk_->cells_in_box(offset_box);
   }else{

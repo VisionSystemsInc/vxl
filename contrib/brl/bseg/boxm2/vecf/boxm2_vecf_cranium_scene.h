@@ -27,7 +27,7 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
 {
  public:
   enum anat_type { CRANIUM, NO_TYPE};
- boxm2_vecf_cranium_scene(): source_model_exists_(false), alpha_data_(0), app_data_(0), nobs_data_(0), cranium_data_(0),target_alpha_data_(0),target_app_data_(0), target_nobs_data_(0), extrinsic_only_(false),target_blk_(0),target_data_extracted_(false),boxm2_vecf_articulated_scene(),sigma_(0.5f){}
+ boxm2_vecf_cranium_scene(): cranium_data_(0), extrinsic_only_(false),boxm2_vecf_articulated_scene(){}
 
   //: set parameters
   bool set_params(boxm2_vecf_articulated_params const& params);
@@ -52,12 +52,14 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
  //: test the anat_type (CRANIUM) of a given data index
  bool is_type_data_index(unsigned data_index, anat_type type) const;
 
- //: tree subblock size in mm
- double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
   //: set up pointers to source block databases
  void extract_block_data();
+
+#if 0 // moved  to  parent
   //: set up pointers to target block databases
  void extract_target_block_data(boxm2_scene_sptr target_scene);
+#endif
+
  //: initialize the source block data
  void fill_block();
  //: initialize the full target block (not currently used )
@@ -81,12 +83,14 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   bool vfield_params_change_check(const boxm2_vecf_cranium_params& params);
   // store the neigbors of each cell for each anatomical component in a vector;
   void cache_neighbors();
+#if 0 // move to parent
   // pre-refine the target scene
   void prerefine_target(boxm2_scene_sptr target_scene);
+#endif
   //: refine target cells to match the refinement level of the source block
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
+  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
   //: compute inverse vector field for unrefined sub_block centers
-  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){}//FIXME
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
  // ============   cranium methods ================
  //: construct manidble from parameters
  void create_cranium();
@@ -104,6 +108,7 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
 
   //: members
  boxm2_vecf_cranium cranium_geo_;
+#if 0
   boxm2_block_sptr blk_;                     // the source block
   boxm2_block_sptr target_blk_;              // the target block
   // cached databases
@@ -111,8 +116,6 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   boxm2_data_base* alpha_base_;
   boxm2_data_base* app_base_;
   boxm2_data_base* nobs_base_;
-  boxm2_data_base* cranium_base_;
-
   // target dbs
   boxm2_data_base* target_alpha_base_;
   boxm2_data_base* target_app_base_;
@@ -124,10 +127,12 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   boxm2_data<BOXM2_ALPHA>::datatype* target_alpha_data_;   //target alpha database
   boxm2_data<BOXM2_MOG3_GREY>::datatype* target_app_data_; //target appearance database
   boxm2_data<BOXM2_NUM_OBS>::datatype* target_nobs_data_;  //target nobs
+#endif
   vcl_vector<cell_info> box_cell_centers_;       // cell centers in the target block
 
   boxm2_vecf_cranium_params params_;               // parameter struct
-  // =============  manible ===============
+  // =============  cranium ===============
+  boxm2_data_base* cranium_base_;
   boxm2_data<BOXM2_PIXEL>::datatype* cranium_data_;        // is voxel a cranium point
 
   vcl_vector<vgl_point_3d<double> > cranium_cell_centers_; // centers of cranium cells
@@ -140,11 +145,8 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   vcl_map<unsigned, vcl_vector<unsigned> > cell_neighbor_data_index_; // data index to neighbor data indices
 
 private:
-  bool source_model_exists_;
   bool extrinsic_only_;
   bool intrinsic_change_;
-  bool target_data_extracted_;
-  float sigma_;
 
  //: assign target cell centers that map to the source scene bounding box
   void determine_target_box_cell_centers();
