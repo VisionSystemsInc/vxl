@@ -27,8 +27,8 @@ void test_composite_face()
   boxm2_vecf_composite_face_scene cfscene(scene_paths);
   //boxm2_cache::instance()->write_to_disk();
 
-  //  vcl_string target_scene_path = scene_dir + "target_face.xml";
-    vcl_string target_scene_path = scene_dir + "../cranium/target_cranium_8.xml";
+  vcl_string target_scene_path = scene_dir + "target_face.xml";
+    //vcl_string target_scene_path = scene_dir + "../cranium/target_cranium_8.xml";
 
   if(!vul_file::exists(target_scene_path))
     {

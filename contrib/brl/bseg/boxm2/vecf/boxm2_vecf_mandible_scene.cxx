@@ -175,9 +175,9 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_fil
   prefixes.push_back("boxm2_mog3_grey");
   prefixes.push_back("boxm2_num_obs");
   prefixes.push_back("boxm2_pixel_mandible");
-  boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes);
-  boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes);
-  //  boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes);
+  boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes, params_.neighbor_radius());
+  boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes, params_.neighbor_radius());
+  //boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes);
   this->rebuild();
   this->set_inv_rot();
  }
@@ -191,6 +191,7 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_fil
     return;
   }
   params_file >> this->params_;
+  this->set_inv_rot();
   this->extrinsic_only_ = true;
   target_blk_ = 0;
   target_data_extracted_ = false;
@@ -360,6 +361,11 @@ bool boxm2_vecf_mandible_scene::inverse_vector_field(vgl_point_3d<double> const&
   vgl_point_3d<double> p = target_pt-params_.offset_;
   vgl_point_3d<double> rp = inv_rot_ * p;// rotated point
   if(!source_bb_.contains(rp))
+    return false;
+  unsigned dindx = 0;
+  if(!blk_->data_index(rp, dindx))
+    return false;
+  if(!is_type_data_index(dindx, MANDIBLE))
     return false;
   inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
   return true;

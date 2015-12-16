@@ -40,12 +40,14 @@
 #include "../../boxm2_vecf_mandible_scene.h"
 #include "../../boxm2_vecf_cranium_scene.h"
 #include "../../boxm2_vecf_skull_scene.h"
+#include "../../boxm2_vecf_composite_face_scene.h"
 #include "../../boxm2_vecf_composite_head_model.h"
 #include "../../ocl/boxm2_vecf_ocl_composite_head_model.h"
 #include "../../boxm2_vecf_orbit_articulation.h"
 #include "../../boxm2_vecf_mandible_articulation.h"
 #include "../../boxm2_vecf_cranium_articulation.h"
 #include "../../boxm2_vecf_skull_articulation.h"
+#include "../../boxm2_vecf_composite_face_articulation.h"
 #include "../../boxm2_vecf_composite_head_model_articulation.h"
 #include "../boxm2_ocl_articulated_render_tableau.h"
 
@@ -106,7 +108,7 @@ int main(int argc, char ** argv)
     return -1;
   }
 
-  good = (geo_path != "") && vul_file::exists(geometry_path);
+  good = (geo_path != "") || vul_file::exists(geometry_path);
   if(!good){
     vcl_cout << geometry_path << " is not valid\n";
     return -1;
@@ -236,6 +238,14 @@ int main(int argc, char ** argv)
       //boxm2_scene_sptr crscn = skull_scene->scene();
       //boxm2_lru_cache::instance()->write_to_disk(crscn);
       bit_tableau->init(device, opencl_cache, skull_scene, skull_articulation,target_scene, ni, nj, pcam, "");
+    }else if(scene_t == "composite_face"){
+      boxm2_vecf_composite_face_scene* composite_face_scene = new boxm2_vecf_composite_face_scene(articulated_scene_path);
+      boxm2_vecf_composite_face_articulation* composite_face_articulation =new boxm2_vecf_composite_face_articulation();
+      composite_face_articulation->set_play_sequence("default");
+      composite_face_scene->set_target_background(dark_background);
+      //boxm2_scene_sptr crscn = skull_scene->scene();
+      //boxm2_lru_cache::instance()->write_to_disk(crscn);
+      bit_tableau->init(device, opencl_cache, composite_face_scene, composite_face_articulation,target_scene, ni, nj, pcam, "");
     }
       //create window, attach the new tableau and status bar
       vgui_window* win = vgui::produce_window(ni, nj, "OpenCl Volume Visualizer (Render)");
