@@ -281,60 +281,38 @@ bool boxm2_vecf_skin_scene::is_type_global(vgl_point_3d<double> const& global_pt
 }
 
 bool boxm2_vecf_skin_scene::find_nearest_data_index(boxm2_vecf_skin_scene::anat_type type, vgl_point_3d<double> const& probe, double cell_len, unsigned& data_indx, int& found_depth) const{
-   //form a box around the probe with a radius of 1/2 the cell diagonal
-  double r = 0.5*cell_len*params_.neighbor_radius();
-  vgl_point_3d<double> pmin(probe.x()-r, probe.y()-r, probe.z()-r);
-  vgl_point_3d<double> pmax(probe.x()+r, probe.y()+r, probe.z()+r);
-  vgl_box_3d<double> probe_box;
-  probe_box.add(pmin);  probe_box.add(pmax);
-  vcl_vector<cell_info> ccs = blk_->cells_in_box(probe_box);
-  unsigned dindx = 0;
-  int depth_min = 0;
-  double dmin = vcl_numeric_limits<double>::max();
-  unsigned data_index_min = 0;
-  for(vcl_vector<cell_info>::iterator cit = ccs.begin();
-      cit != ccs.end(); ++cit){
-    dindx = cit->data_index_;
-    if(!is_type_data_index(dindx, type))
-      continue;
-    int depth = cit->depth_;
-    double d = vgl_distance(probe, cit->cell_center_);
-    if(d<dmin){
-      dmin = d;
-      data_index_min =dindx;
-      depth_min = depth;
-    }
-  }
-  if(dmin>r)
+  unsigned depth;
+  bool found_probe = blk_->data_index(probe, data_indx, depth, cell_len);
+  if(!found_probe)
     return false;
-  data_indx = data_index_min;
-  found_depth = depth_min;
+  if(!is_type_data_index(data_indx, type))
+    return false;
+  found_depth = static_cast<int>(depth);
   return true;
 }
-
-void  boxm2_vecf_skin_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf,
+bool boxm2_vecf_skin_scene::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
+  vgl_point_3d<double> rp = target_pt-params_.offset_;
+  if(!source_bb_.contains(rp))
+    return false;
+  if(!is_type_global(rp, SKIN))
+    return false;
+  inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
+  return true;
+}
+void boxm2_vecf_skin_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf,
                                                       vcl_vector<bool>& valid) const{
   vul_timer t;
-#if 0
-  vgl_box_3d<double> bb;
-  if(source_model_exists_)
-    bb = blk_->bounding_box_global();
-#endif
   unsigned nt = static_cast<unsigned>(box_cell_centers_.size());
   vf.resize(nt);// initialized to 0
   valid.resize(nt, false);
   unsigned cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
-    vgl_point_3d<double> p = (box_cell_centers_[i].cell_center_)-params_.offset_;
-    vgl_point_3d<double> rp = p; //for later transformations 
-    if(!source_bb_.contains(p))
+    vgl_vector_3d<double> inv_vf;
+    if(!inverse_vector_field(box_cell_centers_[i].cell_center_, inv_vf))
       continue;
     cnt++;
-    // vf only defined for cells on the skin
-    if(!is_type_global(p, SKIN))
-      continue;
     valid[i]=true;
-    vf[i].set(rp.x() - p.x(), rp.y() - p.y(), rp.z() - p.z());
+    vf[i].set(inv_vf.x(), inv_vf.y(), inv_vf.z());
   }
   vcl_cout << "computed " << cnt << " pts out of "<< nt << " for skin vector field in " << t.real()/1000.0 << " sec.\n";
 }
@@ -385,6 +363,10 @@ void boxm2_vecf_skin_scene::interpolate_vector_field(vgl_point_3d<double> const&
   target_alpha_data_[tindx] = alpha;
 }
 
+bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){
+        return false;
+}
+
 void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){
   boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
@@ -418,10 +400,12 @@ void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3
     unsigned sindx, dindx;
     int found_depth;//for debug purposes
     if(!this->find_nearest_data_index(SKIN, src, side_len, dindx, found_depth)){
-      app[0]=(unsigned char)(0);//default to black
-      alpha = 0.0f;//default to no occlusion
-      target_app_data_[tindx] = app;
-      target_alpha_data_[tindx] = alpha;
+     
+        app[0]=(unsigned char)(0);//default to black
+        alpha = 0.0f;//default to no occlusion
+        target_app_data_[tindx] = app;
+        target_alpha_data_[tindx] = alpha;
+    
       continue;
     }
     sindx = data_index_to_cell_index_[dindx];

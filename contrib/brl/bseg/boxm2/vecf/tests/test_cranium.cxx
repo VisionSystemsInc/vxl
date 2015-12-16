@@ -49,7 +49,8 @@ void test_cranium()
   boxm2_scene_sptr scene = crscene.scene();
   if(!scene)
     return;
-  vcl_string target_scene_path = scene_dir + "target_cranium_8.xml";
+  //vcl_string target_scene_path = scene_dir + "target_cranium_8.xml";
+  vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";
 
   if(!vul_file::exists(target_scene_path))
     {

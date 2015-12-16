@@ -9,6 +9,7 @@ DECLARE( test_pc_viewer );
 DECLARE( test_mandible);
 DECLARE( test_cranium);
 DECLARE( test_skin);
+DECLARE( test_composite_face);
 
 void register_tests()
 {
@@ -21,6 +22,7 @@ void register_tests()
   REGISTER( test_mandible );
   REGISTER( test_cranium );
   REGISTER( test_skin );
+  REGISTER( test_composite_face );
 }
 
 DEFINE_MAIN;

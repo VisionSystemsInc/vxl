@@ -13,6 +13,7 @@
 //smart pointer
 #include <vbl/vbl_ref_count.h>
 #include <vbl/vbl_smart_ptr.h>
+#include <vcl_compiler.h>
 
 //:
 // \file
@@ -26,7 +27,7 @@ typedef  boxm2_data_traits<BOXM2_GAUSS_RGB>::datatype color_APM;
 typedef vnl_vector_fixed<double,8> double8;
 typedef vnl_vector_fixed<unsigned char,8> uchar8;
 typedef vnl_vector_fixed<unsigned char, 16> uchar16;
-static boxm2_array_3d<uchar16> tree_init;// to initalize trees_
+
 
 class boxm2_vecf_articulated_scene;
 #define LERP(w1,w2,p,p1,p2) (w1 * (p2 - p) + w2 * (p-p1))/(p2 - p1)
@@ -34,25 +35,21 @@ typedef vbl_smart_ptr<boxm2_vecf_articulated_scene> boxm2_vecf_articulated_scene
 
 class boxm2_vecf_articulated_scene : public vbl_ref_count{
  public:
- boxm2_vecf_articulated_scene(): blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),trees_(tree_init),sigma_(0.5f),
+ boxm2_vecf_articulated_scene(): blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),sigma_(0.5f),
     source_model_exists_(false){
     base_model_ = 0; has_background_ = false; is_single_instance_ = false;
     color_apm_id_ = "frontalized"; target_data_extracted_=false;
   }
 
  boxm2_vecf_articulated_scene(vcl_string scene_file,vcl_string color_apm_id = "frontalized"):
-  blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),trees_(tree_init),sigma_(0.5f),source_model_exists_(false){
+  blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),
+    sigma_(0.5f),source_model_exists_(false){
     base_model_ = new boxm2_scene(scene_file);
     has_background_ = false;
     color_apm_id_=color_apm_id;
     target_data_extracted_=false;
   }
 
-  // need to define the assigment operator to intialize the  trees_ reference
-  boxm2_vecf_articulated_scene& operator = (boxm2_vecf_articulated_scene& rhs){
-    trees_ = tree_init;
-    return *this;
-  }
   // member methods
   void extract_target_block_data(boxm2_scene_sptr target_scene);
   void extract_source_block_data();
@@ -78,14 +75,21 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   virtual void map_to_target(boxm2_scene_sptr target_scene)=0;
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index) = 0;
   virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene) = 0;
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const = 0;
+  virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf) = 0;
+
   // functions that may be implemented by subclass or by *this
   virtual void set_target_background(bool has_background){ has_background_ = has_background;}
   virtual void clear_target(boxm2_scene_sptr target_scene);
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
-
+  
  //: tree subblock size in mm
  double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
 
+ vcl_size_t target_linear_index(vcl_size_t ix, vcl_size_t iy, vcl_size_t iz) const{
+   return (ix*targ_n_.y()+iy)*targ_n_.z() + iz;
+ }
+ vgl_box_3d<double> source_bounding_box() const {return source_bb_;}
  protected:
   float sigma_;
   static double gauss(double d, double sigma);
@@ -102,7 +106,7 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   ///// treat as read only !!
   ///// refers to source tree array (can't initialize a ref to a const)
   ///// but use reference for efficiency
-  boxm2_array_3d<uchar16>& trees_;
+  boxm2_array_3d<uchar16> trees_;
   ////////
 
   // block meta info

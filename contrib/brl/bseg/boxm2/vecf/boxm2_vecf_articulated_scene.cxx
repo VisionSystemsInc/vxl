@@ -78,7 +78,8 @@ void boxm2_vecf_articulated_scene::extract_source_block_data(){
   vcl_cout << "Extracting from block with " << blk_->num_cells() << " cells\n";
   sigma_ = static_cast<float>(dims_.x());
   // somewhat dangerous but as long as trees_ is treated as read only we are safe
-  trees_ = const_cast<boxm2_array_3d<uchar16>&>(blk_->trees());
+  //trees_ = const_cast<boxm2_array_3d<uchar16>&>(blk_->trees());
+  trees_ = blk_->trees_copy();
   alpha_base_  = boxm2_cache::instance()->get_data_base(base_model_,*iter_blk,boxm2_data_traits<BOXM2_ALPHA>::prefix());
   alpha_base_->enable_write();
   alpha_data_= reinterpret_cast<boxm2_data_traits<BOXM2_ALPHA>::datatype*>(alpha_base_->data_buffer());

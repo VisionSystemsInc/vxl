@@ -17,7 +17,7 @@
 #include "../boxm2_vecf_mandible.h"
 #include "../boxm2_vecf_mandible_scene.h"
 #include "../boxm2_vecf_spline_field.h"
-//#define BUILD_TEST_MANDIBLE
+#define BUILD_TEST_MANDIBLE
 void test_mandible()
 {
 #ifdef BUILD_TEST_MANDIBLE
@@ -129,11 +129,14 @@ void test_mandible()
 
   //boxm2_vecf_mandible mand(mandible_geo_path);
   
-  boxm2_vecf_mandible_scene mscene(mandible_scene_path, mandible_geo_path);
-  const boxm2_vecf_mandible& mand = mscene.mandible_geo();
+  //boxm2_vecf_mandible_scene mscene(mandible_scene_path, mandible_geo_path);
+  boxm2_vecf_mandible_scene mscene(mandible_scene_path);
+  //  const boxm2_vecf_mandible& mand = mscene.mandible_geo();
   boxm2_scene_sptr scene = mscene.scene();
   if(!scene)
     return;
+  //boxm2_cache::instance()->write_to_disk();
+
   vcl_vector<vcl_string> prefixes;
   prefixes.push_back("alpha");
   prefixes.push_back("boxm2_mog3_grey");
@@ -158,9 +161,10 @@ void test_mandible()
   vcl_vector<unsigned> data_indices;
   blk->leaf_neighbors(probe, 1.5, nbrs, nbr_edge_lengths, data_indices);
 #endif
-  vcl_string target_scene_path = scene_dir + "target_mandible_8.xml";
+#if 1
+  //vcl_string target_scene_path = scene_dir + "target_mandible_8.xml";
 //vcl_string target_scene_path = scene_dir + "../skull/target_skull_8.xml";
-
+  vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";
   if(!vul_file::exists(target_scene_path))
     {
       vcl_cout<<"target scene file) does not exist"<<vcl_endl;
@@ -170,7 +174,9 @@ void test_mandible()
   if(!target)
     return;
   mscene.map_to_target(target);
-  // boxm2_cache::instance()->write_to_disk();
+  boxm2_cache::instance()->write_to_disk();
+#endif
+
 #if 0
   vcl_map<boxm2_block_id, boxm2_block_metadata> tblocks = target->blocks();
   vcl_map<boxm2_block_id, boxm2_block_metadata>::iterator bitrg = tblocks.begin();

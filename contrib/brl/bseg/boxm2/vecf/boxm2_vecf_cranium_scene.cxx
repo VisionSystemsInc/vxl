@@ -263,42 +263,21 @@ bool boxm2_vecf_cranium_scene::is_type_global(vgl_point_3d<double> const& global
 }
 
 bool boxm2_vecf_cranium_scene::find_nearest_data_index(boxm2_vecf_cranium_scene::anat_type type, vgl_point_3d<double> const& probe, double cell_len, unsigned& data_indx, int& found_depth) const{
-   //form a box around the probe with a radius of 1/2 the cell diagonal
-    double r = 0.5*cell_len*params_.neighbor_radius();
-   vgl_point_3d<double> pmin(probe.x()-r, probe.y()-r, probe.z()-r);
-   vgl_point_3d<double> pmax(probe.x()+r, probe.y()+r, probe.z()+r);
-   vgl_box_3d<double> probe_box;
-   probe_box.add(pmin);  probe_box.add(pmax);
-   vcl_vector<cell_info> ccs = blk_->cells_in_box(probe_box);
-   unsigned dindx = 0;
-   int depth_min = 0;
-   double dmin = vcl_numeric_limits<double>::max();
-   unsigned data_index_min = 0;
-   for(vcl_vector<cell_info>::iterator cit = ccs.begin();
-       cit != ccs.end(); ++cit){
-     dindx = cit->data_index_;
-     if(!is_type_data_index(dindx, type))
-       continue;
-     int depth = cit->depth_;
-     double d = vgl_distance(probe, cit->cell_center_);
-     if(d<dmin){
-       dmin = d;
-       data_index_min =dindx;
-       depth_min = depth;
-     }
-   }
-   if(dmin>r)
-     return false;
-   data_indx = data_index_min;
-   found_depth = depth_min;
-   return true;
+  unsigned depth;
+  bool found_probe = blk_->data_index(probe, data_indx, depth, cell_len);
+  if(!found_probe)
+    return false;
+  if(!is_type_data_index(data_indx, type))
+    return false;
+  found_depth = static_cast<int>(depth);
+  return true;
 }
 
 int boxm2_vecf_cranium_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
   int ix = sub_block_index.x(), iy = sub_block_index.y(), iz = sub_block_index.z();
-  vcl_size_t lindex = trees_.linear_index(ix, iy, iz);
+  vcl_size_t lindex = target_linear_index(ix, iy, iz);
   if(!valid_unrefined_[lindex])
     return -1;
   double x = targ_origin_.x() + ix*targ_dims_.x();
@@ -366,6 +345,18 @@ void boxm2_vecf_cranium_scene::inverse_vector_field_unrefined(boxm2_scene_sptr t
    }
 }
 
+bool boxm2_vecf_cranium_scene::inverse_vector_field(vgl_point_3d<double> const&  target_pt, vgl_vector_3d<double>& inv_vf) const{
+  vgl_point_3d<double> tp = target_pt-params_.offset_;
+  if(!source_bb_.contains(tp))
+    return false;
+  // vf only defined for cells on the cranium
+  if(!is_type_global(tp, CRANIUM))
+    return false;
+  inv_vf.set(tp.x() - target_pt.x(), tp.y() - target_pt.y(), tp.z() - target_pt.z());
+  return true;
+}
+
+
 void  boxm2_vecf_cranium_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf,
                                                       vcl_vector<bool>& valid) const{
   vul_timer t;
@@ -374,16 +365,12 @@ void  boxm2_vecf_cranium_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<do
   valid.resize(nt, false);
   unsigned cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
-        vgl_point_3d<double> p = box_cell_centers_[i].cell_center_;
-    vgl_point_3d<double> tp = p-params_.offset_;
-    if(!source_bb_.contains(tp))
+    vgl_vector_3d<double> inv_vf;
+    if(!inverse_vector_field(box_cell_centers_[i].cell_center_, inv_vf))
       continue;
-    // vf only defined for cells on the cranium
-    if(!is_type_global(tp, CRANIUM))
-      continue;
-        cnt++;
+    cnt++;
     valid[i]=true;
-    vf[i].set(tp.x() - p.x(), tp.y() - p.y(), tp.z() - p.z());
+    vf[i].set(inv_vf.x(), inv_vf.y(), inv_vf.z());
   }
   vcl_cout << "computed " << cnt << " pts out of "<< nt << " for cranium vector field in " << t.real()/1000.0 << " sec.\n";
 }
@@ -434,6 +421,27 @@ void boxm2_vecf_cranium_scene::interpolate_vector_field(vgl_point_3d<double> con
   target_alpha_data_[tindx] = alpha;
 }
 
+bool boxm2_vecf_cranium_scene::apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){
+  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
+  boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
+  vgl_point_3d<double> trg_cent_in_source = target_cell.cell_center_;
+  double side_len = target_cell.side_length_;
+  unsigned tindx = target_cell.data_index_;
+  vgl_point_3d<double> src = trg_cent_in_source + inv_vf;//add inverse vector field
+  int depth = target_cell.depth_;//for debug purposes
+  int found_depth;//for debug purposes
+  unsigned sindx, dindx;
+  if(!this->find_nearest_data_index(CRANIUM, src, side_len, dindx, found_depth))
+    return false;
+  sindx = data_index_to_cell_index_[dindx];
+  app = app_data_[dindx];
+  alpha = alpha_data_[dindx];
+  // use nearest neighbor interpolation for now
+  target_app_data_[tindx] = app;
+  target_alpha_data_[tindx] = alpha;
+  return true;
+}
+#if 0
 void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){
   boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
@@ -444,13 +452,9 @@ void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vecto
     return;//shouldn't happen
   vul_timer t;
   // iterate over the target cells and interpolate info from source
-  for(int j = n; j<n; ++j){
+  for(int j = 0; j<n; ++j){
     
     if(!valid[j]){
-      unsigned indxt = box_cell_centers_[j].data_index_;
-      /// this assignment cannot be done when applying multiple anatomical components FIXME!
-      // it runs the risk of wiping out valid data from other components
-      target_alpha_data_[indxt] = 0.0f;
       continue;
     }
     // target cell center is translated back to source box
@@ -489,7 +493,30 @@ void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vecto
   }
   vcl_cout << "Apply cranium vector field in " << t.real()/1000.0 << " sec.\n";
 }
+#endif
+void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
+                                                              vcl_vector<bool> const& valid){
+  unsigned n = static_cast<unsigned>(box_cell_centers_.size());
+  int valid_count = 0;
+  if(n==0)
+    return;//shouldn't happen
+  vul_timer t; 
+  // iterate over the target cells and interpolate info from source
+  for(unsigned j = 0; j<n; ++j){
 
+    // if vector field is not defined then assign zero alpha
+    if(!valid[j]){
+      continue;
+    }
+    // cells have vector field defined but not mandible cells
+    if(!this->apply_vector_field(box_cell_centers_[j], vf[j])){
+      target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
+      continue;
+    }
+    valid_count++;
+  }
+  vcl_cout << "Apply cranium vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
+}
 #if 0
 void boxm2_vecf_cranium_scene::prerefine_target(boxm2_scene_sptr target_scene){
   if(!target_blk_){
@@ -583,6 +610,7 @@ void boxm2_vecf_cranium_scene::map_to_target(boxm2_scene_sptr target_scene){
     this->extract_target_block_data(target_scene);
   // compute inverse vector field for prerefining the target
   this->inverse_vector_field_unrefined(target_scene);
+
   // refine the target to match the source tree refinement
   this->prerefine_target(target_scene);
   // have to extract target data again to refresh data bases and buffers after refinement
@@ -663,7 +691,7 @@ void boxm2_vecf_cranium_scene::determine_target_box_cell_centers(){
 
   vgl_box_3d<double> offset_box(source_bb_.centroid() + params_.offset_ ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
-    box_cell_centers_ = target_blk_->cells_in_box(offset_box);
+    box_cell_centers_ = target_blk_->cells_in_box(target_blk_->bounding_box_global());
   }else{
    vcl_cout << "Null target block -- FATAL!\n";
     return;

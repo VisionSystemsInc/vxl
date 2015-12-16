@@ -132,6 +132,9 @@ class boxm2_vecf_orbit_scene : public boxm2_vecf_articulated_scene
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){return -1;}//FIXME
   //: compute inverse vector field for unrefined sub_block centers
   virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){}//FIXME
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{return false;}//FIXME
+  virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){return false;}//FIXME
+
  // ============   eye methods ================
  //: construct eye sphere, iris and pupil
  void create_eye();

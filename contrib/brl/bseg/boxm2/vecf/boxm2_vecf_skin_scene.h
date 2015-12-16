@@ -53,6 +53,10 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
   //: compute an inverse vector field for rotation of skin
   void inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<bool>& valid) const;
 
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
+  virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf);
+
+
   //: test the anat_type (SKIN) of the voxel that contains a global point
   bool is_type_global(vgl_point_3d<double> const& global_pt, anat_type type) const;
 

@@ -33,7 +33,9 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
   //: set parameters
   bool set_params(boxm2_vecf_articulated_params const& params);
 
-  //: construct from scene file specification, use exising database unless initialize == true
+  // construct from existing scene block database
+  boxm2_vecf_mandible_scene(vcl_string const& scene_file);
+
   // otherwise compute voxel contents from the mandible parameters
   boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file);
 
@@ -47,6 +49,9 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
   
   //: compute an inverse vector field for rotation of mandible
   void inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<bool>& valid) const;
+
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
+  virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf);
 
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
@@ -65,6 +70,9 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
 
  //: set up pointers to source block databases particular to this subclass
  void extract_block_data();
+
+ //: set inv_rot_ from params_;
+ void set_inv_rot();
 
  //: initialize the source block data
  void fill_block();

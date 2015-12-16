@@ -43,6 +43,10 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   //: map cranium data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);
 
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
+  virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf);
+
+
   //: compute an inverse vector field for rotation of cranium
   void inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<bool>& valid) const;
 

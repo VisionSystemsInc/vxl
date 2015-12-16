@@ -198,9 +198,13 @@ int main(int argc, char ** argv)
     composite_head_model->map_to_target(target_scene);
 
       bit_tableau->init(device, opencl_cache, composite_head_model, head_model_articulation,target_scene, ni, nj, pcam, "");
-    }else if(scene_t == "mandible"){
-
-      boxm2_vecf_mandible_scene* mandible_scene = new boxm2_vecf_mandible_scene(articulated_scene_path, geometry_path);
+    }else if(scene_t == "mandible"||scene_t == "mandible_f"){
+      boxm2_vecf_mandible_scene* mandible_scene= 0;
+      if(scene_t == "mandible_f")
+           mandible_scene = new boxm2_vecf_mandible_scene(articulated_scene_path);
+      else
+        mandible_scene = new boxm2_vecf_mandible_scene(articulated_scene_path, geometry_path);
+      
       boxm2_vecf_mandible_articulation* mandible_articulation =new boxm2_vecf_mandible_articulation();
       mandible_articulation->set_play_sequence("default");
       mandible_scene->set_target_background(dark_background);
