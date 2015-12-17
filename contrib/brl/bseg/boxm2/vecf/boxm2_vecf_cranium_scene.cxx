@@ -441,59 +441,7 @@ bool boxm2_vecf_cranium_scene::apply_vector_field(cell_info const& target_cell, 
   target_alpha_data_[tindx] = alpha;
   return true;
 }
-#if 0
-void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
-                                                              vcl_vector<bool> const& valid){
-  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
-  boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
-    int n = static_cast<unsigned>(box_cell_centers_.size());
 
-  if(n==0)
-    return;//shouldn't happen
-  vul_timer t;
-  // iterate over the target cells and interpolate info from source
-  for(int j = 0; j<n; ++j){
-    
-    if(!valid[j]){
-      continue;
-    }
-    // target cell center is translated back to source box
-    // the source cell is found by appplying the inverse vector
-    
-    vgl_point_3d<double> p = box_cell_centers_[j].cell_center_;
-
-    vgl_point_3d<double> src = p + vf[j];//add inverse vector field
-
-    // find closest sphere voxel cell
-    unsigned sindx, dindx;
-    double side_len = box_cell_centers_[j].side_length_;
-    unsigned tindx = box_cell_centers_[j].data_index_;
-    int found_depth;//for debug purposes
-    if(!this->find_nearest_data_index(CRANIUM, src, side_len, dindx, found_depth)){
-      app[0]=(unsigned char)(0);//default to black
-      alpha = 0.0f;//default to no occlusion
-      target_app_data_[tindx] = app;
-      target_alpha_data_[tindx] = alpha;
-      continue;
-    }
-    int depth = box_cell_centers_[j].depth_;//for debug purposes
-    sindx = data_index_to_cell_index_[dindx];
-    app = app_data_[dindx];
-    alpha = alpha_data_[dindx];
-    if(alpha>alpha_init_&&app[0]!=params_.cranium_intensity_)
-      vcl_cout << '.';
-    target_app_data_[tindx] = app;
-    target_alpha_data_[tindx] = alpha;
-    
-#if 0// use nearest neighbor for now
-    this->interpolate_vector_field(src, sindx, dindx, tindx,
-                                   cranium_cell_centers_, cell_neighbor_cell_index_,
-                                   cell_neighbor_data_index_);
-#endif
-  }
-  vcl_cout << "Apply cranium vector field in " << t.real()/1000.0 << " sec.\n";
-}
-#endif
 void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){
   unsigned n = static_cast<unsigned>(box_cell_centers_.size());
@@ -506,6 +454,7 @@ void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vecto
 
     // if vector field is not defined then assign zero alpha
     if(!valid[j]){
+     target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
       continue;
     }
     // cells have vector field defined but not mandible cells
@@ -517,92 +466,6 @@ void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vecto
   }
   vcl_cout << "Apply cranium vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
-#if 0
-void boxm2_vecf_cranium_scene::prerefine_target(boxm2_scene_sptr target_scene){
-  if(!target_blk_){
-    vcl_cout << "FATAL! - NULL target block\n";
-    return;
-  }
-  vul_timer t;
-  int count0 = 0, count1 = 0, count2 = 0, count3 = 0;
-  vgl_box_3d<double> bb = blk_->bounding_box_global();
-  int max_level = blk_->max_level();
-  int deepest_cell_depth = 0;
-
-  // don't copy the trees for efficiency
-  const boxm2_array_3d<uchar16>& trees = blk_->trees();
-
-  vgl_vector_3d<unsigned> n = target_blk_->sub_block_num();
-  // the array of depths found in the source intersecting the inversely transformed sub_block (tree) bounding box.
-  vbl_array_3d<int> depths_to_match(n.x(), n.y(), n.z());
-
-  //iterate through the trees of the target. At this point they are unrefined
-  vgl_point_3d<double> origin = target_blk_->local_origin();
-  vgl_vector_3d<double> dims = target_blk_->sub_block_dim();
-  double x=0.0, y=0.0, z=0.0;
-  for(unsigned ix = 0; ix<n.x(); ++ix){
-    x = origin.x()+ix*dims.x();
-    for(unsigned iy = 0; iy<n.y(); ++iy){
-      y = origin.y()+iy*dims.y();
-      for(unsigned iz = 0; iz<n.z(); ++iz){
-        z = origin.z()+iz*dims.z();
-
-        // the center of the sub_block (tree) at (ix, iy, iz)
-        vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
-
-        // map the origin back to source by the offset
-        vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
-        vgl_point_3d<double> sbc_min(center_in_source.x()-0.5*dims.x(),
-                                     center_in_source.y()-0.5*dims.y(),
-                                     center_in_source.z()-0.5*dims.z());
-                                     
-        vgl_point_3d<double> sbc_max(center_in_source.x()+0.5*dims.x(),
-                                     center_in_source.y()+0.5*dims.y(),
-                                     center_in_source.z()+0.5*dims.z());
-
-        vgl_box_3d<double> target_box_in_source;
-        target_box_in_source.add(sbc_min);
-        target_box_in_source.add(sbc_max); 
-
-        // the source blocks intersecting the rotated target box
-        vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
-
-        // iterate through each intersecting source tree and find the maximum tree depth 
-        int max_depth = 0;
-        for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
-            bit != int_sblks.end(); ++bit){
-          const uchar16& tree_bits = trees(bit->x(), bit->y(), bit->z());
-          //safely cast since bit_tree is just temporary
-          uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
-          boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
-          int dpth = bit_tree.depth();
-          if(dpth>max_depth){
-            max_depth = dpth;
-          }
-        }
-        depths_to_match[ix][iy][iz]=max_depth;
-                if(max_depth == 0)      count0++;
-                else if(max_depth == 1) count1++;
-                else if(max_depth == 2) count2++;
-                else if(max_depth == 3) count3++;
-                  
-        //record the deepest tree found
-        if(max_depth>deepest_cell_depth){
-          deepest_cell_depth = max_depth;
-        }
-      }
-    }
-  }
-  vcl_cout << "deepest cell depth in prerefine_target " << deepest_cell_depth << '\n';
-  vcl_cout << "count0 " << count0 << " count1 " << count1 << " count2 " << count2 << " count3 " << count3 << '\n';
-
-  //fully refine the target trees to the required depth
-  vcl_vector<vcl_string> prefixes;
-  prefixes.push_back("alpha");  prefixes.push_back("boxm2_mog3_grey"); prefixes.push_back("boxm2_num_obs");
-  boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
-  vcl_cout << "prefine in " << t.real() << " msec\n";
- }
-#endif
 void boxm2_vecf_cranium_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
   // initially extract unrefined target data 

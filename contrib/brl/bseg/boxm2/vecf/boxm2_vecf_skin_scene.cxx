@@ -294,7 +294,10 @@ bool boxm2_vecf_skin_scene::inverse_vector_field(vgl_point_3d<double> const& tar
   vgl_point_3d<double> rp = target_pt-params_.offset_;
   if(!source_bb_.contains(rp))
     return false;
-  if(!is_type_global(rp, SKIN))
+  unsigned dindx = 0;
+  if(!blk_->data_index(rp, dindx))
+    return false;
+  if(!is_type_data_index(dindx, SKIN))
     return false;
   inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
   return true;
@@ -364,66 +367,51 @@ void boxm2_vecf_skin_scene::interpolate_vector_field(vgl_point_3d<double> const&
 }
 
 bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){
-        return false;
+  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
+  boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
+  vgl_point_3d<double> trg_cent_in_source = target_cell.cell_center_;
+  double side_len = target_cell.side_length_;
+  unsigned tindx = target_cell.data_index_;
+  vgl_point_3d<double> src = trg_cent_in_source + inv_vf;//add inverse vector field
+  int depth = target_cell.depth_;//for debug purposes
+  int found_depth;//for debug purposes
+  unsigned sindx, dindx;
+  if(!this->find_nearest_data_index(SKIN, src, side_len, dindx, found_depth))
+    return false;
+  sindx = data_index_to_cell_index_[dindx];
+  app = app_data_[dindx];
+  alpha = alpha_data_[dindx];
+  // use nearest neighbor interpolation for now
+  target_app_data_[tindx] = app;
+  target_alpha_data_[tindx] = 0.001f*alpha;//JLM FIX
+  return true;
 }
+
 
 void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){
-  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
-  boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
-    int n = static_cast<unsigned>(box_cell_centers_.size());
-
+  unsigned n = static_cast<unsigned>(box_cell_centers_.size());
+  int valid_count = 0;
   if(n==0)
     return;//shouldn't happen
-  vul_timer t;
+  vul_timer t; 
   // iterate over the target cells and interpolate info from source
-  for(int j = 0; j<n; ++j){
+  for(unsigned j = 0; j<n; ++j){
+
+    // if vector field is not defined then assign zero alpha
     if(!valid[j]){
-      unsigned indxt = box_cell_centers_[j].data_index_;
-      /// this assignment cannot be done when applying multiple anatomical components FIXME!
-      // it runs the risk of wiping out valid data from other components
-      target_alpha_data_[indxt] = 0.0f;
+      target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
       continue;
     }
-    // target cell center is translated back to source box
-    // the source cell is found by appplying the inverse vector
-    vgl_point_3d<double> trg_cent_in_source = box_cell_centers_[j].cell_center_-params_.offset_;
-    double side_len = box_cell_centers_[j].side_length_;
-    int depth = box_cell_centers_[j].depth_;//for debug purposes
-    unsigned tindx = box_cell_centers_[j].data_index_;
-
-    vgl_point_3d<double> p = box_cell_centers_[j].cell_center_-params_.offset_;
-
-    vgl_point_3d<double> src = p + vf[j];//add inverse vector field
-
-    // find closest sphere voxel cell
-    unsigned sindx, dindx;
-    int found_depth;//for debug purposes
-    if(!this->find_nearest_data_index(SKIN, src, side_len, dindx, found_depth)){
-     
-        app[0]=(unsigned char)(0);//default to black
-        alpha = 0.0f;//default to no occlusion
-        target_app_data_[tindx] = app;
-        target_alpha_data_[tindx] = alpha;
-    
+    // cells have vector field defined but not mandible cells
+    if(!this->apply_vector_field(box_cell_centers_[j], vf[j])){
+      target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
       continue;
     }
-    sindx = data_index_to_cell_index_[dindx];
-    app = app_data_[dindx];
-    alpha = alpha_data_[dindx];
-    target_app_data_[tindx] = app;
-    target_alpha_data_[tindx] = alpha;
-    
-#if 0
-    this->interpolate_vector_field(src, sindx, dindx, tindx,
-                                   skin_cell_centers_, cell_neighbor_cell_index_,
-                                   cell_neighbor_data_index_);
-#endif
+    valid_count++;
   }
-  vcl_cout << "Apply skin vector field in " << t.real()/1000.0 << " sec.\n";
+  vcl_cout << "Apply skin vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
-
-
 int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
@@ -558,10 +546,6 @@ void boxm2_vecf_skin_scene::determine_target_box_cell_centers(){
     return;
   }
     
-#if 0
-  vgl_box_3d<double> source_box = blk_->bounding_box_global();
-  vgl_box_3d<double> offset_box(source_box.centroid() + params_.offset_ ,source_box.width(),source_box.height(),source_box.depth(),vgl_box_3d<double>::centre);
-#endif
 vgl_box_3d<double> offset_box(source_bb_.centroid() + params_.offset_ ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
     box_cell_centers_ = target_blk_->cells_in_box(offset_box);

@@ -162,9 +162,9 @@ void test_mandible()
   blk->leaf_neighbors(probe, 1.5, nbrs, nbr_edge_lengths, data_indices);
 #endif
 #if 1
-  //vcl_string target_scene_path = scene_dir + "target_mandible_8.xml";
+  vcl_string target_scene_path = scene_dir + "target_mandible_8.xml";
 //vcl_string target_scene_path = scene_dir + "../skull/target_skull_8.xml";
-  vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";
+ // vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";
   if(!vul_file::exists(target_scene_path))
     {
       vcl_cout<<"target scene file) does not exist"<<vcl_endl;

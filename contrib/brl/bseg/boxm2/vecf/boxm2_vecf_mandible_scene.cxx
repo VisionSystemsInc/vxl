@@ -618,8 +618,9 @@ void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vect
   // iterate over the target cells and interpolate info from source
   for(unsigned j = 0; j<n; ++j){
 
-    // if vector field is not defined then skip the target cell
+    // if vector field is not defined then clear the cell
     if(!valid[j]){
+      target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
       continue;
     }
     // cells have vector field defined but not mandible cells

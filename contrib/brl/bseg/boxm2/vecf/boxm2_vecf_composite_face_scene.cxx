@@ -56,12 +56,7 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   //load the scenes
   mandible_ = new boxm2_vecf_mandible_scene(mandible_path);
   cranium_ = new boxm2_vecf_cranium_scene(cranium_path);
-#if 0
   skin_ = new boxm2_vecf_skin_scene(skin_path);
-
-#endif
-
-  skin_ = 0;
 }
 
 //: compute the inverse vector field 
@@ -146,6 +141,7 @@ bool boxm2_vecf_composite_face_scene::set_params(boxm2_vecf_articulated_params c
     vcl_cout<<" Can't downcast to composite_face parameters! PARAMATER ASSIGNMENT PHAILED!"<<vcl_endl;
     return false;
   }
+  if(mandible_)
   mandible_->set_params( params_.mandible_params_);
   return true;
 }
@@ -191,6 +187,8 @@ void boxm2_vecf_composite_face_scene::apply_vector_field_to_target(vcl_vector<vg
       fail = !cranium_->apply_vector_field(target_cell_centers_[j], vf[j]);
     }else if(t == "mandible"){
       fail = !mandible_->apply_vector_field(target_cell_centers_[j], vf[j]);
+    }else if(t == "skin"){
+      fail = !skin_->apply_vector_field(target_cell_centers_[j], vf[j]);
     }
     if(t == "invalid" || fail){
       unsigned tindx = target_cell_centers_[j].data_index_;
