@@ -15,54 +15,6 @@
 #include <boxm2/cpp/algo/boxm2_refine_block_multi_data.h>
 typedef vnl_vector_fixed<unsigned char, 16> uchar16;
 typedef boxm2_data_traits<BOXM2_PIXEL>::datatype pixtype;
-// fill the background alpha and intensity values to be slightly dark
-// no-longer useful since doesn't work for refined scenes
-void boxm2_vecf_skin_scene::fill_block(){
-  vgl_point_3d<double> orig = blk_->local_origin();
-  vgl_vector_3d<double> dims = blk_->sub_block_dim();
-  vgl_vector_3d<unsigned int> nums = blk_->sub_block_num();
-  for(unsigned iz = 0; iz<nums.z(); ++iz){
-    double z = orig.z() + iz*dims.z();
-    for(unsigned iy = 0; iy<nums.y(); ++iy){
-      double y = orig.y() + iy*dims.y();
-      for(unsigned ix = 0; ix<nums.x(); ++ix){
-        double x = orig.x() + ix*dims.x();
-        vgl_point_3d<double> p(x, y, z);
-        unsigned indx;
-        if(!blk_->data_index(p, indx))
-          continue;
-        skin_data_[indx]  = static_cast<pixtype>(false);
-      }
-    }
-  }
-}
-// currently unused, except for display purposes
-// also doesn't work for for refined target scenes
-void boxm2_vecf_skin_scene::fill_target_block(){
-  params_.app_[0]=static_cast<unsigned char>(10);
-  boxm2_data_traits<BOXM2_NUM_OBS>::datatype nobs;
-  nobs.fill(0);
-  vgl_point_3d<double> orig = target_blk_->local_origin();
-  vgl_vector_3d<double> dims = target_blk_->sub_block_dim();
-  vgl_vector_3d<unsigned int> nums = target_blk_->sub_block_num();
-  for(unsigned iz = 0; iz<nums.z(); ++iz){
-    double z = orig.z() + iz*dims.z();
-    for(unsigned iy = 0; iy<nums.y(); ++iy){
-      double y = orig.y() + iy*dims.y();
-      for(unsigned ix = 0; ix<nums.x(); ++ix){
-        double x = orig.x() + ix*dims.x();
-        vgl_point_3d<double> p(x, y, z);
-        unsigned indx;
-        if(!target_blk_->data_index(p, indx))
-          continue;
-        target_alpha_data_[indx]=0.005f;//to see contrast against white
-        target_app_data_[indx] = params_.app_;
-        target_nobs_data_[indx] = nobs;
-      }
-    }
-  }
-}
-
 
 void boxm2_vecf_skin_scene::extract_block_data(){
   boxm2_vecf_articulated_scene::extract_source_block_data();
@@ -70,42 +22,36 @@ void boxm2_vecf_skin_scene::extract_block_data(){
   skin_base_->enable_write();
   skin_data_=reinterpret_cast<boxm2_data_traits<BOXM2_PIXEL>::datatype*>(skin_base_->data_buffer());
 }
+
 void boxm2_vecf_skin_scene::create_anatomy_labels(){
   if(!blk_) return;
-  
-  int total = 0, skin_count = 0;
   vgl_box_3d<double> source_box = blk_->bounding_box_global();
   vcl_vector<cell_info> source_cell_centers = blk_->cells_in_box(source_box);
   for(vcl_vector<cell_info>::iterator cit = source_cell_centers.begin();
-      cit != source_cell_centers.end(); ++cit, total++){
+      cit != source_cell_centers.end(); ++cit){
     int depth = cit->depth_;
     unsigned data_index = cit->data_index_;
     float alpha = static_cast<float>(alpha_data_[data_index]);
     if(alpha>alpha_init_){
-      skin_count++;
       skin_data_[data_index] = static_cast<boxm2_data_traits<BOXM2_PIXEL>::datatype>(true);
     }
     else{
       skin_data_[data_index]= static_cast<boxm2_data_traits<BOXM2_PIXEL>::datatype>(false);
     }
   }
-  vcl_cout << "out of " << total << " cells " << skin_count <<  " are skin \n";
 }
 
 
 //retrieve cells with skin anatomy label
 void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
-  int total = 0, skin_count = 0;
-
   vcl_vector<cell_info> source_cell_centers = blk_->cells_in_box(source_bb_);
   
   for(vcl_vector<cell_info>::iterator cit = source_cell_centers.begin();
-      cit != source_cell_centers.end(); ++cit, total++){
+      cit != source_cell_centers.end(); ++cit){
     unsigned dindx = cit->data_index_;
     float alpha = alpha_data_[dindx];
     bool skin = skin_data_[dindx]   > pixtype(0);
     if(skin||alpha>alpha_init_){
-      skin_count++;
       unsigned skin_index  = static_cast<unsigned>(skin_cell_centers_.size());
       skin_cell_centers_.push_back(cit->cell_center_);
       skin_cell_data_index_.push_back(dindx);
@@ -121,11 +67,10 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
       }
     }
   }
-  vcl_cout << "out of " << total << " cells " << skin_count <<  " are skin \n";
 }
+
 // constructors
 boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file): boxm2_vecf_articulated_scene(scene_file){
-  extrinsic_only_ = true;
   source_model_exists_=true;
   boxm2_lru_cache::create(base_model_);
   vul_timer t;
@@ -136,7 +81,6 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file): boxm
 boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file):
   boxm2_vecf_articulated_scene(scene_file){
   skin_geo_ = boxm2_vecf_skin(geometry_file);
-  this->extrinsic_only_ = false;
   source_model_exists_=false;
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
@@ -154,22 +98,9 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_s
   //  boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes);
   this->rebuild();
 }
-#if 0
-boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file_name):
-  boxm2_vecf_articulated_scene(scene_file),source_model_exists_(false),alpha_data_(0), app_data_(0), nobs_data_(0),skin_data_(0),alpha_init_(0.0f)
-  {
-    vcl_ifstream params_file(params_file_name.c_str());
-    if (!params_file){
-      vcl_cout<<" could not open params file : "<<params_file_name<<vcl_endl;
-    }else{
-    params_file >> this->params_;
-    // need input here !!!
-  }
-}
-#endif
+
 void boxm2_vecf_skin_scene::rebuild(){
 this->extract_block_data();
-//this-> create_anatomy_labels();
 this->cache_cell_centers_from_anatomy_labels();
 //this->cache_neighbors();
 }
@@ -204,12 +135,6 @@ void boxm2_vecf_skin_scene::build_skin(){
     }
   }
 }
-#if 0
-void boxm2_vecf_skin_scene::create_skin(){
-  this->build_skin();
-  this->paint_skin();
- }
-#endif
 
 void boxm2_vecf_skin_scene::find_cell_neigborhoods(){
   vul_timer t;
@@ -235,17 +160,6 @@ void boxm2_vecf_skin_scene::find_cell_neigborhoods(){
   }
   vcl_cout << "Find skin cell neighborhoods in " << static_cast<double>(t.real())/1000.0 << " sec.\n";
 }
-#if 0
- void boxm2_vecf_skin_scene::recreate_skin(){
-   skin_cell_centers_.clear();
-   skin_cell_data_index_.clear();
-   cell_neighbor_cell_index_.clear();
-   data_index_to_cell_index_.clear();
-   cell_neighbor_data_index_.clear();
-   cache_cell_centers_from_anatomy_labels();
-   //this->find_cell_neigborhoods(); no vector field for now JLM
- }
-#endif
 
 void boxm2_vecf_skin_scene::paint_skin(){
   params_.app_[0]=params_.skin_intensity_;
@@ -412,6 +326,7 @@ void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3
   }
   vcl_cout << "Apply skin vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
+
 int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
@@ -440,7 +355,7 @@ int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<int> const& s
   target_box_in_source.add(sbc_min);
   target_box_in_source.add(sbc_max); 
 
-  // the source blocks intersecting the rotated target box
+  // the source blocks intersecting the inverse mapped target box
   vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
 
   // iterate through each intersecting source tree and find the maximum tree depth 
@@ -518,26 +433,6 @@ bool boxm2_vecf_skin_scene::set_params(boxm2_vecf_articulated_params const& para
   }
 }
 
-bool boxm2_vecf_skin_scene::vfield_params_change_check(const boxm2_vecf_skin_params & params){
-#if 0
-  double tol = 0.001;
-  bool intrinsic_change = false;
-  //  intrinsic_change |= fabs(this->params_.crease_dphi_rad_ - params.crease_dphi_rad_)>tol;
-  intrinsic_change |= fabs(this->params_.dphi_rad_ - params.dphi_rad_)              >tol;
-  intrinsic_change |= fabs(this->params_.brow_angle_rad_  - params.brow_angle_rad_) > tol;
-  intrinsic_change |= fabs(this->params_.eye_radius_  - params.eye_radius_) > tol;
-  intrinsic_change |= fabs(this->params_.scale_x_coef_  - params.scale_x_coef_) > tol;
-  intrinsic_change |= fabs(this->params_.scale_y_coef_  - params.scale_y_coef_) > tol;
-
-  intrinsic_change |= fabs((float)this->params_.pupil_intensity_               - (float)params.pupil_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.sclera_intensity_              - (float)params.sclera_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.lower_eyelid_intensity_        - (float)params.lower_eyelid_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.eyelid_intensity_              - (float)params.eyelid_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.eyelid_crease_upper_intensity_ - (float)params.eyelid_crease_upper_intensity_) > tol;
-  return intrinsic_change;
-#endif
-  return false;//temporary
-}
 
 // find the skin cell locations in the target volume
 void boxm2_vecf_skin_scene::determine_target_box_cell_centers(){

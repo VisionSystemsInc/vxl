@@ -65,19 +65,12 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
  //: test the anat_type (LEFT_RAMUS, LEFT_ANGLE, ... ) of a given data index
  bool is_type_data_index(unsigned data_index, anat_type type) const;
 
- //: tree subblock size in mm
- double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
-
  //: set up pointers to source block databases particular to this subclass
  void extract_block_data();
 
  //: set inv_rot_ from params_;
  void set_inv_rot();
 
- //: initialize the source block data
- void fill_block();
- //: initialize the full target block (not currently used )
- void fill_target_block();
  //: interpolate the alpha and appearance data around the vector field source location
  void interpolate_vector_field(vgl_point_3d<double> const& src, unsigned sindx, unsigned dindx, unsigned tindx,
                                 vcl_vector<vgl_point_3d<double> > & cell_centers,
@@ -123,13 +116,7 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
  void create_right_angle();
  void create_right_ramus();
 #endif
- void recreate_left_ramus();
-#if 0
- void recreate_left_angle();
- void recreate_body();
- void recreate_right_angle();
- void recreate_right_ramus();
- #endif
+
  //: assign appearance to parts of the mandible
  void paint_mandible();
  void paint_left_ramus();

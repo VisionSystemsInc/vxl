@@ -35,21 +35,19 @@ typedef vbl_smart_ptr<boxm2_vecf_articulated_scene> boxm2_vecf_articulated_scene
 
 class boxm2_vecf_articulated_scene : public vbl_ref_count{
  public:
- boxm2_vecf_articulated_scene(): blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),sigma_(0.5f),
-    source_model_exists_(false){
-    base_model_ = 0; has_background_ = false; is_single_instance_ = false;
-    color_apm_id_ = "frontalized"; target_data_extracted_=false;
+ boxm2_vecf_articulated_scene(): blk_(0), alpha_base_(0), app_base_(0),nobs_base_(0), alpha_data_(0), app_data_(0), nobs_data_(0),
+    target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_alpha_data_(0), target_app_data_(0),
+    target_nobs_data_(0), target_blk_(0),sigma_(0.5f), source_model_exists_(false), base_model_(0),
+    has_background_(false), is_single_instance_(true), color_apm_id_("frontalized"), target_data_extracted_(false){
   }
 
  boxm2_vecf_articulated_scene(vcl_string scene_file,vcl_string color_apm_id = "frontalized"):
-  blk_(0), target_alpha_base_(0),target_app_base_(0),target_nobs_base_(0), target_blk_(0),
-    sigma_(0.5f),source_model_exists_(false){
+  blk_(0), alpha_base_(0), app_base_(0), nobs_base_(0), alpha_data_(0), app_data_(0), nobs_data_(0), target_alpha_base_(0),
+    target_app_base_(0),target_nobs_base_(0), target_alpha_data_(0), target_app_data_(0), target_nobs_data_(0), target_blk_(0),
+    is_single_instance_(true), sigma_(0.5f),source_model_exists_(false), has_background_(false), color_apm_id_(color_apm_id),
+    target_data_extracted_(false){
     base_model_ = new boxm2_scene(scene_file);
-    has_background_ = false;
-    color_apm_id_=color_apm_id;
-    target_data_extracted_=false;
   }
-
   // member methods
   void extract_target_block_data(boxm2_scene_sptr target_scene);
   void extract_source_block_data();

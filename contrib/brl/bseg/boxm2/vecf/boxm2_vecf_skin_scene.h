@@ -27,7 +27,7 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 {
  public:
   enum anat_type { SKIN, NO_TYPE};
- boxm2_vecf_skin_scene(): skin_data_(0), extrinsic_only_(false),boxm2_vecf_articulated_scene(){}
+ boxm2_vecf_skin_scene(): skin_data_(0),boxm2_vecf_articulated_scene(){}
 
   //: set parameters
   bool set_params(boxm2_vecf_articulated_params const& params);
@@ -38,9 +38,6 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 
   boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file);
 
-#if 0 //currently only a pre-built skin is used
-  boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file);
-#endif
   //: find the inverse vector field for unrefined target block centers
   virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
 
@@ -63,18 +60,9 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  //: test the anat_type (SKIN) of a given data index
  bool is_type_data_index(unsigned data_index, anat_type type) const;
 
- //: tree subblock size in mm
- double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
   //: set up pointers to source block databases
  void extract_block_data();
-#if 0
-  //: set up pointers to target block databases
- void extract_target_block_data(boxm2_scene_sptr target_scene);
-#endif
- //: initialize the source block data
- void fill_block();
- //: initialize the full target block (not currently used )
- void fill_target_block();
+
  //: interpolate the alpha and appearance data around the vector field source location
  void interpolate_vector_field(vgl_point_3d<double> const& src, unsigned sindx, unsigned dindx, unsigned tindx,
                                vcl_vector<vgl_point_3d<double> > & cell_centers,
@@ -87,27 +75,21 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  // find nearest cell and return the data index of the nearest cell (found depth is for debug, remove at some point)
  bool find_nearest_data_index(boxm2_vecf_skin_scene::anat_type type, vgl_point_3d<double> const& probe, double cell_len, unsigned& data_indx, int& found_depth) const;
 
- 
   //re-create geometry according to params_
   void rebuild();
-  //check for intrinsic parameter change
-  bool vfield_params_change_check(const boxm2_vecf_skin_params& params);
+
   // store the neigbors of each cell for each anatomical component in a vector;
   void cache_neighbors();
-#if 0
-  // pre-refine the target scene
-  void prerefine_target(boxm2_scene_sptr target_scene);
-#endif
+
   void create_anatomy_labels();
+
   void export_point_cloud(vcl_ostream& ostr) const;
 
+  //should be implemented on params class
+  bool vfield_params_change_check(const boxm2_vecf_skin_params& params){return false;}
+ 
  // ============   skin methods ================
-#if 0
- //: construct manidble from parameters
- void create_skin();
- //:read block eye data and reset indices
- void recreate_skin();
-#endif
+
  //: cache index of neighboring cells
  void find_cell_neigborhoods();
  //: set manible anatomy flags
@@ -118,9 +100,6 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  //: assign appearance to parts of the skin
  void paint_skin();
 
-#if 0
- void reset_buffers();
-#endif
   //: members
   // =============  skin ===============
   boxm2_data_base* skin_base_;
@@ -143,7 +122,6 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 
 private:
   void extract_scene_metadata();
-  bool extrinsic_only_;
 
  //: assign target cell centers that map to the source scene bounding box
   void determine_target_box_cell_centers();

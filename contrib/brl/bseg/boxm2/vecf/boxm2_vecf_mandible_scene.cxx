@@ -20,56 +20,6 @@
 #include <vcl_set.h>
 #include <vul/vul_timer.h>
 typedef boxm2_data_traits<BOXM2_PIXEL>::datatype pixtype;
-// fill the background alpha and intensity values to be slightly dark
-// !!!!!this method only works for unrefined trees!!!
-void boxm2_vecf_mandible_scene::fill_block(){
-  for(unsigned iz = 0; iz<n_.z(); ++iz){
-    double z = origin_.z() + iz*dims_.z();
-    for(unsigned iy = 0; iy<n_.y(); ++iy){
-      double y = origin_.y() + iy*dims_.y();
-      for(unsigned ix = 0; ix<n_.x(); ++ix){
-        double x = origin_.x() + ix*dims_.x();
-        vgl_point_3d<double> p(x, y, z);
-        unsigned indx;
-        if(!blk_->data_index(p, indx))
-          continue;
-        mandible_data_[indx]  = static_cast<pixtype>(false);
-#if 0
-        left_ramus_->data()[indx]  = static_cast<pixtype>(false);
-        left_angle_->data()[indx]  = static_cast<pixtype>(false);
-        body_->data()[indx]        = static_cast<pixtype>(false);
-        right_angle_->data()[indx] = static_cast<pixtype>(false);
-        right_ramus_->data()[indx] = static_cast<pixtype>(false);
-#endif
-      }
-    }
-  }
-}
-// !!!!!this method only works for unrefined trees!!!
-// currently unused, except for display purposes
-void boxm2_vecf_mandible_scene::fill_target_block(){
-  params_.app_[0]=static_cast<unsigned char>(10);
-  boxm2_data_traits<BOXM2_NUM_OBS>::datatype nobs;
-  nobs.fill(0);
-  // replace datavalues
-  for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
-    double z = targ_origin_.z() + iz*targ_dims_.z();
-    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
-      double y = targ_origin_.y() + iy*targ_dims_.y();
-      for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
-        double x = targ_origin_.x() + ix*targ_dims_.x();
-        vgl_point_3d<double> p(x, y, z);
-        unsigned indx;
-        if(!target_blk_->data_index(p, indx))
-          continue;
-        target_alpha_data_[indx]=0.005f;//to see contrast against white
-        target_app_data_[indx] = params_.app_;
-        target_nobs_data_[indx] = nobs;
-      }
-    }
-  }
-}
-
 
 void boxm2_vecf_mandible_scene::extract_block_data(){
   boxm2_vecf_articulated_scene::extract_source_block_data();
@@ -233,8 +183,8 @@ void boxm2_vecf_mandible_scene::cache_neighbors(){
 }
 
 void boxm2_vecf_mandible_scene::build_mandible(){
-  double len = vcl_sqrt(3.0)*dims_.x();//was 3xblk_->...
-  double d_thresh = len;//sqrt(3)/2 x len, diagonal distance
+  double len = params_.neighbor_radius()*dims_.x();
+  double d_thresh = len;
   vgl_box_3d<double> bb = mandible_geo_.bounding_box();
    // cell in a box centers are in global coordinates
   vcl_vector<cell_info> ccs = blk_->cells_in_box(bb);
@@ -264,7 +214,7 @@ void boxm2_vecf_mandible_scene::create_mandible(){
 
 void boxm2_vecf_mandible_scene::find_cell_neigborhoods(){
   vul_timer t;
-  double distance = params_.neighbor_radius()*subblock_len();
+  double distance = params_.neighbor_radius()*dims_.x();
   for(unsigned i = 0; i<mandible_cell_centers_.size(); i++){
       vgl_point_3d<double>& p = mandible_cell_centers_[i];
       unsigned indx_i = mandible_cell_data_index_[i];
@@ -396,10 +346,6 @@ void boxm2_vecf_mandible_scene::create_left_ramus(){
    this->paint_left_ramus();
 }
 
-void boxm2_vecf_mandible_scene::recreate_left_ramus(){
-  this->create_left_ramus();
-  this->find_left_ramus_cell_neigborhoods();
-}
 
 void boxm2_vecf_mandible_scene::find_left_ramus_cell_neigborhoods(){
   vul_timer t;
@@ -556,58 +502,6 @@ bool boxm2_vecf_mandible_scene::apply_vector_field(cell_info const& target_cell,
   return true;
 }
 
-#if 0
-void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
-                                                              vcl_vector<bool> const& valid){
-  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
-  boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
-  unsigned n = static_cast<unsigned>(box_cell_centers_.size());
-  int valid_count = 0;
-  if(n==0)
-    return;//shouldn't happen
-  vul_timer t; 
-  // iterate over the target cells and interpolate info from source
-  for(unsigned j = 0; j<n; ++j){
-
-    // if vector field is not defined then skip the target cell
-    if(!valid[j]){
-      continue;
-    }
-    //target cell center translated back to source box, and should be a mandible cell
-    vgl_point_3d<double> trg_cent_in_source = box_cell_centers_[j].cell_center_-params_.offset_;
-    double side_len = box_cell_centers_[j].side_length_;
-    int depth = box_cell_centers_[j].depth_;//for debug purposes
-    unsigned tindx = box_cell_centers_[j].data_index_;
-    vgl_point_3d<double> src = trg_cent_in_source + vf[j];//add inverse vector field
-
-    // find closest mandible voxel cell in source. if not found then set target data to default values
-    unsigned sindx, dindx;
-    int found_depth;//for debug purposes
-    if(!this->find_nearest_data_index(MANDIBLE, src, side_len, dindx, found_depth)){
-      app[0]=(unsigned char)(0);//default to black
-      alpha = 0.0f;//default to no occlusion
-      target_app_data_[tindx] = app;
-      target_alpha_data_[tindx] = alpha;
-      continue;
-    }
-
-    // the nearest source data is defined, so use it
-    sindx = data_index_to_cell_index_[dindx];
-    app = app_data_[dindx];
-    alpha = alpha_data_[dindx];
-    target_app_data_[tindx] = app;
-    target_alpha_data_[tindx] = alpha;
-    valid_count++;
-
-#if 0 // for now just use nearest neighbor
-    this->interpolate_vector_field(src, sindx, dindx, tindx,
-                                   mandible_cell_centers_, cell_neighbor_cell_index_,
-                                   cell_neighbor_data_index_);
-#endif
-  }
-  vcl_cout << "Apply mandible vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
-}
-#else
 void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){
   unsigned n = static_cast<unsigned>(box_cell_centers_.size());
@@ -632,7 +526,7 @@ void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vect
   }
   vcl_cout << "Apply mandible vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
-#endif
+
 int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
@@ -686,6 +580,7 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<int> cons
   }
   return max_depth;
 }
+
 void boxm2_vecf_mandible_scene::set_inv_rot(){
   // set rotation from params
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
@@ -693,6 +588,7 @@ void boxm2_vecf_mandible_scene::set_inv_rot(){
   vgl_rotation_3d<double> rot(Q);
   inv_rot_ = rot.inverse();
 }
+
 void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
   // initially extract unrefined target data 
@@ -736,96 +632,13 @@ bool boxm2_vecf_mandible_scene::set_params(boxm2_vecf_articulated_params const& 
 }
 
 bool boxm2_vecf_mandible_scene::vfield_params_change_check(const boxm2_vecf_mandible_params & params){
-#if 0
-  double tol = 0.001;
-  bool intrinsic_change = false;
-  //  intrinsic_change |= fabs(this->params_.crease_dphi_rad_ - params.crease_dphi_rad_)>tol;
-  intrinsic_change |= fabs(this->params_.dphi_rad_ - params.dphi_rad_)              >tol;
-  intrinsic_change |= fabs(this->params_.brow_angle_rad_  - params.brow_angle_rad_) > tol;
-  intrinsic_change |= fabs(this->params_.eye_radius_  - params.eye_radius_) > tol;
-  intrinsic_change |= fabs(this->params_.scale_x_coef_  - params.scale_x_coef_) > tol;
-  intrinsic_change |= fabs(this->params_.scale_y_coef_  - params.scale_y_coef_) > tol;
-
-  intrinsic_change |= fabs((float)this->params_.pupil_intensity_               - (float)params.pupil_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.sclera_intensity_              - (float)params.sclera_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.lower_eyelid_intensity_        - (float)params.lower_eyelid_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.eyelid_intensity_              - (float)params.eyelid_intensity_) > tol;
-  intrinsic_change |= fabs((float)this->params_.eyelid_crease_upper_intensity_ - (float)params.eyelid_crease_upper_intensity_) > tol;
-  return intrinsic_change;
-#endif
   return false;//temporary
 }
-void boxm2_vecf_mandible_scene::reset_buffers(){
-  vcl_vector<boxm2_block_id> blocks = base_model_->get_block_ids();
-  boxm2_block_metadata mdata = base_model_->get_block_metadata_const(blocks[0]);
-  #if 0
-  app_data_      ->set_default_value(boxm2_data_traits<BOXM2_MOG3_GREY>::prefix(), mdata);
-  alpha_data_    ->set_default_value(boxm2_data_traits<BOXM2_ALPHA>::prefix(), mdata);
-  mandible_data_ ->set_default_value(boxm2_data_traits<BOXM2_PIXEL>::prefix(), mdata);
 
-  left_ramus_    ->set_default_value(boxm2_data_traits<BOXM2_PIXEL>::prefix(), mdata);
-  left_angle_    ->set_default_value(boxm2_data_traits<BOXM2_PIXEL>::prefix(), mdata);
-  body_          ->set_default_value(boxm2_data_traits<BOXM2_PIXEL>::prefix(), mdata);
-  right_angle_   ->set_default_value(boxm2_data_traits<BOXM2_PIXEL>::prefix(), mdata);
-  right_ramus_   ->set_default_value(boxm2_data_traits<BOXM2_PIXEL>::prefix(), mdata);
-#endif
-  mandible_cell_centers_.clear();
-  mandible_cell_data_index_.clear();
-
-  cell_neighbor_cell_index_.clear();
-  data_index_to_cell_index_.clear();
-  cell_neighbor_data_index_.clear();
-#if 0
-  left_ramus_cell_centers_.clear();
-  left_ramus_cell_data_index_.clear();
-  left_ramus_cell_neighbor_cell_index_.clear();
-  left_ramus_data_index_to_cell_index_.clear();
-  left_ramus_cell_neighbor_data_index_.clear();
-
-  left_angle_cell_centers_.clear();
-  left_angle_cell_data_index_.clear();
-  left_angle_cell_neighbor_cell_index_.clear();
-  left_angle_data_index_to_cell_index_.clear();
-  left_angle_cell_neighbor_data_index_.clear();
-
-  body_cell_centers_.clear();
-  body_cell_data_index_.clear();
-  body_cell_neighbor_cell_index_.clear();
-  body_data_index_to_cell_index_.clear();
-  body_cell_neighbor_data_index_.clear();
-
-  right_angle_cell_centers_.clear();
-  right_angle_cell_data_index_.clear();
-  right_angle_cell_neighbor_cell_index_.clear();
-  right_angle_data_index_to_cell_index_.clear();
-  right_angle_cell_neighbor_data_index_.clear();
-
-  right_ramus_cell_centers_.clear();
-  right_ramus_cell_data_index_.clear();
-  right_ramus_cell_neighbor_cell_index_.clear();
-  right_ramus_data_index_to_cell_index_.clear();
-  right_ramus_cell_neighbor_data_index_.clear();
-#endif
-}
-#if 0 //to do get reasonable bounds on the target cells to process
-// find the source cell locations in the target volume
-void boxm2_vecf_mandible_scene::determine_target_box_cell_centers(){
-  vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
-  vnl_quaternion<double> Q(X,params_.max_jaw_opening_angle_rad_);
-  vgl_orient_box_3d<double> obox(source_bb_, Q);
-  vgl_box_3d<double> rot_source_box = obox.enclosing_box();
-  vcl_cout << "source box " << source_box << '\n' << "rotated source box " << rot_source_box << '\n';
-  //  vgl_box_3d<double> offset_box(obox.centroid() + params_.offset_ ,obox.width(),obox.height(),obox.depth(),vgl_box_3d<double>::centre);
-  if(target_blk_){
-    box_cell_centers_ = target_blk_->cells_in_box(rot_source_box);
-  }
-}
-#endif
-#if 1
 void boxm2_vecf_mandible_scene::determine_target_box_cell_centers(){
   vgl_box_3d<double> offset_box(source_bb_.centroid() + params_.offset_ ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
     box_cell_centers_ = target_blk_->cells_in_box(offset_box);
   }
 }
-#endif
+

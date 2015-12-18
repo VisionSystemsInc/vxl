@@ -27,7 +27,7 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
 {
  public:
   enum anat_type { CRANIUM, NO_TYPE};
- boxm2_vecf_cranium_scene(): cranium_data_(0), extrinsic_only_(false),boxm2_vecf_articulated_scene(){}
+ boxm2_vecf_cranium_scene(): cranium_data_(0),boxm2_vecf_articulated_scene(){}
 
   //: set parameters
   bool set_params(boxm2_vecf_articulated_params const& params);
@@ -37,8 +37,6 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   boxm2_vecf_cranium_scene(vcl_string const& scene_file);
 
   boxm2_vecf_cranium_scene(vcl_string const& scene_file, vcl_string const& geometry_file);
-
-  boxm2_vecf_cranium_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file);
 
   //: map cranium data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);
@@ -59,15 +57,6 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   //: set up pointers to source block databases
  void extract_block_data();
 
-#if 0 // moved  to  parent
-  //: set up pointers to target block databases
- void extract_target_block_data(boxm2_scene_sptr target_scene);
-#endif
-
- //: initialize the source block data
- void fill_block();
- //: initialize the full target block (not currently used )
- void fill_target_block();
  //: interpolate the alpha and appearance data around the vector field source location
  void interpolate_vector_field(vgl_point_3d<double> const& src, unsigned sindx, unsigned dindx, unsigned tindx,
                                 vcl_vector<vgl_point_3d<double> > & cell_centers,
@@ -87,10 +76,7 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   bool vfield_params_change_check(const boxm2_vecf_cranium_params& params);
   // store the neigbors of each cell for each anatomical component in a vector;
   void cache_neighbors();
-#if 0 // move to parent
-  // pre-refine the target scene
-  void prerefine_target(boxm2_scene_sptr target_scene);
-#endif
+
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
   //: compute inverse vector field for unrefined sub_block centers
@@ -149,8 +135,6 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   vcl_map<unsigned, vcl_vector<unsigned> > cell_neighbor_data_index_; // data index to neighbor data indices
 
 private:
-  bool extrinsic_only_;
-  bool intrinsic_change_;
 
  //: assign target cell centers that map to the source scene bounding box
   void determine_target_box_cell_centers();
