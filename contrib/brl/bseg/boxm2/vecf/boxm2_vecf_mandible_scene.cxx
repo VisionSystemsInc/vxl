@@ -321,6 +321,15 @@ bool boxm2_vecf_mandible_scene::inverse_vector_field(vgl_point_3d<double> const&
   return true;
 }
 
+bool boxm2_vecf_mandible_scene::coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
+  vgl_point_3d<double> p = target_pt-params_.offset_;
+  vgl_point_3d<double> rp = inv_rot_ * p;// rotated point
+   inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
+   bool valid = rp.y()< -60.0;
+   valid = valid || inv_vf.length()==0.0;
+   return valid;
+}
+
 void  boxm2_vecf_mandible_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf, vcl_vector<bool>& valid) const{
 
   vul_timer t;

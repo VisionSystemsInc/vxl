@@ -2,7 +2,19 @@
 #include <vul/vul_file.h>
 #include <vul/vul_timer.h>
 #include <vcl_fstream.h>
+#include <vgl/vgl_point_3d.h>
+#if 0
+static vgl_box_3d<double> coupling_box(){
+  // hand selected from skin-trans-sampled 
+  vgl_point_3d<double> p0(-54.0, -62.0, 53.0), p1(-36.0, -109.0, 46.0), p2(54.0, -62.0, 53.0), p3(36.0, -109.0, 46.0);
+  vgl_box_3d<double> box;
+
+  return box;
+}
+#endif
 boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string const& face_scene_paths){
+  vgl_point_3d<double> p0(-54.0, -60.0, 110.0), p1(-36.0, -180.0, 46.0), p2(54.0, -60.0, 110.0), p3(36.0, -180.0, 46.0);
+
   vcl_ifstream istr(face_scene_paths.c_str());
   // construct paths to component scene xml files
   vcl_map<vcl_string, vcl_string> scene_path_map;
@@ -57,6 +69,8 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   mandible_ = new boxm2_vecf_mandible_scene(mandible_path);
   cranium_ = new boxm2_vecf_cranium_scene(cranium_path);
   skin_ = new boxm2_vecf_skin_scene(skin_path);
+
+  coupling_box_.add(p0); coupling_box_.add(p1); coupling_box_.add(p2); coupling_box_.add(p3);
 }
 
 //: compute the inverse vector field 
@@ -68,14 +82,19 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
   type.resize(nt, "invalid");
   unsigned mandible_cnt = 0, skin_cnt = 0, cranium_cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
+    const vgl_point_3d<double>& p = target_cell_centers_[i].cell_center_;
     vgl_vector_3d<double> mandible_inv_vf, cranium_inv_vf, skin_inv_vf; //need to iterate over components here (left off)
     bool mandible_valid=false, cranium_valid=false, skin_valid=false;
     if(mandible_)
-      mandible_valid = mandible_->inverse_vector_field(target_cell_centers_[i].cell_center_,mandible_inv_vf);
+      mandible_valid = mandible_->inverse_vector_field(p, mandible_inv_vf);
     if(cranium_)
-      cranium_valid = cranium_->inverse_vector_field(target_cell_centers_[i].cell_center_, cranium_inv_vf);
-    if(skin_)
-      skin_valid = skin_->inverse_vector_field(target_cell_centers_[i].cell_center_, skin_inv_vf);
+      cranium_valid = cranium_->inverse_vector_field(p, cranium_inv_vf);
+    if(skin_){
+      if(coupling_box_.contains(p))
+        skin_valid = mandible_->coupled_vector_field(p, skin_inv_vf);
+      else
+        skin_valid = skin_->inverse_vector_field(p, skin_inv_vf);
+    }
     bool not_valid = !mandible_valid&&!cranium_valid&&!skin_valid;
     if(not_valid){
       continue;

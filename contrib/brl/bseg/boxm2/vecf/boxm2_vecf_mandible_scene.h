@@ -51,6 +51,7 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
   void inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<bool>& valid) const;
 
   virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
+  virtual bool coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
   virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf);
 
   //: refine target cells to match the refinement level of the source block

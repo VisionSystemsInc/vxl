@@ -80,7 +80,7 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   virtual void set_target_background(bool has_background){ has_background_ = has_background;}
   virtual void clear_target(boxm2_scene_sptr target_scene);
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
-  
+  virtual bool coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{return false;}  
  //: tree subblock size in mm
  double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
 

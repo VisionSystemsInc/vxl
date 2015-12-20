@@ -295,9 +295,8 @@ bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl
   sindx = data_index_to_cell_index_[dindx];
   app = app_data_[dindx];
   alpha = alpha_data_[dindx];
-  // use nearest neighbor interpolation for now
   target_app_data_[tindx] = app;
-  target_alpha_data_[tindx] = 0.001f*alpha;//JLM FIX
+  target_alpha_data_[tindx] = alpha;
   return true;
 }
 

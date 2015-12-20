@@ -360,6 +360,9 @@ bool boxm2_vecf_cranium_scene::apply_vector_field(cell_info const& target_cell, 
   app = app_data_[dindx];
   alpha = alpha_data_[dindx];
   // use nearest neighbor interpolation for now
+  if(src.y()>-120.0&&src.y()<0.0&&src.z()>50.0){
+    app[0]= static_cast<unsigned char>(0);
+  }
   target_app_data_[tindx] = app;
   target_alpha_data_[tindx] = alpha;
   return true;
@@ -417,7 +420,7 @@ bool boxm2_vecf_cranium_scene::set_params(boxm2_vecf_articulated_params const& p
     bool change = this->vfield_params_change_check(params_ref); 
     params_ = boxm2_vecf_cranium_params(params_ref);
 #if _DEBUG
-    vcl_cout<< "intrinsic change? "<<intrinsic_change_<<vcl_endl;
+    //vcl_cout<< "intrinsic change? "<<intrinsic_change_<<vcl_endl;
 #endif
     if(change){
       this->rebuild();
