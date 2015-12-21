@@ -58,7 +58,7 @@ T vgl_fit_plane_3d<T>::fit(vcl_ostream* errstream)
 
   // compute the matrix A of Ax=b
   T A=0, B=0, C=0, D=0, E=0, F=0, G=0, H=0, I=0;
-  const unsigned n = points_.size();
+  const unsigned n = static_cast<const unsigned>(points_.size());
   for (unsigned i=0; i<n; i++) {
     points_[i] = norm(points_[i]);//normalize
     const T x = points_[i].x()/points_[i].w();
@@ -112,7 +112,6 @@ T vgl_fit_plane_3d<T>::fit(vcl_ostream* errstream)
   c = s.get(2);
   d = s.get(3);
   plane_ = vgl_homg_plane_3d<T> (a, b, c, d);
-  
   return svd.sigma_min();
 }
 

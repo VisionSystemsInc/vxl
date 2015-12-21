@@ -50,6 +50,7 @@ SET(boxm2_vecf_sources
     boxm2_vecf_composite_face_scene.h       boxm2_vecf_composite_face_scene.cxx
     boxm2_vecf_composite_face_params.h      boxm2_vecf_composite_face_params.cxx
     boxm2_vecf_composite_face_articulation.h    boxm2_vecf_composite_face_articulation.cxx
+    boxm2_vecf_mouth.h                      boxm2_vecf_mouth.cxx
 )
 
 AUX_SOURCE_DIRECTORY(Templates boxm2_vecf_sources)
