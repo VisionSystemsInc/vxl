@@ -45,7 +45,10 @@ void test_mouth()
     return;
   ostr << mouth_pts;
   ostr.close();
-  
+  vgl_point_3d<double> bad_pt(-18.450000762939,-134.199996948242,70.720001220703);
+  params.jaw_opening_angle_rad_ = 0.0;
+  mouth.set_mandible_params(params);
+  bool bad = mouth.in(bad_pt);
 #endif
 }
 TESTMAIN( test_mouth);

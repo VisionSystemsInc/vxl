@@ -28,6 +28,8 @@ void boxm2_vecf_mouth::rotate_inf(){
     rot_knots.push_back(rot_*(*kit));
   inf_ = bvgl_spline_region_3d<double>(rot_knots);
   vgl_point_3d<double> cent_sup = sup_.centroid();
+  // add to y to avoid degenerate offset above inf
+  cent_sup.set(cent_sup.x(), cent_sup.y()+0.1, cent_sup.z());
   inf_.set_point_positive(cent_sup);
 }
 

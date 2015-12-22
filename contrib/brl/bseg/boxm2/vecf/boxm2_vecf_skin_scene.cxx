@@ -296,6 +296,7 @@ bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl
   app = app_data_[dindx];
   alpha = alpha_data_[dindx];
   target_app_data_[tindx] = app;
+  //  target_alpha_data_[tindx] = 0.003*alpha;
   target_alpha_data_[tindx] = alpha;
   return true;
 }

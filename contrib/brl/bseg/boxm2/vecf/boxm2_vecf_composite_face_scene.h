@@ -10,6 +10,7 @@
 #include "boxm2_vecf_articulated_params.h"
 #include "boxm2_vecf_composite_face_params.h"
 #include "boxm2_vecf_articulated_scene.h"
+#include "boxm2_vecf_mouth.h"
 class boxm2_vecf_composite_face_scene : public boxm2_vecf_articulated_scene{
 public:
   enum comp_type {MANDIBLE, CRANIUM, SKIN, NO_TYPE};
@@ -39,6 +40,7 @@ public:
   void extract_target_cell_centers();
 private:
   vgl_box_3d<double> coupling_box_;
+  boxm2_vecf_mouth mouth_;
   boxm2_vecf_composite_face_params params_;
   boxm2_vecf_articulated_scene_sptr mandible_;
   boxm2_vecf_articulated_scene_sptr cranium_;
