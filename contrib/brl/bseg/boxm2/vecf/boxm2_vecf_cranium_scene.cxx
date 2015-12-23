@@ -359,10 +359,6 @@ bool boxm2_vecf_cranium_scene::apply_vector_field(cell_info const& target_cell, 
   sindx = data_index_to_cell_index_[dindx];
   app = app_data_[dindx];
   alpha = alpha_data_[dindx];
-  // use nearest neighbor interpolation for now
-  if(src.y()>-120.0&&src.y()<0.0&&src.z()>50.0){
-    app[0]= static_cast<unsigned char>(0);
-  }
   target_app_data_[tindx] = app;
   target_alpha_data_[tindx] = alpha;
   return true;

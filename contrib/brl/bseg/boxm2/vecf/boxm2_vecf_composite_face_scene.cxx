@@ -14,7 +14,7 @@ static vgl_box_3d<double> coupling_box(){
 }
 #endif
 boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string const& face_scene_paths){
-  vgl_point_3d<double> p0(-74.0, -50.0, 110.0), p1(-56.0, -180.0, 46.0), p2(74.0, -50.0, 110.0), p3(56.0, -180.0, 46.0);
+  vgl_point_3d<double> p0(-74.0, -53.0, 110.0), p1(-56.0, -180.0, 46.0), p2(74.0, -53.0, 110.0), p3(56.0, -180.0, 46.0);
 
   vcl_ifstream istr(face_scene_paths.c_str());
   // construct paths to component scene xml files
@@ -114,11 +114,14 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
         }
 
     bool not_valid = (!mandible_valid&&!cranium_valid&&!skin_valid);
-    bool mouth_skin_invalid = skin_valid&&in_mouth;
-    if(not_valid||mouth_skin_invalid){
+    if(not_valid){
       continue;
     }
-    if(mandible_valid){
+    bool mouth_skin_invalid = skin_valid&&in_mouth;
+    if(mouth_skin_invalid){
+      type[i] = "mouth";
+      vfield[i].set(0.0, 0.0, 0.0);
+    }else if(mandible_valid){
       type[i]="mandible";
       vfield[i].set(mandible_inv_vf.x(), mandible_inv_vf.y(), mandible_inv_vf.z());
       mandible_cnt++;
@@ -219,12 +222,20 @@ void boxm2_vecf_composite_face_scene::extract_target_cell_centers(){
 
 void boxm2_vecf_composite_face_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf, vcl_vector<vcl_string> const& type){
   boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
+  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
   unsigned n_valid = 0;
   unsigned n = static_cast<unsigned>(vf.size());
   for(unsigned j = 0; j<n; ++j){
     const vcl_string& t = type[j];
     bool fail = true;
-    if(t == "cranium"){
+    if(t == "mouth"){
+      app[0]= static_cast<unsigned char>(0.0);
+      unsigned tindx = target_cell_centers_[j].data_index_;
+      alpha = 0.001f;//default to no occlusion
+      target_alpha_data_[tindx] = alpha;
+      target_app_data_[tindx]=app;
+      continue;
+    }else if(t == "cranium"){
       fail = !cranium_->apply_vector_field(target_cell_centers_[j], vf[j]);
     }else if(t == "mandible"){
       fail = !mandible_->apply_vector_field(target_cell_centers_[j], vf[j]);
