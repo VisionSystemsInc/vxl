@@ -53,7 +53,8 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
     bool skin = skin_data_[dindx]   > pixtype(0);
     if(skin||alpha>alpha_init_){
       unsigned skin_index  = static_cast<unsigned>(skin_cell_centers_.size());
-      skin_cell_centers_.push_back(cit->cell_center_);
+      const vgl_point_3d<double>& p = cit->cell_center_;
+      skin_cell_centers_.push_back(p);
       skin_cell_data_index_.push_back(dindx);
       data_index_to_cell_index_[dindx] = skin_index;
       // new cell that doesn't have appearance or anatomy data
@@ -61,7 +62,12 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
       // outside the distance tolerance to the geo surface, but when
       // refined, a leaf cell is within tolerance
       if(!skin){
-        params_.app_[0]=params_.skin_intensity_;
+        if(skin_geo_.has_appearance()){
+          double a = 0.0;
+          double d = skin_geo_.surface_distance(p, a);
+          params_.app_[0]=static_cast<unsigned char>(a);
+        }else
+          params_.app_[0]=params_.skin_intensity_;
         app_data_[dindx]=params_.app_;
         skin_data_[dindx] = static_cast<pixtype>(true);
       }
@@ -85,7 +91,8 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_s
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
   this->build_skin();
-  this->paint_skin();
+  if(!skin_geo_.has_appearance())
+    this->paint_skin();
   vcl_vector<vcl_string> prefixes;
   prefixes.push_back("alpha");
   prefixes.push_back("boxm2_mog3_grey");
@@ -110,6 +117,8 @@ void boxm2_vecf_skin_scene::cache_neighbors(){
 
 
 void boxm2_vecf_skin_scene::build_skin(){
+  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
+  bool has_app = skin_geo_.has_appearance();
   double len_coef = params_.neighbor_radius();
   vgl_box_3d<double> bb = skin_geo_.bounding_box();
    // cell in a box centers are in global coordinates
@@ -118,7 +127,9 @@ void boxm2_vecf_skin_scene::build_skin(){
       cit != ccs.end(); ++cit){
     const vgl_point_3d<double>& cell_center = cit->cell_center_;
     unsigned indx = cit->data_index_;
-    double d = skin_geo_.surface_distance(cell_center);
+    double a = 0.0;
+    double d = skin_geo_.surface_distance(cell_center, a);
+    unsigned char apc = static_cast<unsigned char>(a);
     double d_thresh = len_coef*cit->side_length_;
     if(d < d_thresh){
       if(!is_type_global(cell_center, SKIN)){
@@ -127,6 +138,10 @@ void boxm2_vecf_skin_scene::build_skin(){
         data_index_to_cell_index_[indx]=static_cast<unsigned>(skin_cell_centers_.size())-1;
         //float blending_factor = static_cast<float>(gauss(d,sigma_));
         alpha_data_[indx]= - vcl_log(1.0f - ( 0.95f ))/ static_cast<float>(this->subblock_len());// * blending_factor;
+        if(has_app){
+          app[0]=apc;
+          app_data_[indx] = app;
+        }
         skin_data_[indx] = static_cast<pixtype>(true);
       }
     }else{
@@ -456,4 +471,15 @@ void boxm2_vecf_skin_scene::export_point_cloud(vcl_ostream& ostr) const{
   for(unsigned i = 0; i<n; ++i) 
     ptset.add_point(skin_cell_centers_[i]);
   ostr << ptset;
+}
+
+void boxm2_vecf_skin_scene::export_point_cloud_with_appearance(vcl_ostream& ostr) const{
+  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
+  unsigned n = static_cast<unsigned>(skin_cell_centers_.size());
+  for(unsigned i = 0; i<n; ++i){
+    const vgl_point_3d<double>& p = skin_cell_centers_[i];
+    unsigned dindx = skin_cell_data_index_[i];
+    double a = static_cast<double>(app_data_[dindx][0]);
+    ostr << p.x() << ',' << p.y() << ',' << p.z() << ',' << a << '\n';
+  }
 }

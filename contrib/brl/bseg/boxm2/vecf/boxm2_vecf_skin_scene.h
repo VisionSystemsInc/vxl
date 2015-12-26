@@ -85,6 +85,8 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 
   void export_point_cloud(vcl_ostream& ostr) const;
 
+  void export_point_cloud_with_appearance(vcl_ostream& ostr) const;
+
   //should be implemented on params class
   bool vfield_params_change_check(const boxm2_vecf_skin_params& params){return false;}
  

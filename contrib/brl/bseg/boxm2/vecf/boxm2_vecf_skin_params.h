@@ -13,7 +13,7 @@
 class boxm2_vecf_skin_params : public boxm2_vecf_articulated_params{
  public:
 
- boxm2_vecf_skin_params():  offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0)), skin_intensity_((unsigned char)(130)){
+ boxm2_vecf_skin_params():  offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0)), skin_intensity_(static_cast<unsigned char>(130)){
   }
 
  boxm2_vecf_skin_params(unsigned char skin_intensity):skin_intensity_(skin_intensity){

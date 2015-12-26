@@ -9,6 +9,7 @@
 #include <vul/vul_timer.h>
 #include "../boxm2_vecf_skin_params.h"
 #include "../boxm2_vecf_skin_scene.h"
+#include "../boxm2_vecf_skin.h"
 #include <vgl/vgl_point_3d.h>
 #include <boxm2/boxm2_scene.h>
 #include <boxm2/io/boxm2_cache.h>
@@ -20,6 +21,8 @@ void test_skin()
   vcl_string pc_dir = "c:/Users/mundy/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/skull/";
   vcl_string scene_dir = "c:/Users/mundy/VisionSystems/Janus/experiments/vector_flow/skin/";
   vcl_string skin_scene_path = scene_dir + "skin.xml";
+  //vcl_string skin_scene_path = scene_dir + "skin_orig.xml";
+  vcl_string vrml_path = pc_dir + "skin_vrml.wrl";
   if(!vul_file::exists(skin_scene_path))
     {
       vcl_cout<<"skin scene file does not exist"<<vcl_endl;
@@ -31,24 +34,33 @@ void test_skin()
       vcl_cout<<"skin geo file does not exist"<<vcl_endl;
       return;
     }
-  //boxm2_vecf_skin_scene skscene(skin_scene_path, skin_geo_path);
-  boxm2_vecf_skin_scene skscene(skin_scene_path);
+
+  boxm2_vecf_skin_scene skscene(skin_scene_path, skin_geo_path);
+  //  boxm2_vecf_skin_scene skscene(skin_scene_path);
   boxm2_scene_sptr scene = skscene.scene();
   if(!scene)
     return;
-  //boxm2_cache::instance()->write_to_disk();
+  boxm2_cache::instance()->write_to_disk();
 
-
-#if 0  
-  vcl_string skin_pc_path = pc_dir + "skin_trans.txt";
+#if 0
+  //// create vrml from existing geo
+  boxm2_vecf_skin skin(skin_geo_path);
+  vcl_ofstream ostr(vrml_path.c_str());
+  skin.display_vrml(ostr);
+  //////
+  //  create geo from existing scene
+  vcl_string skin_pc_path = pc_dir + "skin_orig_appearance.txt";
   vcl_ofstream ostr(skin_pc_path.c_str());
   if(!ostr){
     vcl_cout << "couldn't open output stream for " << skin_pc_path << "\n";
     return;
   }
-  skscene.export_point_cloud(ostr);
+  skscene.export_point_cloud_with_appearance(ostr);
   ostr.close();
+  //  create from existing scene
 #endif
+#if 0  
+
   vcl_string target_scene_path = scene_dir + "target_skin.xml";
 
   if(!vul_file::exists(target_scene_path))
@@ -62,7 +74,7 @@ void test_skin()
   skscene.map_to_target(target);
 
   boxm2_cache::instance()->write_to_disk();
-
+#endif
 #endif
 }
 TESTMAIN( test_skin );
