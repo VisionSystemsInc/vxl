@@ -2,8 +2,8 @@
 #include <vcl_cstdlib.h>
 
 boxm2_vecf_mouth::boxm2_vecf_mouth(vcl_vector<vgl_point_3d<double> > const& knots){
-  sup_ = bvgl_spline_region_3d<double>(knots);
-  inf_ = bvgl_spline_region_3d<double>(knots);
+  sup_ = bvgl_spline_region_3d<double>(knots, 1.0);
+  inf_ = bvgl_spline_region_3d<double>(knots, 1.0);
   // set the sense of the normals so that points inside the mouth
   // have positive signed distances from both region planes
   vgl_point_3d<double> cent_sup = sup_.centroid();
@@ -24,9 +24,11 @@ void boxm2_vecf_mouth::rotate_inf(){
   // thus an invariant starting point before rotation
   vcl_vector<vgl_point_3d<double> > rot_knots;
   for(vcl_vector<vgl_point_3d<double> >::iterator kit = knots.begin();
-      kit != knots.end(); ++kit)
-    rot_knots.push_back(rot_*(*kit));
-  inf_ = bvgl_spline_region_3d<double>(rot_knots);
+      kit != knots.end(); ++kit){
+    vgl_point_3d<double> rp = rot_*(*kit);
+    rot_knots.push_back(rp);
+  }
+  inf_ = bvgl_spline_region_3d<double>(rot_knots, 1.0);
   vgl_point_3d<double> cent_sup = sup_.centroid();
   // add to y to avoid degenerate offset above inf
   cent_sup.set(cent_sup.x(), cent_sup.y()+0.1, cent_sup.z());
@@ -38,6 +40,7 @@ void boxm2_vecf_mouth::set_mandible_params(boxm2_vecf_mandible_params const& man
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
   vnl_quaternion<double> Q(X,mand_params_.jaw_opening_angle_rad_);
   rot_ = vgl_rotation_3d<double>(Q);
+  inv_rot_ = rot_.inverse();
   this->rotate_inf();
 }
 
@@ -54,12 +57,28 @@ vgl_box_3d<double> boxm2_vecf_mouth::bounding_box() const{
   return ret;
 }
 
+#if 0
 bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
   double ds, di;
   bool sup_sd_valid = sup_.signed_distance(pt, ds);
   bool inf_sd_valid = inf_.signed_distance(pt, di);
  
   return sup_sd_valid&&inf_sd_valid&&ds>=0.0&&di>=0.0;
+}
+#endif
+bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
+  double x = pt.x(), y = pt.y(), z = pt.z();
+  const vgl_plane_3d<double>& plane = sup_.plane();
+  double a = plane.a(), b = plane.b(), c = plane.c(), d = plane.d();
+  double norm = vcl_sqrt(a*a + b*b + c*c);
+  a/=norm; b/=norm; c/=norm; d/=norm;
+  double theta = -(a*x + b*y + c*z + d)/(b*z - c*y);
+  double theta_max = mand_params_.jaw_opening_angle_rad_;
+  if(theta<=0.0 || theta>theta_max)
+    return false;
+   vgl_point_3d<double> inv_p(x, (y+theta*z), (z-theta*y));
+  bool in = sup_.in(inv_p);
+  return in;
 }
 vgl_pointset_3d<double> boxm2_vecf_mouth::random_pointset(unsigned n_pts) const{
   // add sup and inf random pointsets

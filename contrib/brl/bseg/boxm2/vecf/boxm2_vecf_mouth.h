@@ -42,6 +42,7 @@ class boxm2_vecf_mouth{
   bvgl_spline_region_3d<double> inf_;
   boxm2_vecf_mandible_params mand_params_;
   vgl_rotation_3d<double> rot_;
+  vgl_rotation_3d<double> inv_rot_;
 };
 vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_mouth const& pr);
 vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_mouth& pr);

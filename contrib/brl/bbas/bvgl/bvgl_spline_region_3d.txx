@@ -10,8 +10,8 @@
 #include <vcl_cmath.h>
 #include <vcl_limits.h>
 template <class Type>
-bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type> > const& knots):
-  tolerance_(Type(0.5)){
+bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type> > const& knots, Type tolerance):
+  tolerance_(tolerance){
   vgl_fit_plane_3d<Type> fitter;
   fitter.clear();
   Type limit = static_cast<Type>(1);
@@ -46,9 +46,9 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type>
   }
 }
 template <class Type>
-bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset){
+bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset, Type tolerance){
   vcl_vector<vgl_point_3d<Type> > knots = ptset.points();
-  *this = bvgl_spline_region_3d<Type>(knots);
+  *this = bvgl_spline_region_3d<Type>(knots, tolerance);
 }
 
 

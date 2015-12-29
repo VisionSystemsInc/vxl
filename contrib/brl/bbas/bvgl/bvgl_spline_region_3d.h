@@ -24,10 +24,10 @@ class bvgl_spline_region_3d
  bvgl_spline_region_3d():tolerance_(Type(0.5)){};
 
   //: Construct using spline knots (must be closed curve)
-  bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type> > const& knots);
+ bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type> > const& knots, Type tolerance);
 
   //: Construct using spline knots as a pointset
-  bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset);
+ bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset, Type tolerance);
 
   //: set point positve, the plane is oriented so the specified point has a positive distance.
   void set_point_positive(vgl_point_3d<Type> const& p_pos);
@@ -40,7 +40,7 @@ class bvgl_spline_region_3d
   //: centroid of the region
   vgl_point_3d<Type> centroid() const;
   vcl_vector<vgl_point_3d<Type> > knots() const {return spline_3d_.knots();}
-  
+  const vgl_plane_3d<Type>& plane() const{return plane_;}
   // for debug purposes
   // generate a random poinset drawn from the region
   vgl_pointset_3d<Type> random_pointset(unsigned n_pts) const;
@@ -56,7 +56,6 @@ class bvgl_spline_region_3d
 template <class Type>
 vcl_ostream&  operator<<(vcl_ostream& s, bvgl_spline_region_3d<Type> const& p);
 
-//: Read box from stream
 template <class Type>
 vcl_istream&  operator>>(vcl_istream& is,  bvgl_spline_region_3d<Type>& p);
 

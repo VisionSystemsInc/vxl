@@ -99,10 +99,9 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_s
   prefixes.push_back("boxm2_num_obs");
   prefixes.push_back("boxm2_pixel_skin");
   double nrad = params_.neighbor_radius();
-  // only refine twice for the time being to save time
   boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
   boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
-  //  boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes);
+  boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
   this->rebuild();
 }
 
@@ -311,7 +310,7 @@ bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl
   app = app_data_[dindx];
   alpha = alpha_data_[dindx];
   target_app_data_[tindx] = app;
-  //  target_alpha_data_[tindx] = 0.003*alpha;
+  //  target_alpha_data_[tindx] = 0.001f*alpha;
   target_alpha_data_[tindx] = alpha;
   return true;
 }

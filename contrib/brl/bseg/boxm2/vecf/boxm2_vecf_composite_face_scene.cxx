@@ -4,18 +4,18 @@
 #include <vcl_fstream.h>
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_pointset_3d.h>
-#if 0
-static vgl_box_3d<double> coupling_box(){
-  // hand selected from skin-trans-sampled 
-  vgl_point_3d<double> p0(-54.0, -62.0, 53.0), p1(-36.0, -109.0, 46.0), p2(54.0, -62.0, 53.0), p3(36.0, -109.0, 46.0);
-  vgl_box_3d<double> box;
 
-  return box;
-}
-#endif
 boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string const& face_scene_paths){
-  vgl_point_3d<double> p0(-74.0, -53.0, 110.0), p1(-56.0, -180.0, 46.0), p2(74.0, -53.0, 110.0), p3(56.0, -180.0, 46.0);
+  //points defining the jaw coupled vector field bounding box
+  //the vector field from the mandible is propagated to all skin voxels within the box
+  // unless invalid as defined by the articulated mouth region
+  vgl_point_3d<double> p0(-82.0,-60.0, 0.0);
+  vgl_point_3d<double> p1(82.0,-60.0, 0.0);
+  vgl_point_3d<double> p2(-56.0,-150.0,0.0);
+  vgl_point_3d<double> p3(56.0,-150.0,0.0);
+  vgl_point_3d<double> p4(0,-60.,120.0);
 
+  //left off here
   vcl_ifstream istr(face_scene_paths.c_str());
   // construct paths to component scene xml files
   vcl_map<vcl_string, vcl_string> scene_path_map;
@@ -86,7 +86,7 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   mstr.close();
   mouth_ = boxm2_vecf_mouth(ptset);
 
-  coupling_box_.add(p0); coupling_box_.add(p1); coupling_box_.add(p2); coupling_box_.add(p3);
+  coupling_box_.add(p0); coupling_box_.add(p1); coupling_box_.add(p2); coupling_box_.add(p3); coupling_box_.add(p4);
 }
 
 //: compute the inverse vector field 
@@ -125,14 +125,14 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
       type[i]="mandible";
       vfield[i].set(mandible_inv_vf.x(), mandible_inv_vf.y(), mandible_inv_vf.z());
       mandible_cnt++;
-    }else if(cranium_valid){
-      type[i]="cranium";
-      vfield[i].set(cranium_inv_vf.x(), cranium_inv_vf.y(), cranium_inv_vf.z());
-      cranium_cnt++;
     }else if(skin_valid){
       type[i]="skin";
       vfield[i].set(skin_inv_vf.x(), skin_inv_vf.y(), skin_inv_vf.z());
       skin_cnt++;
+    }else if(cranium_valid){
+      type[i]="cranium";
+      vfield[i].set(cranium_inv_vf.x(), cranium_inv_vf.y(), cranium_inv_vf.z());
+      cranium_cnt++;
     }
   }
   vcl_cout << "computed " << mandible_cnt << " mandible pts "<< skin_cnt << " skin pts and " 
@@ -141,6 +141,8 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
 
 void boxm2_vecf_composite_face_scene::map_to_target(boxm2_scene_sptr target){
   vul_timer t;
+  static bool first = true;
+  if(first){
   if(!target_data_extracted_)
     this->extract_target_block_data(target);
   // compute inverse vector field for prerefining the target
@@ -166,7 +168,8 @@ void boxm2_vecf_composite_face_scene::map_to_target(boxm2_scene_sptr target){
     cranium_->extract_target_block_data(target);
   if(skin_)
     skin_->extract_target_block_data(target);
-
+  first = false;
+  }
   this->extract_target_cell_centers();
   vcl_vector<vgl_vector_3d<double> > vfield;
   vcl_vector<vcl_string> type;
@@ -231,14 +234,14 @@ void boxm2_vecf_composite_face_scene::apply_vector_field_to_target(vcl_vector<vg
     if(t == "mouth"){
       app[0]= static_cast<unsigned char>(0.0);
       unsigned tindx = target_cell_centers_[j].data_index_;
-      alpha = 0.001f;//default to no occlusion
+      alpha = 0.0f;//default to no occlusion
       target_alpha_data_[tindx] = alpha;
       target_app_data_[tindx]=app;
       continue;
-    }else if(t == "cranium"){
-      fail = !cranium_->apply_vector_field(target_cell_centers_[j], vf[j]);
     }else if(t == "mandible"){
       fail = !mandible_->apply_vector_field(target_cell_centers_[j], vf[j]);
+    }else if(t == "cranium"){
+      fail = !cranium_->apply_vector_field(target_cell_centers_[j], vf[j]);
     }else if(t == "skin"){
       fail = !skin_->apply_vector_field(target_cell_centers_[j], vf[j]);
     }
