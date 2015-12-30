@@ -84,7 +84,7 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
     return;
   mstr >> ptset;
   mstr.close();
-  mouth_ = boxm2_vecf_mouth(ptset);
+  mouth_geo_ = boxm2_vecf_mouth(ptset);
 
   coupling_box_.add(p0); coupling_box_.add(p1); coupling_box_.add(p2); coupling_box_.add(p3); coupling_box_.add(p4);
 }
@@ -108,7 +108,7 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
     if(skin_){
       if(coupling_box_.contains(p)){
         skin_valid = mandible_->coupled_vector_field(p, skin_inv_vf);
-        in_mouth = mouth_.in(p);
+        in_mouth = mouth_geo_.in(p);
       }else
         skin_valid = skin_->inverse_vector_field(p, skin_inv_vf);
         }
@@ -189,7 +189,7 @@ bool boxm2_vecf_composite_face_scene::set_params(boxm2_vecf_articulated_params c
     skin_->set_params(params_.skin_params_);
   if(mandible_){
     mandible_->set_params( params_.mandible_params_);
-    mouth_.set_mandible_params(params_.mandible_params_);
+    mouth_geo_.set_mandible_params(params_.mandible_params_);
     vcl_cout << "======> Set jaw angle " << params_.mandible_params_.jaw_opening_angle_rad_ << '\n';
   }
   return true;

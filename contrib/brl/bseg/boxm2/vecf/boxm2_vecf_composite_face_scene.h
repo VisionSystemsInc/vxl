@@ -40,7 +40,7 @@ public:
   void extract_target_cell_centers();
 private:
   vgl_box_3d<double> coupling_box_;
-  boxm2_vecf_mouth mouth_;
+  boxm2_vecf_mouth mouth_geo_;
   boxm2_vecf_composite_face_params params_;
   boxm2_vecf_articulated_scene_sptr mandible_;
   boxm2_vecf_articulated_scene_sptr cranium_;

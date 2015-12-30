@@ -37,13 +37,8 @@ void test_mouth()
   istr.close();
   boxm2_vecf_mouth mouth(ptset);
   boxm2_vecf_mandible_params params;
-  params.jaw_opening_angle_rad_ = 0.35;
+  params.jaw_opening_angle_rad_ = 0.5;
   mouth.set_mandible_params(params);
-  vgl_point_3d<double> pt_sup(-3.456, -60.0, 90.459);
-  vgl_point_3d<double> pt_inf(-3.518, -69.144, 88.131);
-  vgl_vector_3d<double> v = pt_sup-pt_inf;
-  vgl_point_3d<double> bad_pt = pt_inf + 0.3*v;
-  bool badin = mouth.in(bad_pt);
   unsigned n_pts = 1000;
   vgl_pointset_3d<double> mouth_pts = mouth.random_pointset(n_pts);
   vcl_ofstream ostr(mouth_display_pc_path.c_str());

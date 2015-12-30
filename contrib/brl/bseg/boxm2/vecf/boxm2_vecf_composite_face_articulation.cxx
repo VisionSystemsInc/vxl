@@ -5,7 +5,7 @@ boxm2_vecf_composite_face_articulation::boxm2_vecf_composite_face_articulation()
   //======================= default articulation =====================
   vcl_vector<boxm2_vecf_composite_face_params> default_articulation;
   boxm2_vecf_composite_face_params  params;
-  params.skin_params_.skin_is_transparent_ = true;
+  params.skin_params_.skin_is_transparent_ = false;
   default_articulation.push_back(params);
   params.mandible_params_.jaw_opening_angle_rad_ = 0.05;
   default_articulation.push_back(params);

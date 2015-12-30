@@ -40,8 +40,9 @@ void boxm2_vecf_mouth::set_mandible_params(boxm2_vecf_mandible_params const& man
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
   vnl_quaternion<double> Q(X,mand_params_.jaw_opening_angle_rad_);
   rot_ = vgl_rotation_3d<double>(Q);
-  inv_rot_ = rot_.inverse();
   this->rotate_inf();
+  vgl_box_3d<double> bb = this->bounding_box();
+  params_.t_max_= params_.t(0.0, bb.min_y());
 }
 
 vgl_box_3d<double> boxm2_vecf_mouth::bounding_box() const{
@@ -57,15 +58,15 @@ vgl_box_3d<double> boxm2_vecf_mouth::bounding_box() const{
   return ret;
 }
 
-#if 0
-bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
-  double ds, di;
-  bool sup_sd_valid = sup_.signed_distance(pt, ds);
-  bool inf_sd_valid = inf_.signed_distance(pt, di);
- 
-  return sup_sd_valid&&inf_sd_valid&&ds>=0.0&&di>=0.0;
+bool boxm2_vecf_mouth::in_oris(vgl_point_3d<double> const& pt) const{
+  double xp = 0.9*pt.x(), y = pt.y();
+ if(xp<params_.x_min_ || xp>params_.x_max_)
+    return false;
+  double t = params_.t(xp, y);
+  bool valid = valid_t(t);
+  return valid;
 }
-#endif
+
 bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
   double x = pt.x(), y = pt.y(), z = pt.z();
   const vgl_plane_3d<double>& plane = sup_.plane();
@@ -76,9 +77,13 @@ bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
   double theta_max = mand_params_.jaw_opening_angle_rad_;
   if(theta<=0.0 || theta>theta_max)
     return false;
-   vgl_point_3d<double> inv_p(x, (y+theta*z), (z-theta*y));
+  vgl_point_3d<double> inv_p(x, (y+theta*z), (z-theta*y));
   bool in = sup_.in(inv_p);
-  return in;
+  if(in){
+    bool in_o = this->in_oris(pt);
+    return in_o;
+  }
+  return false;
 }
 vgl_pointset_3d<double> boxm2_vecf_mouth::random_pointset(unsigned n_pts) const{
   // add sup and inf random pointsets
