@@ -185,6 +185,8 @@ bool boxm2_vecf_composite_face_scene::set_params(boxm2_vecf_articulated_params c
     vcl_cout<<" Can't downcast to composite_face parameters! PARAMATER ASSIGNMENT PHAILED!"<<vcl_endl;
     return false;
   }
+  if(skin_)
+    skin_->set_params(params_.skin_params_);
   if(mandible_){
     mandible_->set_params( params_.mandible_params_);
     mouth_.set_mandible_params(params_.mandible_params_);

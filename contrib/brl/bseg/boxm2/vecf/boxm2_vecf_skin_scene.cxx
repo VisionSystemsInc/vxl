@@ -297,6 +297,9 @@ void boxm2_vecf_skin_scene::interpolate_vector_field(vgl_point_3d<double> const&
 bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){
   boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
   boxm2_data_traits<BOXM2_ALPHA>::datatype alpha = 0.0f;
+  float alpha_mul = 1.0f;
+  if(params_.skin_is_transparent_)
+    alpha_mul = params_.skin_transparency_factor_;
   vgl_point_3d<double> trg_cent_in_source = target_cell.cell_center_;
   double side_len = target_cell.side_length_;
   unsigned tindx = target_cell.data_index_;
@@ -310,11 +313,9 @@ bool boxm2_vecf_skin_scene::apply_vector_field(cell_info const& target_cell, vgl
   app = app_data_[dindx];
   alpha = alpha_data_[dindx];
   target_app_data_[tindx] = app;
-  //  target_alpha_data_[tindx] = 0.001f*alpha;
-  target_alpha_data_[tindx] = alpha;
+  target_alpha_data_[tindx] = alpha_mul*alpha;
   return true;
 }
-
 
 void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){

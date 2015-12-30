@@ -12,6 +12,7 @@
 #include <vgl/vgl_vector_3d.h>
 #include "boxm2_vecf_mandible_params.h"
 #include "boxm2_vecf_cranium_params.h"
+#include "boxm2_vecf_skin_params.h"
 class boxm2_vecf_composite_face_params : public boxm2_vecf_articulated_params{
  public:
 
@@ -24,6 +25,7 @@ class boxm2_vecf_composite_face_params : public boxm2_vecf_articulated_params{
   vgl_vector_3d<double> offset_;
   boxm2_vecf_mandible_params mandible_params_;
   boxm2_vecf_cranium_params cranium_params_;
+  boxm2_vecf_skin_params skin_params_;
 };
 vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_composite_face_params const& pr);
 vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_composite_face_params& pr);

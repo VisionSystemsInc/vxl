@@ -31,6 +31,7 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 
   //: set parameters
   bool set_params(boxm2_vecf_articulated_params const& params);
+  void set_skin_params(boxm2_vecf_skin_params const& params) {params_ = params;}
 
   //: construct from scene file specification, use exising database unless initialize == true
   // otherwise compute voxel contents from the skin parameters
