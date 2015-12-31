@@ -190,6 +190,7 @@ bool boxm2_vecf_composite_face_scene::set_params(boxm2_vecf_articulated_params c
   if(mandible_){
     mandible_->set_params( params_.mandible_params_);
     mouth_geo_.set_mandible_params(params_.mandible_params_);
+    mouth_geo_.set_params(params_.mouth_params_);
     vcl_cout << "======> Set jaw angle " << params_.mandible_params_.jaw_opening_angle_rad_ << '\n';
   }
   return true;
@@ -230,6 +231,7 @@ void boxm2_vecf_composite_face_scene::apply_vector_field_to_target(vcl_vector<vg
   boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
   unsigned n_valid = 0;
   unsigned n = static_cast<unsigned>(vf.size());
+  bool show_mouth = params_.mouth_params_.show_mouth_region_;
   for(unsigned j = 0; j<n; ++j){
     const vcl_string& t = type[j];
     bool fail = true;
@@ -237,6 +239,8 @@ void boxm2_vecf_composite_face_scene::apply_vector_field_to_target(vcl_vector<vg
       app[0]= static_cast<unsigned char>(0.0);
       unsigned tindx = target_cell_centers_[j].data_index_;
       alpha = 0.0f;//default to no occlusion
+      if(show_mouth)
+        alpha = 10.0f;
       target_alpha_data_[tindx] = alpha;
       target_app_data_[tindx]=app;
       continue;

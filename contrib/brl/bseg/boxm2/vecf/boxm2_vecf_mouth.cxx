@@ -17,7 +17,11 @@ boxm2_vecf_mouth::boxm2_vecf_mouth(vcl_vector<vgl_point_3d<double> > const& knot
 boxm2_vecf_mouth::boxm2_vecf_mouth(vgl_pointset_3d<double>  const& ptset){
   *this = boxm2_vecf_mouth(ptset.points());
 }
-
+//
+// rotate the plane of the lower lip accoding to the
+// angle of the mandible. Defines the extreme lower bound
+// on the mouth region
+//
 void boxm2_vecf_mouth::rotate_inf(){
   vcl_vector<vgl_point_3d<double> > knots = sup_.knots();
   // rotate the knots of the sup rather than current inf knots
@@ -57,16 +61,49 @@ vgl_box_3d<double> boxm2_vecf_mouth::bounding_box() const{
     ret.add(*kit);
   return ret;
 }
-
+//
+// the shape of the mouth opening is controlled mainly by the
+// orbicularis oris muscle. The shape of the opening is defined
+// by a linear blend of two polynomials by the parameter t
+// this function tests to see if the x,y position of a point
+// lies inside the region defined by the two polynomials. The
+// lower lip t = t_max is determined from the rotation angle of the mandible
+// the upper lip t is defined to be zero. The x,y coordinates determine
+// a t value so that the point lies on the blended polynomial. If
+// t lies inside the bounds then the point is in the mouth opening.
+//
 bool boxm2_vecf_mouth::in_oris(vgl_point_3d<double> const& pt) const{
-  double xp = 0.9*pt.x(), y = pt.y();
+  double xp = 0.95*pt.x(), y = pt.y();
  if(xp<params_.x_min_ || xp>params_.x_max_)
     return false;
   double t = params_.t(xp, y);
   bool valid = valid_t(t);
   return valid;
 }
-
+// the idea here is to map the point, pt, backwards using a linear
+// approximation to the rotational vector field of the mandible,
+// that is,
+//                     [ 1    0    0   ]
+//      R_inv(theta) = [ 0    1  theta ]
+//                     [ 0 -theta  1   ]
+//
+// the value of theta needed to map the point back to sup,
+// (the mouth plane when theta == 0) can be found by solving the
+// linear equation:
+//
+//       { a  b  c  d][         ][ x ]
+//                    [ R(theta)][ y ] = 0
+//                    [         ][ z ] 
+//                    [         ][ 1 ]
+// The solution is,
+//
+//   theta  = -( ax + by +cz +d)/(bz -cy)
+//
+//  The plane is normalized below to insure good numerical conditioning
+//  for the linear solution. Note that b ~ 1.0 and |c| << |b| so the
+//  singular condition (bz - cy) == 0 occurs in plane, -cy + bz = 0,
+//  approximately the z=0 plane passing through the x axis.
+//
 bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
   double x = pt.x(), y = pt.y(), z = pt.z();
   const vgl_plane_3d<double>& plane = sup_.plane();
@@ -85,6 +122,9 @@ bool boxm2_vecf_mouth::in(vgl_point_3d<double> const& pt) const{
   }
   return false;
 }
+//
+// A randomly generated set of 3-d points that lie inside the mouth for debugging purposes
+//
 vgl_pointset_3d<double> boxm2_vecf_mouth::random_pointset(unsigned n_pts) const{
   // add sup and inf random pointsets
   vgl_pointset_3d<double> pts = sup_.random_pointset(n_pts);

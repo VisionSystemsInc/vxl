@@ -14,8 +14,9 @@
 class boxm2_vecf_mouth_params : public boxm2_vecf_articulated_params{
  public:
 
- boxm2_vecf_mouth_params(): offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0)), t_min_(0.0), t_max_(1.0), x_min_(-30), x_max_(30.0){
+ boxm2_vecf_mouth_params(): offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0)), t_min_(0.0), t_max_(1.0), x_min_(-32), x_max_(32.0), show_mouth_region_(false){
   }
+  bool show_mouth_region_;
   // min and max t for validity  
   double t_min_, t_max_;
   double x_min_, x_max_;
