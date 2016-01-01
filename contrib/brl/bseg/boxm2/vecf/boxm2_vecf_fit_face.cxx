@@ -15,6 +15,8 @@
 void boxm2_vecf_fit_face::fill_smid_map(){
   smid_map_["left_lateral_canthus"]=LEFT_LATERAL_CANTHUS;
   smid_map_["right_lateral_canthus"]=RIGHT_LATERAL_CANTHUS;
+  smid_map_["left_medial_canthus"]=LEFT_MEDIAL_CANTHUS;
+  smid_map_["right_medial_canthus"]=RIGHT_MEDIAL_CANTHUS;
   smid_map_["mid_upper_jaw"]=MID_UPPER_JAW;
   smid_map_["mid_forehead"]=MID_FOREHEAD;
   smid_map_["mid_forehead_normal"]=MID_FOREHEAD_NORMAL;
@@ -140,6 +142,15 @@ bool boxm2_vecf_fit_face::set_trans(){
     return false;
   const vgl_point_3d<double>& rlc_tgt = lit->second.p3d_;// - cmv_;
 
+  lit = lpts_.find(LEFT_MEDIAL_CANTHUS);
+  if(lit == lpts_.end())
+    return false;
+  const vgl_point_3d<double>& lmc_tgt = lit->second.p3d_;// - cmv_;
+
+  lit = lpts_.find(RIGHT_MEDIAL_CANTHUS);
+  if(lit == lpts_.end())
+    return false;
+  const vgl_point_3d<double>& rmc_tgt = lit->second.p3d_;// - cmv_;
 
   lit = lpts_.find(MID_UPPER_JAW);
   if(lit == lpts_.end())
@@ -164,6 +175,8 @@ bool boxm2_vecf_fit_face::set_trans(){
   //get source points
   vgl_point_3d<double> llc_src = params_.left_lateral_canthus_;
   vgl_point_3d<double> rlc_src = params_.right_lateral_canthus_;
+  vgl_point_3d<double> lmc_src = params_.left_medial_canthus_;
+  vgl_point_3d<double> rmc_src = params_.right_medial_canthus_;
   vgl_point_3d<double> mjaw_src = params_.mid_upper_jaw_;
   vgl_point_3d<double> fint_src = params_.forehead_intersection_;
   vgl_point_3d<double> nose_src = params_.nose_;
@@ -171,10 +184,12 @@ bool boxm2_vecf_fit_face::set_trans(){
 
   vcl_vector<vgl_homg_point_3d<double> > source_pts, target_pts;
   source_pts.push_back(vgl_homg_point_3d<double>(llc_src)); source_pts.push_back(vgl_homg_point_3d<double>(rlc_src));
+  source_pts.push_back(vgl_homg_point_3d<double>(lmc_src)); source_pts.push_back(vgl_homg_point_3d<double>(rmc_src));
   source_pts.push_back(vgl_homg_point_3d<double>(mjaw_src)); source_pts.push_back(vgl_homg_point_3d<double>(fint_src));
   source_pts.push_back(vgl_homg_point_3d<double>(nose_src)); source_pts.push_back(vgl_homg_point_3d<double>(chin_src));
   
   target_pts.push_back(vgl_homg_point_3d<double>(llc_tgt));  target_pts.push_back(vgl_homg_point_3d<double>(rlc_tgt));
+  target_pts.push_back(vgl_homg_point_3d<double>(lmc_tgt));  target_pts.push_back(vgl_homg_point_3d<double>(rmc_tgt));
   target_pts.push_back(vgl_homg_point_3d<double>(mjaw_tgt)); target_pts.push_back(vgl_homg_point_3d<double>(fint_tgt));
   target_pts.push_back(vgl_homg_point_3d<double>(nose_tgt)); target_pts.push_back(vgl_homg_point_3d<double>(chin_tgt));
 
@@ -182,17 +197,17 @@ bool boxm2_vecf_fit_face::set_trans(){
   bool success = hca.compute(source_pts, target_pts, params_.trans_);
   if(!success) return false;
   //for debug purposes
-  vcl_cout << params_.trans_ << '\n';
+  vcl_cout << params_.trans_ << '\n'<< vcl_flush;
   vnl_matrix_fixed<double, 3, 3> R, S;
   params_.trans_.polar_decomposition(S, R);
-  vcl_cout << "Rotation part\n " << R << '\n';
-  vcl_cout << "Symmetric part\n " << S << '\n';
+  vcl_cout << "Rotation part\n " << R << '\n'<< vcl_flush;
+  vcl_cout << "Symmetric part\n " << S << '\n'<< vcl_flush;
 
   unsigned n = static_cast<unsigned>(source_pts.size());
   for(unsigned i = 0; i<n; ++i){
     vgl_homg_point_3d<double> hts = params_.trans_(source_pts[i]);
     vgl_point_3d<double> ts(hts), t(target_pts[i]);
-    vcl_cout << vcl_setprecision(3) << ts << ' ' << t << ' ' << (t-ts).length() << '\n';
+    vcl_cout << vcl_setprecision(3) << ts << ' ' << t << ' ' << (t-ts).length() << '\n'<< vcl_flush;
   }
                                 
   return true;

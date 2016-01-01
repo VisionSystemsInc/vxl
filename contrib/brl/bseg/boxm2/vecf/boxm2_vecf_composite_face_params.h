@@ -19,9 +19,9 @@ class boxm2_vecf_composite_face_params : public boxm2_vecf_articulated_params{
  public:
 // reference points below picked manually from skull/skin_orig_appearance_sampled-r10-s1.05-t10.txt
 boxm2_vecf_composite_face_params():  offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0)), composite_face_intensity_((unsigned char)(200)),
-   left_lateral_canthus_(vgl_point_3d<double>(46.4,20.35,88.0)), right_lateral_canthus_(vgl_point_3d<double>(-46.4,20.35,88.0)),
-   //mid_upper_jaw_(vgl_point_3d<double>(0.0, -44.5, 98.5)), mid_forehead_(vgl_point_3d<double>(-0.14, 45.23,106.84)),
-   mid_upper_jaw_(vgl_point_3d<double>(0.0, -60.0, 96.0)), mid_forehead_(vgl_point_3d<double>(-0.14, 45.23,106.84)),
+    left_lateral_canthus_(vgl_point_3d<double>(46.4,20.35,88.0)), right_lateral_canthus_(vgl_point_3d<double>(-46.4,20.35,88.0)),
+    left_medial_canthus_(vgl_point_3d<double>(27.0,20.1,89.5)), right_medial_canthus_(vgl_point_3d<double>(-27.0,20.1,89.5)),
+    mid_upper_jaw_(vgl_point_3d<double>(0.0, -60.0, 96.0)), mid_forehead_(vgl_point_3d<double>(-0.14, 45.23,106.84)),
     mid_forehead_normal_(vgl_vector_3d<double>(0.004,0.033,0.9994)),nose_(vgl_point_3d<double>(0.0,-26.0, 119.0)),chin_(vgl_point_3d<double>(0.0,-107.0, 73.0)),trans_(vgl_h_matrix_3d<double>()){
   }
 
@@ -45,6 +45,8 @@ boxm2_vecf_composite_face_params():  offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0
   // these points define the affine transformation of the face to the target head
   vgl_point_3d<double> left_lateral_canthus_;
   vgl_point_3d<double> right_lateral_canthus_;
+  vgl_point_3d<double> left_medial_canthus_;
+  vgl_point_3d<double> right_medial_canthus_;
   vgl_point_3d<double> mid_upper_jaw_;
   vgl_point_3d<double> mid_forehead_;
   vgl_vector_3d<double> mid_forehead_normal_;
