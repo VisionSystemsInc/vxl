@@ -2,7 +2,7 @@
 #define boxm2_vecf_fit_face_h_
 //:
 // \file
-// \brief  Fit parameters of the face model to data
+// \brief  Fit parameters of the 3-d composite face model to anchor data
 //
 // \author J.L. Mundy
 // \date   31 December 2015
@@ -18,7 +18,7 @@
 #include <vgl/vgl_vector_3d.h>
 class boxm2_vecf_fit_face{
  public:
-  // ids for face measurements
+  // ids for face anchors
   enum mids {LEFT_LATERAL_CANTHUS, RIGHT_LATERAL_CANTHUS, LEFT_MEDIAL_CANTHUS, RIGHT_MEDIAL_CANTHUS, MID_UPPER_JAW, MID_FOREHEAD, MID_FOREHEAD_NORMAL,
              CANTHUS_MIDPOINT, FOREHEAD_INTERSECTION, NOSE, CHIN};
   
@@ -40,8 +40,11 @@ class boxm2_vecf_fit_face{
   //: set the affine transform between source face and target head
   bool set_trans();
 
-  //: transform face
+  //: transform face according to the computed affine transform
   bool transform_face(vcl_string const& source_face_path, vcl_string const& target_face_path) const;
+
+  //: return current parameter settings
+  boxm2_vecf_composite_face_params params() const {return params_;}
 
  private:
   //: the map between string and enum
@@ -59,7 +62,7 @@ class boxm2_vecf_fit_face{
   //: A vector to the canthus midpoint
   vgl_vector_3d<double> cmv_;
 
-  //: parameters
+  //: parameters, contains nominal anchors for average face
   boxm2_vecf_composite_face_params params_;
 };
 #endif// boxm2_vecf_fit_face

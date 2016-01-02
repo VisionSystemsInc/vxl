@@ -38,7 +38,20 @@ public:
 
   //: get the cell centers
   void extract_target_cell_centers();
-private:
+
+  //: compute target box from point cloud
+  // the point cloud is a target to compare with source
+  void compute_target_box( vcl_string const& pc_path);
+  vgl_box_3d<double> target_box() const {return target_box_;}
+  // for debugging purposes
+  void set_target_box(vgl_box_3d<double> const& target_box){ target_box_ = target_box;}
+
+  //: construct the target scene from the bounding box  
+  boxm2_scene_sptr construct_target_scene(vcl_string const& scene_dir,vcl_string const& scene_name, vcl_string const& data_path, double sub_block_len,
+                                         bool save_scene_xml = true);
+
+ private:
+  vgl_box_3d<double> target_box_;
   vgl_box_3d<double> coupling_box_;
   boxm2_vecf_mouth mouth_geo_;
   boxm2_vecf_composite_face_params params_;

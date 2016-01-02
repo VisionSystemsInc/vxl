@@ -4,18 +4,18 @@
 #include <vcl_fstream.h>
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_pointset_3d.h>
+#include <vgl/vgl_bounding_box.h>
+#include <vgl/algo/vgl_h_matrix_3d.h>
 
 boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string const& face_scene_paths){
-  //points defining the jaw coupled vector field bounding box
+  //points defining the jaw coupled vector field bounding box in the source scene
   //the vector field from the mandible is propagated to all skin voxels within the box
   // unless invalid as defined by the articulated mouth region
-  vgl_point_3d<double> p0(-82.0,-60.0, 0.0);
-  vgl_point_3d<double> p1(82.0,-60.0, 0.0);
-  vgl_point_3d<double> p2(-56.0,-150.0,0.0);
-  vgl_point_3d<double> p3(56.0,-150.0,0.0);
+  vgl_point_3d<double> p0(-82.0,-60.0, 0.0);  vgl_point_3d<double> p1(82.0,-60.0, 0.0);
+  vgl_point_3d<double> p2(-56.0,-150.0,0.0);  vgl_point_3d<double> p3(56.0,-150.0,0.0);
   vgl_point_3d<double> p4(0,-60.,120.0);
+  coupling_box_.add(p0); coupling_box_.add(p1); coupling_box_.add(p2); coupling_box_.add(p3); coupling_box_.add(p4);
 
-  //left off here
   vcl_ifstream istr(face_scene_paths.c_str());
   // construct paths to component scene xml files
   vcl_map<vcl_string, vcl_string> scene_path_map;
@@ -85,20 +85,20 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   mstr >> ptset;
   mstr.close();
   mouth_geo_ = boxm2_vecf_mouth(ptset);
-
-  coupling_box_.add(p0); coupling_box_.add(p1); coupling_box_.add(p2); coupling_box_.add(p3); coupling_box_.add(p4);
 }
 
-//: compute the inverse vector field 
+//: compute the inverse vector field, first undoing the affine map to the target
 void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<vcl_string>& type) const{
   vul_timer t;
   //the target cell centers. the vector field could potentially be defined at all target points
   unsigned nt = static_cast<unsigned>(target_cell_centers_.size());
   vfield.resize(nt, vgl_vector_3d<double>(0.0, 0.0, 0.0));// initialized to 0
   type.resize(nt, "invalid");
+  //  const vgl_h_matrix_3d<double>& A = params_.trans_.get_inverse();
   unsigned mandible_cnt = 0, skin_cnt = 0, cranium_cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
     const vgl_point_3d<double>& p = target_cell_centers_[i].cell_center_;
+    //vgl_point_3d<double> p = A*pt;
     vgl_vector_3d<double> mandible_inv_vf, cranium_inv_vf, skin_inv_vf; //need to iterate over components here (left off)
     bool mandible_valid=false, cranium_valid=false, skin_valid=false, in_mouth = false;
     if(mandible_)
@@ -218,6 +218,30 @@ int boxm2_vecf_composite_face_scene::prerefine_target_sub_block(vgl_point_3d<int
       max_depth = depth_skin;
   }
   return max_depth;
+}
+
+void boxm2_vecf_composite_face_scene::compute_target_box( vcl_string const& pc_path){
+  vcl_ifstream istr(pc_path.c_str());
+  if(!istr){
+    vcl_cout << "FATAL - can't open point cloud path " << pc_path << '\n';
+    return;
+  }
+  vgl_pointset_3d<double> ptset;
+  istr >> ptset;
+  target_box_ = vgl_bounding_box(ptset);
+}
+boxm2_scene_sptr boxm2_vecf_composite_face_scene::
+construct_target_scene(vcl_string const& scene_dir,vcl_string const& scene_name, vcl_string const& data_path,
+                      double sub_block_len, bool save_scene_xml){
+  if(target_box_.is_empty())
+    return 0;
+  vcl_vector<vcl_string> prefixes;
+  prefixes.push_back("boxm2_mog3_grey");
+  prefixes.push_back("boxm2_num_obs");
+  boxm2_scene_sptr tscene = new boxm2_scene(scene_dir, scene_name, data_path, prefixes, target_box_, sub_block_len);
+  if(save_scene_xml)
+    tscene->save_scene();
+  return tscene;
 }
 
 void boxm2_vecf_composite_face_scene::extract_target_cell_centers(){

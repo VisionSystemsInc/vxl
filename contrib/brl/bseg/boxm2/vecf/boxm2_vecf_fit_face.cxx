@@ -129,48 +129,48 @@ bool boxm2_vecf_fit_face::compute_auxillary_points(){
 }
 bool boxm2_vecf_fit_face::set_trans(){
 
-  // get target points and subtract off canthus midpoint vector
+  // get target points previously read from anchor file
   vcl_map<mids, boxm2_vecf_labeled_point>::iterator lit;
 
   lit = lpts_.find(LEFT_LATERAL_CANTHUS);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& llc_tgt = lit->second.p3d_;//- cmv_;
+  const vgl_point_3d<double>& llc_tgt = lit->second.p3d_;
 
   lit = lpts_.find(RIGHT_LATERAL_CANTHUS);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& rlc_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& rlc_tgt = lit->second.p3d_;
 
   lit = lpts_.find(LEFT_MEDIAL_CANTHUS);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& lmc_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& lmc_tgt = lit->second.p3d_;
 
   lit = lpts_.find(RIGHT_MEDIAL_CANTHUS);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& rmc_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& rmc_tgt = lit->second.p3d_;
 
   lit = lpts_.find(MID_UPPER_JAW);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& mjaw_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& mjaw_tgt = lit->second.p3d_;
 
   lit = lpts_.find(FOREHEAD_INTERSECTION);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& fint_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& fint_tgt = lit->second.p3d_;
 
   lit = lpts_.find(NOSE);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& nose_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& nose_tgt = lit->second.p3d_;
 
   lit = lpts_.find(CHIN);
   if(lit == lpts_.end())
     return false;
-  const vgl_point_3d<double>& chin_tgt = lit->second.p3d_;// - cmv_;
+  const vgl_point_3d<double>& chin_tgt = lit->second.p3d_;
   
   //get source points
   vgl_point_3d<double> llc_src = params_.left_lateral_canthus_;

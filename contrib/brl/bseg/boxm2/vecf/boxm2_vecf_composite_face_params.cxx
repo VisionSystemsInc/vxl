@@ -17,5 +17,23 @@ void boxm2_vecf_composite_face_params::compute_auxillary_pts(){
     vcl_cout << "Intersection of ray with forehead plane - failed\n";
   }
 }
-vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_composite_face_params const& pr){return s;}
-vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_composite_face_params& pr){return s;}
+vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_composite_face_params const& prc){
+  if(!s){
+    vcl_cout << "Bad parameter file stream\n";
+    return s;
+  }
+  // bad practice --- but easy
+  boxm2_vecf_composite_face_params & pr = const_cast<boxm2_vecf_composite_face_params &>(prc);
+  s << "affine_transform: " << pr.trans_ << '\n';
+  return s;
+}
+vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_composite_face_params& pr){
+  if(!s){
+    vcl_cout << "Bad parameter file stream\n";
+    return s;
+  }
+  vcl_string st;
+  double val;
+  s >> st >> pr.trans_;
+  return s;
+}

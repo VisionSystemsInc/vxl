@@ -58,6 +58,14 @@ int main(int argc, char ** argv)
         vcl_cout << "failed to compute face transform\n";
     return -1;
   } 
+  vcl_string param_path = base_dir + id + "/" + id + "_face_params.txt";
+  vcl_ofstream ostr(param_path.c_str());
+  if(ostr){
+    ostr << fs.params();
+    ostr.close();
+  }else
+    vcl_cout << "WARNING - not able to open param path " << param_path << '\n' << vcl_flush;
+  
   vcl_string source_path = base_dir + "skull/skin_orig_appearance_sampled-r10-s1.05-t10.txt";
   vcl_string target_path = base_dir + id + "/" + id + "_trans_face.txt";
   good = fs.transform_face(source_path, target_path);

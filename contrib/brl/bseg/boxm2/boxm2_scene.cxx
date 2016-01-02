@@ -40,7 +40,38 @@ boxm2_scene::boxm2_scene(vcl_string data_path, vgl_point_3d<double> const& origi
   id_ = boxm2_scene::get_count();
   boxm2_scene::get_count()++;
 }
-
+//create a scene with one block
+boxm2_scene::boxm2_scene(vcl_string const& scene_dir, vcl_string const& scene_name, vcl_string const& data_path, vcl_vector<vcl_string> const& prefixes,
+            vgl_box_3d<double> const& scene_box, double sub_block_len, int init_level,
+                         int max_level, double max_mb, double p_init, int n_illum_bins, int version){
+  num_illumination_bins_ = n_illum_bins;
+  version_ = version;
+  id_ = boxm2_scene::get_count();
+  boxm2_scene::get_count()++;
+  boxm2_block_id bid(0,0,0);
+  boxm2_block_metadata md;
+  md.id_ = bid;
+  vgl_point_3d<double> origin = scene_box.min_point();
+  unsigned dim_x = static_cast<unsigned>(vcl_ceil(scene_box.width()/sub_block_len));
+  unsigned dim_y = static_cast<unsigned>(vcl_ceil(scene_box.height()/sub_block_len));
+  unsigned dim_z = static_cast<unsigned>(vcl_ceil(scene_box.depth()/sub_block_len));
+  md.local_origin_ = origin;
+  md.sub_block_dim_ = vgl_vector_3d<double>(sub_block_len, sub_block_len, sub_block_len);
+  md.sub_block_num_ = vgl_vector_3d<unsigned>(dim_x, dim_y, dim_z);
+  md.init_level_ = init_level;
+  md.max_level_ = max_level;
+  md.max_mb_ = 400;
+  md.p_init_ = .001;
+  md.version_ = version;
+  blocks_[bid]=md;
+  appearances_ = prefixes;
+  this->set_local_origin(origin);
+  this->set_rpc_origin(origin);
+  vpgl_lvcs lvcs;
+  this->set_lvcs(lvcs);
+  this->set_xml_path(scene_dir + scene_name + ".xml");
+  this->set_data_path(scene_dir + data_path );
+}
 boxm2_scene::boxm2_scene(const char* buffer)
 {
   boxm2_scene_parser parser;
