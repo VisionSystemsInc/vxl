@@ -341,54 +341,6 @@ void boxm2_vecf_skin_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3
   }
   vcl_cout << "Apply skin vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
-///// old version now deprecated - remove at some point
-int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
-  int max_level = blk_->max_level();
-  // the center of the sub_block (tree) at (ix, iy, iz)
-  int ix = sub_block_index.x(), iy = sub_block_index.y(), iz = sub_block_index.z();
-  vcl_size_t lindex = trees_.linear_index(ix, iy, iz);
-  if(!valid_unrefined_[lindex])
-    return -1;
-  double x = targ_origin_.x() + ix*targ_dims_.x();
-  double y = targ_origin_.y() + iy*targ_dims_.y();
-  double z = targ_origin_.z() + iz*targ_dims_.z();
-  vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
-
-  // map the target back to source
-  vgl_point_3d<double> center_in_source = sub_block_center +  vfield_unrefined_[lindex];
-
-  // sub_block axis-aligned corners in source
-  vgl_point_3d<double> sbc_min(center_in_source.x()-0.5*targ_dims_.x(),
-                               center_in_source.y()-0.5*targ_dims_.y(),
-                               center_in_source.z()-0.5*targ_dims_.z());
-                                     
-  vgl_point_3d<double> sbc_max(center_in_source.x()+0.5*targ_dims_.x(),
-                               center_in_source.y()+0.5*targ_dims_.y(),
-                               center_in_source.z()+0.5*targ_dims_.z());
-
-  vgl_box_3d<double> target_box_in_source;
-  target_box_in_source.add(sbc_min);
-  target_box_in_source.add(sbc_max); 
-
-  // the source blocks intersecting the inverse mapped target box
-  vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
-
-  // iterate through each intersecting source tree and find the maximum tree depth 
-  int max_depth = 0;
-  for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
-      bit != int_sblks.end(); ++bit){
-    const uchar16& tree_bits = trees_(bit->x(), bit->y(), bit->z());
-    //safely cast since bit_tree is just temporary
-    uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
-    boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
-    int dpth = bit_tree.depth();
-    if(dpth>max_depth){
-      max_depth = dpth;
-    }
-  }
-  return max_depth;
-}
-///// remove above ------------------ ^^^^^^^
 
 int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){
   int max_level = blk_->max_level();
@@ -428,32 +380,6 @@ int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<double> const
   }
   return max_depth;
 }
-///// old version now deprecated - remove at some point
-void boxm2_vecf_skin_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
-  unsigned ntrees = targ_n_.x()*targ_n_.y()*targ_n_.z();
-  vfield_unrefined_.resize(ntrees, vgl_vector_3d<double>(0.0, 0.0, 0.0));
-  valid_unrefined_.resize(ntrees, false);
-  unsigned vf_index = 0;
-  //iterate through the trees of the target. During this pass, only the sub_block locations are used
-   for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
-    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
-      for(unsigned iz = 0; iz<targ_n_.z(); ++iz, vf_index++){
-          double x = targ_origin_.x() + ix*targ_dims_.x();
-          double y = targ_origin_.y() + iy*targ_dims_.y();
-          double z = targ_origin_.z() + iz*targ_dims_.z();
-          vgl_point_3d<double> sub_block_center(x+0.5, y+0.5, z+0.5);
-          vgl_point_3d<double> center_in_source = sub_block_center-params_.offset_;
-          if(!source_bb_.contains(center_in_source))
-            continue;
-          valid_unrefined_[vf_index] = true;
-          vfield_unrefined_[vf_index].set(center_in_source.x() - sub_block_center.x(),
-                                          center_in_source.y() - sub_block_center.y(),
-                                          center_in_source.z() - sub_block_center.z());
-      }
-    }
-   }
-}
-/////// remove above ---------------------------^^^^
 
 // == the full inverse vector field  p_source = p_target + vf === 
 void boxm2_vecf_skin_scene::inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts){
@@ -477,8 +403,13 @@ void boxm2_vecf_skin_scene::inverse_vector_field_unrefined(vcl_vector<vgl_point_
   // initially extract unrefined target data 
   if(!target_data_extracted_)
     this->extract_target_block_data(target_scene);
+  this->extract_unrefined_cell_info();//on articulated_scene
+  vcl_vector<vgl_point_3d<double> > tgt_pts;
+  for(vcl_vector<unrefined_cell_info>::iterator cit = unrefined_cell_info_.begin();
+      cit != unrefined_cell_info_.end(); ++cit)
+    tgt_pts.push_back(cit->pt_);
   // compute inverse vector field for prerefining the target
-  this->inverse_vector_field_unrefined(target_scene);
+  this->inverse_vector_field_unrefined(tgt_pts);
   // refine the target to match the source tree refinement
    this->prerefine_target(target_scene);
   // have to extract target data again to refresh data bases and buffers after refinement

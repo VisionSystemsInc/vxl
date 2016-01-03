@@ -40,15 +40,9 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
   boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_string const& geometry_file);
 
   //: find the inverse vector field for unrefined target block centers
-  ///// old version now deprecated - remove at some point
-  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
-  ////
   virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
 
   //: refine target cells to match the refinement level of the source block
-  ///// old version now deprecated - remove at some point
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
-  ////
   virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);
 
 

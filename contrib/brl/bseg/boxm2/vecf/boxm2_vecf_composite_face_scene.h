@@ -11,14 +11,7 @@
 #include "boxm2_vecf_composite_face_params.h"
 #include "boxm2_vecf_articulated_scene.h"
 #include "boxm2_vecf_mouth.h"
-struct unrefined_cell_info{
-unrefined_cell_info():linear_index_(0), ix_(0), iy_(0), iz_(0){}
-  unsigned linear_index_;
-  unsigned ix_;
-  unsigned iy_;
-  unsigned iz_;
-  vgl_point_3d<double> pt_;
-};
+
 class boxm2_vecf_composite_face_scene : public boxm2_vecf_articulated_scene{
 public:
   enum comp_type {MANDIBLE, CRANIUM, SKIN, NO_TYPE};
@@ -30,16 +23,10 @@ public:
   boxm2_vecf_composite_face_params const& get_params() const {return params_;}
 
   //: find the inverse vector field for unrefined target block centers
-  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
+    virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
 
   //: refine target cells to match the refinement level of the source block
-  // old version now deprecated - remove at some point
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
-  // current version
   virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);
-
-  //implemented on parent but specialized here
-  virtual void prerefine_target(boxm2_scene_sptr target_scene);
 
   virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const {return false;}
   virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){ return false;}
@@ -65,8 +52,6 @@ public:
                                          bool save_scene_xml = true);
 
  private:
-  void extract_unrefined_cell_info();
-  vcl_vector<unrefined_cell_info> unrefined_cell_info_;
   vgl_box_3d<double> target_box_;
   vgl_box_3d<double> coupling_box_;
   boxm2_vecf_mouth mouth_geo_;

@@ -28,6 +28,15 @@ typedef vnl_vector_fixed<double,8> double8;
 typedef vnl_vector_fixed<unsigned char,8> uchar8;
 typedef vnl_vector_fixed<unsigned char, 16> uchar16;
 
+// structure for prerefining the target scene 
+struct unrefined_cell_info{
+unrefined_cell_info():linear_index_(0), ix_(0), iy_(0), iz_(0){}
+  unsigned linear_index_;
+  unsigned ix_;
+  unsigned iy_;
+  unsigned iz_;
+  vgl_point_3d<double> pt_;
+};
 
 class boxm2_vecf_articulated_scene;
 #define LERP(w1,w2,p,p1,p2) (w1 * (p2 - p) + w2 * (p-p1))/(p2 - p1)
@@ -67,12 +76,15 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
     apm[0] =(unsigned char) apm_f[0]; apm[1] = (unsigned char) apm_f[1] ; apm[2] = (unsigned char) apm_f[2];
     return apm;
   }
+  void extract_unrefined_cell_info();
 
   // functions required by the sub classes
   virtual bool set_params(boxm2_vecf_articulated_params const& params)=0;
   virtual void map_to_target(boxm2_scene_sptr target_scene)=0;
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index) = 0;
-  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene) = 0;
+  //  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index) = 0;
+  // virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene) = 0;
+  virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts) = 0;
+  virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index) = 0;
   virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const = 0;
   virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf) = 0;
 
@@ -81,8 +93,7 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   virtual void clear_target(boxm2_scene_sptr target_scene);
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
   virtual bool coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{return false;}  
-  virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts){}//fix
-  virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){return-1;} //fix
+
   //: tree subblock size in mm
  double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
 
@@ -139,5 +150,5 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   // unrefined vector field info
   vcl_vector<vgl_vector_3d<double> > vfield_unrefined_;
   vcl_vector<bool> valid_unrefined_;
-
+  vcl_vector<unrefined_cell_info> unrefined_cell_info_;
 };

@@ -78,15 +78,9 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   void cache_neighbors();
 
   //: refine target cells to match the refinement level of the source block
-  ///// old version now deprecated - remove at some point
-  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
-  /////
   virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);
 
   //: compute inverse vector field for unrefined sub_block centers
-  ///// old version now deprecated - remove at some point
-  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
-  ////
   virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
 
     // ============   cranium methods ================

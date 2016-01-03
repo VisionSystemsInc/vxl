@@ -121,8 +121,32 @@ void boxm2_vecf_articulated_scene::extract_target_block_data(boxm2_scene_sptr ta
 #endif
 }
 
-void boxm2_vecf_articulated_scene::prerefine_target(boxm2_scene_sptr target_scene){
+void boxm2_vecf_articulated_scene::extract_unrefined_cell_info(){
   if(!target_blk_){
+    vcl_cout << "FATAL! - NULL target block\n";
+    return;
+  }
+  //iterate through the trees of the target. At this point they are unrefined
+  unrefined_cell_info_.resize(targ_n_.x()*targ_n_.y()*targ_n_.z());
+  for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
+        double x = targ_origin_.x() + ix*targ_dims_.x();
+        double y = targ_origin_.y() + iy*targ_dims_.y();
+        double z = targ_origin_.z() + iz*targ_dims_.z();
+        unsigned lindex = static_cast<unsigned>(target_linear_index(ix, iy, iz));
+        unrefined_cell_info cinf;
+        cinf.linear_index_ = lindex;
+        cinf.ix_ = ix; cinf.iy_ = iy; cinf.iz_ = iz;
+        cinf.pt_.set(x+0.5, y+0.5, z+0.5);
+        unrefined_cell_info_[lindex]=cinf;
+      }
+    }
+   }
+}
+
+void boxm2_vecf_articulated_scene::prerefine_target(boxm2_scene_sptr target_scene){
+    if(!target_blk_){
     vcl_cout << "FATAL! - NULL target block\n";
     return;
   }
@@ -134,18 +158,17 @@ void boxm2_vecf_articulated_scene::prerefine_target(boxm2_scene_sptr target_scen
   depths_to_match.fill(0);
 
   //iterate through the trees of the target. At this point they are unrefined
-   for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
-    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
-      for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
-        //record the deepest tree found
-        int max_depth = this->prerefine_target_sub_block(vgl_point_3d<int>(ix, iy, iz));
-        // if max_depth == -1  then don't change the refinement level
-        // since the target didn't map to a valid source position
-        depths_to_match(ix, iy, iz) = max_depth;
-        if(max_depth>deepest_cell_depth){
-          deepest_cell_depth = max_depth;
-        }
-      }
+  for(vcl_vector<unrefined_cell_info>::iterator uit = unrefined_cell_info_.begin();
+      uit != unrefined_cell_info_.end(); ++uit){
+    const vgl_point_3d<double>& pt = uit->pt_;
+    unsigned lindex = uit->linear_index_;
+    //record the deepest tree found
+    int max_depth = this->prerefine_target_sub_block(pt, lindex);
+    // if max_depth == -1  then don't change the refinement level
+    // since the target didn't map to a valid source position
+    depths_to_match(uit->ix_, uit->iy_, uit->iz_) = max_depth;
+    if(max_depth>deepest_cell_depth){
+      deepest_cell_depth = max_depth;
     }
   }
   vcl_cout << "deepest cell depth in prerefine_target " << deepest_cell_depth << '\n';

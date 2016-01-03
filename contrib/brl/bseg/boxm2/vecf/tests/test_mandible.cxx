@@ -129,13 +129,13 @@ void test_mandible()
 
   //boxm2_vecf_mandible mand(mandible_geo_path);
   
-  boxm2_vecf_mandible_scene mscene(mandible_scene_path, mandible_geo_path);
- // boxm2_vecf_mandible_scene mscene(mandible_scene_path);
+  // boxm2_vecf_mandible_scene mscene(mandible_scene_path, mandible_geo_path);
+  boxm2_vecf_mandible_scene mscene(mandible_scene_path);
   //  const boxm2_vecf_mandible& mand = mscene.mandible_geo();
   boxm2_scene_sptr scene = mscene.scene();
   if(!scene)
     return;
-  boxm2_cache::instance()->write_to_disk();
+  //boxm2_cache::instance()->write_to_disk();
 
   vcl_vector<vcl_string> prefixes;
   prefixes.push_back("alpha");
@@ -161,7 +161,7 @@ void test_mandible()
   vcl_vector<unsigned> data_indices;
   blk->leaf_neighbors(probe, 1.5, nbrs, nbr_edge_lengths, data_indices);
 #endif
-#if 0//kkkk
+#if 1//kkkk
   vcl_string target_scene_path = scene_dir + "target_mandible_8.xml";
 //vcl_string target_scene_path = scene_dir + "../skull/target_skull_8.xml";
  // vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";
