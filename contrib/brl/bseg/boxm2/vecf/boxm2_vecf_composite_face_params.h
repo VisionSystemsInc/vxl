@@ -23,6 +23,7 @@ boxm2_vecf_composite_face_params():  offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0
     left_medial_canthus_(vgl_point_3d<double>(27.0,20.1,89.5)), right_medial_canthus_(vgl_point_3d<double>(-27.0,20.1,89.5)),
     mid_upper_jaw_(vgl_point_3d<double>(0.0, -60.0, 96.0)), mid_forehead_(vgl_point_3d<double>(-0.14, 45.23,106.84)),
     mid_forehead_normal_(vgl_vector_3d<double>(0.004,0.033,0.9994)),nose_(vgl_point_3d<double>(0.0,-26.0, 119.0)),chin_(vgl_point_3d<double>(0.0,-107.0, 73.0)),trans_(vgl_h_matrix_3d<double>()){
+    trans_.set_identity();
   }
 
  boxm2_vecf_composite_face_params(unsigned char composite_face_intensity):composite_face_intensity_(composite_face_intensity){

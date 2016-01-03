@@ -1,4 +1,5 @@
 #include "boxm2_vecf_composite_face_scene.h"
+#include <vcl_fstream.h>
 #include <vul/vul_file.h>
 #include <vul/vul_timer.h>
 #include <vcl_fstream.h>
@@ -23,7 +24,7 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   while(istr >> component >> path)
     scene_path_map[component] = path;
 
-  vcl_string base_path, mandible_path, cranium_path, skin_path, mouth_path;
+  vcl_string base_path, mandible_path, cranium_path, skin_path, mouth_path, param_path;
 
   vcl_map<vcl_string, vcl_string>::iterator pit;
 
@@ -66,12 +67,29 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
     vcl_cout << "FATAL - " << skin_path << " does not exist\n";
     return;
   }
+
   pit = scene_path_map.find("mouth_path");
-  if(!vul_file::exists(skin_path)){
-    vcl_cout << "FATAL - " << mouth_path << " does not exist\n";
+  if(pit == scene_path_map.end()){
+    vcl_cout << "FATAL - mouth_path not defined\n";
     return;
   }else
     mouth_path = pit->second;
+
+  if(!vul_file::exists(mouth_path)){
+    vcl_cout << "FATAL - " << mouth_path << " does not exist\n";
+    return;
+  }
+
+  pit = scene_path_map.find("param_path");
+  if(pit != scene_path_map.end()){
+    param_path = pit->second;
+    if(!vul_file::exists(param_path)){
+      vcl_cout << "FATAL - " << param_path << " does not exist\n";
+      return;
+    }
+    vcl_ifstream pistr(param_path.c_str());
+    pistr >> params_;
+  }
 
   //load the scenes
   mandible_ = new boxm2_vecf_mandible_scene(mandible_path);
@@ -90,27 +108,26 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
 //: compute the inverse vector field, first undoing the affine map to the target
 void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<vcl_string>& type) const{
   vul_timer t;
+
   //the target cell centers. the vector field could potentially be defined at all target points
   unsigned nt = static_cast<unsigned>(target_cell_centers_.size());
   vfield.resize(nt, vgl_vector_3d<double>(0.0, 0.0, 0.0));// initialized to 0
   type.resize(nt, "invalid");
-  //  const vgl_h_matrix_3d<double>& A = params_.trans_.get_inverse();
   unsigned mandible_cnt = 0, skin_cnt = 0, cranium_cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
-    const vgl_point_3d<double>& p = target_cell_centers_[i].cell_center_;
-    //vgl_point_3d<double> p = A*pt;
+    const vgl_point_3d<double>& p_inv = target_cell_centers_[i].cell_center_;
     vgl_vector_3d<double> mandible_inv_vf, cranium_inv_vf, skin_inv_vf; //need to iterate over components here (left off)
     bool mandible_valid=false, cranium_valid=false, skin_valid=false, in_mouth = false;
     if(mandible_)
-      mandible_valid = mandible_->inverse_vector_field(p, mandible_inv_vf);
+      mandible_valid = mandible_->inverse_vector_field(p_inv, mandible_inv_vf);
     if(cranium_)
-      cranium_valid = cranium_->inverse_vector_field(p, cranium_inv_vf);
+      cranium_valid = cranium_->inverse_vector_field(p_inv, cranium_inv_vf);
     if(skin_){
-      if(coupling_box_.contains(p)){
-        skin_valid = mandible_->coupled_vector_field(p, skin_inv_vf);
-        in_mouth = mouth_geo_.in(p);
+      if(coupling_box_.contains(p_inv)){
+        skin_valid = mandible_->coupled_vector_field(p_inv, skin_inv_vf);
+        in_mouth = mouth_geo_.in(p_inv);
       }else
-        skin_valid = skin_->inverse_vector_field(p, skin_inv_vf);
+        skin_valid = skin_->inverse_vector_field(p_inv, skin_inv_vf);
         }
 
     bool not_valid = (!mandible_valid&&!cranium_valid&&!skin_valid);
@@ -138,7 +155,33 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
   vcl_cout << "computed " << mandible_cnt << " mandible pts "<< skin_cnt << " skin pts and " 
           << cranium_cnt << " cranium pts out of " << nt << " for face vector field in " << t.real()/1000.0 << " sec.\n";
 }
+void boxm2_vecf_composite_face_scene::extract_unrefined_cell_info(){
+  if(!target_blk_){
+    vcl_cout << "FATAL! - NULL target block\n";
+    return;
+  }
+  // inverse mapping for global affine face transformation to a specific subject
+  const vgl_h_matrix_3d<double>& Ainv = params_.trans_.get_inverse();
 
+  //iterate through the trees of the target. At this point they are unrefined
+  unrefined_cell_info_.resize(targ_n_.x()*targ_n_.y()*targ_n_.z());
+  for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
+        double x = targ_origin_.x() + ix*targ_dims_.x();
+        double y = targ_origin_.y() + iy*targ_dims_.y();
+        double z = targ_origin_.z() + iz*targ_dims_.z();
+        vgl_point_3d<double> p(x, y, z);
+        unsigned lindex = static_cast<unsigned>(target_linear_index(ix, iy, iz));
+        unrefined_cell_info cinf;
+        cinf.linear_index_ = lindex;
+        cinf.ix_ = ix; cinf.iy_ = iy; cinf.iz_ = iz;
+        cinf.pt_=Ainv*p;
+        unrefined_cell_info_[lindex]=cinf;
+      }
+    }
+   }
+}
 void boxm2_vecf_composite_face_scene::map_to_target(boxm2_scene_sptr target){
   vul_timer t;
   static bool first = true;
@@ -149,23 +192,21 @@ void boxm2_vecf_composite_face_scene::map_to_target(boxm2_scene_sptr target){
   this->extract_unrefined_cell_info();//on articulated_scene
   vcl_vector<vgl_point_3d<double> > tgt_pts;
   for(vcl_vector<unrefined_cell_info>::iterator cit = unrefined_cell_info_.begin();
-      cit != unrefined_cell_info_.end(); ++cit)
+      cit != unrefined_cell_info_.end(); ++cit){
     tgt_pts.push_back(cit->pt_);
+  }
 
   // compute inverse vector field for prerefining the target
   if(mandible_){
-    mandible_->extract_target_block_data(target);
-    //mandible_->inverse_vector_field_unrefined(target);
+   // mandible_->extract_target_block_data(target);
     mandible_->inverse_vector_field_unrefined(tgt_pts);
   }
   if(cranium_){
-    cranium_->extract_target_block_data(target);
-    //cranium_->inverse_vector_field_unrefined(target);
+   // cranium_->extract_target_block_data(target);
    cranium_->inverse_vector_field_unrefined(tgt_pts);
   }
   if(skin_){
-    skin_->extract_target_block_data(target);
-    //skin_->inverse_vector_field_unrefined(target);
+    //skin_->extract_target_block_data(target);
     skin_->inverse_vector_field_unrefined(tgt_pts);
   }
 
@@ -257,6 +298,12 @@ construct_target_scene(vcl_string const& scene_dir,vcl_string const& scene_name,
 void boxm2_vecf_composite_face_scene::extract_target_cell_centers(){
   vgl_box_3d<double> target_bb = target_blk_->bounding_box_global();
   target_cell_centers_ = target_blk_->cells_in_box(target_bb);
+  const vgl_h_matrix_3d<double>& Ainv = params_.trans_.get_inverse();
+  for(vcl_vector<cell_info>::iterator cit =target_cell_centers_.begin();
+      cit!=target_cell_centers_.end(); ++cit){
+    const vgl_point_3d<double>& c =     cit->cell_center_;
+    cit->cell_center_ = Ainv*c;
+  }
 }
 
 

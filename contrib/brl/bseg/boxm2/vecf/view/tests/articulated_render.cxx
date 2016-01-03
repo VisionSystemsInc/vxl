@@ -240,7 +240,10 @@ int main(int argc, char ** argv)
       bit_tableau->init(device, opencl_cache, skull_scene, skull_articulation,target_scene, ni, nj, pcam, "");
     }else if(scene_t == "composite_face"){
       boxm2_vecf_composite_face_scene* composite_face_scene = new boxm2_vecf_composite_face_scene(articulated_scene_path);
-      boxm2_vecf_composite_face_articulation* composite_face_articulation =new boxm2_vecf_composite_face_articulation();
+      // this constructor for the articulation passes in the global transformation between source and target
+      // needed to render the face of individual subjects
+      boxm2_vecf_composite_face_articulation* composite_face_articulation =
+        new boxm2_vecf_composite_face_articulation(composite_face_scene->get_params());
       composite_face_articulation->set_play_sequence("default");
       composite_face_scene->set_target_background(dark_background);
       //boxm2_scene_sptr crscn = skull_scene->scene();

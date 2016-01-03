@@ -22,8 +22,11 @@ public:
   bool set_params(boxm2_vecf_articulated_params const& params);
   boxm2_vecf_composite_face_params const& get_params() const {return params_;}
 
+  //: extract target cells, potentially with inverse mapping for a global transformation
+  virtual void extract_unrefined_cell_info();
+
   //: find the inverse vector field for unrefined target block centers
-    virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
+  virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
 
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);

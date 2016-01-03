@@ -33,7 +33,6 @@ vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_composite_face_params& pr)
     return s;
   }
   vcl_string st;
-  double val;
   s >> st >> pr.trans_;
   return s;
 }

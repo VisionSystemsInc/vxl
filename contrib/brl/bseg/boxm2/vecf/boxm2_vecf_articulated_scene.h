@@ -76,13 +76,9 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
     apm[0] =(unsigned char) apm_f[0]; apm[1] = (unsigned char) apm_f[1] ; apm[2] = (unsigned char) apm_f[2];
     return apm;
   }
-  void extract_unrefined_cell_info();
-
   // functions required by the sub classes
   virtual bool set_params(boxm2_vecf_articulated_params const& params)=0;
   virtual void map_to_target(boxm2_scene_sptr target_scene)=0;
-  //  virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index) = 0;
-  // virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene) = 0;
   virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts) = 0;
   virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index) = 0;
   virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const = 0;
@@ -94,6 +90,9 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
   virtual bool coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{return false;}  
 
+  // can be overriden by structural root anatomy component (e.g. head)
+  // accounts for global mapping to a specific subject
+  virtual void extract_unrefined_cell_info();
   //: tree subblock size in mm
  double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
 
@@ -147,8 +146,14 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   boxm2_data<BOXM2_ALPHA>::datatype* target_alpha_data_;   //target alpha data
   boxm2_data<BOXM2_MOG3_GREY>::datatype* target_app_data_; //target appearance data
   boxm2_data<BOXM2_NUM_OBS>::datatype* target_nobs_data_;  //target nobs data
+
   // unrefined vector field info
+  // computed by each component over the target tree cells
   vcl_vector<vgl_vector_3d<double> > vfield_unrefined_;
   vcl_vector<bool> valid_unrefined_;
+
+  // unrefined target tree cell info
+  // supplied by top level structural anatomical component
   vcl_vector<unrefined_cell_info> unrefined_cell_info_;
+
 };
