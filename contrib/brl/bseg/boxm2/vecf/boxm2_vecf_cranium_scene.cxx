@@ -199,7 +199,7 @@ bool boxm2_vecf_cranium_scene::find_nearest_data_index(boxm2_vecf_cranium_scene:
   found_depth = static_cast<int>(depth);
   return true;
 }
-
+///// old version now deprecated - remove at some point
 int boxm2_vecf_cranium_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
@@ -246,6 +246,46 @@ int boxm2_vecf_cranium_scene::prerefine_target_sub_block(vgl_point_3d<int> const
   }
   return max_depth;
 }
+/////////////////////////  remove above
+int boxm2_vecf_cranium_scene::prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){
+  int max_level = blk_->max_level();
+  if(!valid_unrefined_[pt_index])
+    return -1;
+  // map the target back to source
+  vgl_point_3d<double> center_in_source = sub_block_pt +  vfield_unrefined_[pt_index];
+
+  // sub_block axis-aligned corners in source
+  vgl_point_3d<double> sbc_min(center_in_source.x()-0.5*targ_dims_.x(),
+                               center_in_source.y()-0.5*targ_dims_.y(),
+                               center_in_source.z()-0.5*targ_dims_.z());
+                                     
+  vgl_point_3d<double> sbc_max(center_in_source.x()+0.5*targ_dims_.x(),
+                               center_in_source.y()+0.5*targ_dims_.y(),
+                               center_in_source.z()+0.5*targ_dims_.z());
+
+  vgl_box_3d<double> target_box_in_source;
+  target_box_in_source.add(sbc_min);
+  target_box_in_source.add(sbc_max); 
+
+  // the source blocks intersecting the rotated target box
+  vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
+
+  // iterate through each intersecting source tree and find the maximum tree depth 
+  int max_depth = 0;
+  for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
+      bit != int_sblks.end(); ++bit){
+    const uchar16& tree_bits = trees_(bit->x(), bit->y(), bit->z());
+    //safely cast since bit_tree is just temporary
+    uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
+    boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
+    int dpth = bit_tree.depth();
+    if(dpth>max_depth){
+      max_depth = dpth;
+    }
+  }
+  return max_depth;
+}
+  ///// old version now deprecated - remove at some point
 // == the full inverse vector field  p_source = p_target + vf === 
 void boxm2_vecf_cranium_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
   unsigned ntrees = targ_n_.x()*targ_n_.y()*targ_n_.z();
@@ -270,6 +310,24 @@ void boxm2_vecf_cranium_scene::inverse_vector_field_unrefined(boxm2_scene_sptr t
       }
     }
    }
+}
+///////   remove above ===========^^^^^^^
+
+// == the full inverse vector field  p_source = p_target + vf === 
+void boxm2_vecf_cranium_scene::inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts){
+  unsigned n = static_cast<unsigned>(unrefined_target_pts.size());
+  vfield_unrefined_.resize(n, vgl_vector_3d<double>(0.0, 0.0, 0.0));
+  valid_unrefined_.resize(n, false);
+  for(unsigned vf_index = 0;vf_index<n; ++vf_index){
+    const vgl_point_3d<double>& p = unrefined_target_pts[vf_index];
+    vgl_point_3d<double> p_in_source = p - params_.offset_;
+    if(!source_bb_.contains(p_in_source))
+      continue;
+    valid_unrefined_[vf_index] = true;
+    vfield_unrefined_[vf_index].set(p_in_source.x() - p.x(), // really just the offset for now, but keep for
+                                    p_in_source.y() - p.y(), // extended local vector field adjustments
+                                    p_in_source.z() - p.z());
+  }
 }
 
 bool boxm2_vecf_cranium_scene::inverse_vector_field(vgl_point_3d<double> const&  target_pt, vgl_vector_3d<double>& inv_vf) const{

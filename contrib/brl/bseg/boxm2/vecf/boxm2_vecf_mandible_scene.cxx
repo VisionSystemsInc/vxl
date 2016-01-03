@@ -415,7 +415,7 @@ void boxm2_vecf_mandible_scene::paint_left_ramus(){
   }
 }
 ///  <========  End of stuff to be used later===========
-// == the full inverse vector field  p_source = p_target + vf === 
+///// old version now deprecated - remove at some point
 void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
   unsigned ntrees = targ_n_.x()*targ_n_.y()*targ_n_.z();
   vfield_unrefined_.resize(ntrees, vgl_vector_3d<double>(0.0, 0.0, 0.0));
@@ -441,6 +441,26 @@ void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(boxm2_scene_sptr 
       }
     }
    }
+}
+////////////// remove above -------------------^^^^
+
+// == the full inverse vector field  p_source = p_target + vf === 
+void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts){
+  unsigned n = static_cast<unsigned>(unrefined_target_pts.size());
+  vfield_unrefined_.resize(n, vgl_vector_3d<double>(0.0, 0.0, 0.0));
+  valid_unrefined_.resize(n, false);
+  for(unsigned vf_index = 0; vf_index<n; ++vf_index){
+    const vgl_point_3d<double>& p = unrefined_target_pts[vf_index];
+    vgl_point_3d<double> p_in_source = p-params_.offset_;
+    // rotate the target center back to source
+    vgl_point_3d<double> rot_p_in_source = inv_rot_*p_in_source;
+    if(!source_bb_.contains(rot_p_in_source))
+      continue;
+    valid_unrefined_[vf_index] = true;
+    vfield_unrefined_[vf_index].set(rot_p_in_source.x() - p.x(),
+                                    rot_p_in_source.y() - p.y(),
+                                    rot_p_in_source.z() - p.z());
+  }
 }
 
 // interpolate data around the inverted position of the target in the source reference frame. Interpolation weights are based
@@ -533,7 +553,7 @@ void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vect
   }
   vcl_cout << "Apply mandible vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
-
+///// old version now deprecated - remove at some point
 int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_level = blk_->max_level();
   // the center of the sub_block (tree) at (ix, iy, iz)
@@ -587,7 +607,54 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<int> cons
   }
   return max_depth;
 }
+//////////////////// remove above ------^^^^
 
+int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){
+  int max_level = blk_->max_level();
+  if(!valid_unrefined_[pt_index])
+    return -1;
+  // map the target back to source
+  vgl_vector_3d<double> vtr = vfield_unrefined_[pt_index];
+  vgl_point_3d<double> rot_center_in_source = sub_block_pt +  vtr;
+  
+  // sub_block axis-aligned corners in source
+  vgl_point_3d<double> sbc_min(rot_center_in_source.x()-0.5*targ_dims_.x(),
+                               rot_center_in_source.y()-0.5*targ_dims_.y(),
+                               rot_center_in_source.z()-0.5*targ_dims_.z());
+                                     
+  vgl_point_3d<double> sbc_max(rot_center_in_source.x()+0.5*targ_dims_.x(),
+                               rot_center_in_source.y()+0.5*targ_dims_.y(),
+                               rot_center_in_source.z()+0.5*targ_dims_.z());
+
+  vgl_box_3d<double> target_box_in_source;
+  target_box_in_source.add(sbc_min);
+  target_box_in_source.add(sbc_max); 
+
+  // rotate the target box in source by the inverse rotation
+  // the box is rotated about its centroid
+  vgl_orient_box_3d<double> target_obox(target_box_in_source, inv_rot_.as_quaternion());
+  vgl_box_3d<double> rot_target_box_in_source = target_obox.enclosing_box();
+  vgl_box_3d<double> int_box = vgl_intersection(source_bb_, rot_target_box_in_source);
+  if(int_box.is_empty())
+    return -1;
+  // the source blocks intersecting the rotated target box
+  vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(rot_target_box_in_source);
+  
+  // iterate through each intersecting source tree and find the maximum tree depth 
+  int max_depth = 0;
+  for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
+      bit != int_sblks.end(); ++bit){
+    const uchar16& tree_bits = trees_(bit->x(), bit->y(), bit->z());
+    //safely cast since bit_tree is just temporary
+    uchar16& uctree_bits = const_cast<uchar16&>(tree_bits);
+    boct_bit_tree bit_tree(uctree_bits.data_block(), max_level);
+    int dpth = bit_tree.depth();
+    if(dpth>max_depth){
+      max_depth = dpth;
+    }
+  }
+  return max_depth;
+}
 void boxm2_vecf_mandible_scene::set_inv_rot(){
   // set rotation from params
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);

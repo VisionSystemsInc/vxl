@@ -81,7 +81,9 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   virtual void clear_target(boxm2_scene_sptr target_scene);
   virtual void prerefine_target(boxm2_scene_sptr target_scene);
   virtual bool coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{return false;}  
- //: tree subblock size in mm
+  virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts){}//fix
+  virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){return-1;} //fix
+  //: tree subblock size in mm
  double subblock_len() const { if(blk_)return (blk_->sub_block_dim()).x(); return 0.0;}
 
  vcl_size_t target_linear_index(vcl_size_t ix, vcl_size_t iy, vcl_size_t iz) const{
@@ -134,7 +136,7 @@ class boxm2_vecf_articulated_scene : public vbl_ref_count{
   boxm2_data<BOXM2_ALPHA>::datatype* target_alpha_data_;   //target alpha data
   boxm2_data<BOXM2_MOG3_GREY>::datatype* target_app_data_; //target appearance data
   boxm2_data<BOXM2_NUM_OBS>::datatype* target_nobs_data_;  //target nobs data
-  // vector field info
+  // unrefined vector field info
   vcl_vector<vgl_vector_3d<double> > vfield_unrefined_;
   vcl_vector<bool> valid_unrefined_;
 

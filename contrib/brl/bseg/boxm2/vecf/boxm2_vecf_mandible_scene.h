@@ -42,7 +42,10 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
   boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file);
 
   //: compute inverse vector field for unrefined target cells
-  void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
+  ///// old version now deprecated - remove at some point
+  virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
+  ////////////////
+  virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
 
   //: map mandible data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);
@@ -55,8 +58,12 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
   virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf);
 
   //: refine target cells to match the refinement level of the source block
+  ///// old version now deprecated - remove at some point
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
+  /////
+  virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);
 
+ 
   //:return a reference to the mandible geometry
   const boxm2_vecf_mandible& mandible_geo() const {return mandible_geo_;}
 

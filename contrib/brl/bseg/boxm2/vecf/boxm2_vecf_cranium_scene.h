@@ -78,10 +78,18 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
   void cache_neighbors();
 
   //: refine target cells to match the refinement level of the source block
+  ///// old version now deprecated - remove at some point
   virtual int prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index);
+  /////
+  virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);
+
   //: compute inverse vector field for unrefined sub_block centers
+  ///// old version now deprecated - remove at some point
   virtual void inverse_vector_field_unrefined(boxm2_scene_sptr target_scene);
- // ============   cranium methods ================
+  ////
+  virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
+
+    // ============   cranium methods ================
  //: construct manidble from parameters
  void create_cranium();
  //:read block eye data and reset indices
@@ -98,27 +106,8 @@ class boxm2_vecf_cranium_scene : public boxm2_vecf_articulated_scene
 
   //: members
  boxm2_vecf_cranium cranium_geo_;
-#if 0
-  boxm2_block_sptr blk_;                     // the source block
-  boxm2_block_sptr target_blk_;              // the target block
-  // cached databases
-  // source dbs
-  boxm2_data_base* alpha_base_;
-  boxm2_data_base* app_base_;
-  boxm2_data_base* nobs_base_;
-  // target dbs
-  boxm2_data_base* target_alpha_base_;
-  boxm2_data_base* target_app_base_;
-  boxm2_data_base* target_nobs_base_;
 
-  boxm2_data<BOXM2_ALPHA>::datatype* alpha_data_;  // source alpha database
-  boxm2_data<BOXM2_MOG3_GREY>::datatype* app_data_;// source appearance database
-  boxm2_data<BOXM2_NUM_OBS>::datatype* nobs_data_;         // source nobs database
-  boxm2_data<BOXM2_ALPHA>::datatype* target_alpha_data_;   //target alpha database
-  boxm2_data<BOXM2_MOG3_GREY>::datatype* target_app_data_; //target appearance database
-  boxm2_data<BOXM2_NUM_OBS>::datatype* target_nobs_data_;  //target nobs
-#endif
-  vcl_vector<cell_info> box_cell_centers_;       // cell centers in the target block
+ vcl_vector<cell_info> box_cell_centers_;       // cell centers in the target block
 
   boxm2_vecf_cranium_params params_;               // parameter struct
   // =============  cranium ===============

@@ -6,7 +6,7 @@
 #include <vgl/vgl_pointset_3d.h>
 #include <vgl/vgl_bounding_box.h>
 #include <vgl/algo/vgl_h_matrix_3d.h>
-
+#include <boxm2/cpp/algo/boxm2_refine_block_multi_data.h>
 boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string const& face_scene_paths){
   //points defining the jaw coupled vector field bounding box in the source scene
   //the vector field from the mandible is propagated to all skin voxels within the box
@@ -145,18 +145,28 @@ void boxm2_vecf_composite_face_scene::map_to_target(boxm2_scene_sptr target){
   if(first){
   if(!target_data_extracted_)
     this->extract_target_block_data(target);
+
+  this->extract_unrefined_cell_info();
+  vcl_vector<vgl_point_3d<double> > tgt_pts;
+  for(vcl_vector<unrefined_cell_info>::iterator cit = unrefined_cell_info_.begin();
+      cit != unrefined_cell_info_.end(); ++cit)
+    tgt_pts.push_back(cit->pt_);
+
   // compute inverse vector field for prerefining the target
   if(mandible_){
     mandible_->extract_target_block_data(target);
-    mandible_->inverse_vector_field_unrefined(target);
+    //mandible_->inverse_vector_field_unrefined(target);
+    mandible_->inverse_vector_field_unrefined(tgt_pts);
   }
   if(cranium_){
     cranium_->extract_target_block_data(target);
-    cranium_->inverse_vector_field_unrefined(target);
+    //cranium_->inverse_vector_field_unrefined(target);
+   cranium_->inverse_vector_field_unrefined(tgt_pts);
   }
   if(skin_){
     skin_->extract_target_block_data(target);
-    skin_->inverse_vector_field_unrefined(target);
+    //skin_->inverse_vector_field_unrefined(target);
+    skin_->inverse_vector_field_unrefined(tgt_pts);
   }
 
   this->prerefine_target(target);
@@ -199,7 +209,7 @@ bool boxm2_vecf_composite_face_scene::set_params(boxm2_vecf_articulated_params c
 void boxm2_vecf_composite_face_scene::inverse_vector_field_unrefined(boxm2_scene_sptr target_scene){
   
 }
-
+// old version now deprecated - remove at some point
 int boxm2_vecf_composite_face_scene::prerefine_target_sub_block(vgl_point_3d<int> const& sub_block_index){
   int max_depth = -1;
   if(mandible_){
@@ -219,6 +229,85 @@ int boxm2_vecf_composite_face_scene::prerefine_target_sub_block(vgl_point_3d<int
   }
   return max_depth;
 }
+// current version 
+int boxm2_vecf_composite_face_scene::prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){
+  int max_depth = -1;
+  if(mandible_){
+    int depth_mandible = mandible_->prerefine_target_sub_block(sub_block_pt, pt_index);
+    if(depth_mandible>max_depth)
+      max_depth = depth_mandible;
+  }
+  if(cranium_){
+    int depth_cranium = cranium_->prerefine_target_sub_block(sub_block_pt, pt_index);
+    if(depth_cranium>max_depth)
+      max_depth = depth_cranium;
+  }
+  if(skin_){
+    int depth_skin = skin_->prerefine_target_sub_block(sub_block_pt, pt_index);
+    if(depth_skin>max_depth)
+      max_depth = depth_skin;
+  }
+  return max_depth;
+}
+
+void boxm2_vecf_composite_face_scene::extract_unrefined_cell_info(){
+  if(!target_blk_){
+    vcl_cout << "FATAL! - NULL target block\n";
+    return;
+  }
+  //iterate through the trees of the target. At this point they are unrefined
+  unrefined_cell_info_.resize(targ_n_.x()*targ_n_.y()*targ_n_.z());
+  for(unsigned ix = 0; ix<targ_n_.x(); ++ix){
+    for(unsigned iy = 0; iy<targ_n_.y(); ++iy){
+      for(unsigned iz = 0; iz<targ_n_.z(); ++iz){
+        double x = targ_origin_.x() + ix*targ_dims_.x();
+        double y = targ_origin_.y() + iy*targ_dims_.y();
+        double z = targ_origin_.z() + iz*targ_dims_.z();
+        unsigned lindex = static_cast<unsigned>(target_linear_index(ix, iy, iz));
+        unrefined_cell_info cinf;
+        cinf.linear_index_ = lindex;
+        cinf.ix_ = ix; cinf.iy_ = iy; cinf.iz_ = iz;
+        cinf.pt_.set(x+0.5, y+0.5, z+0.5);
+        unrefined_cell_info_[lindex]=cinf;
+      }
+    }
+   }
+}
+
+void boxm2_vecf_composite_face_scene::prerefine_target(boxm2_scene_sptr target_scene){
+    if(!target_blk_){
+    vcl_cout << "FATAL! - NULL target block\n";
+    return;
+  }
+  vul_timer t;
+  int deepest_cell_depth = 0;
+
+  // the array of depths found in the source intersecting the inversely transformed sub_block (tree) bounding box.
+  vbl_array_3d<int> depths_to_match(targ_n_.x(), targ_n_.y(), targ_n_.z());
+  depths_to_match.fill(0);
+
+  //iterate through the trees of the target. At this point they are unrefined
+  for(vcl_vector<unrefined_cell_info>::iterator uit = unrefined_cell_info_.begin();
+      uit != unrefined_cell_info_.end(); ++uit){
+    const vgl_point_3d<double>& pt = uit->pt_;
+    unsigned lindex = uit->linear_index_;
+    //record the deepest tree found
+    int max_depth = this->prerefine_target_sub_block(pt, lindex);
+    // if max_depth == -1  then don't change the refinement level
+    // since the target didn't map to a valid source position
+    depths_to_match(uit->ix_, uit->iy_, uit->iz_) = max_depth;
+    if(max_depth>deepest_cell_depth){
+      deepest_cell_depth = max_depth;
+    }
+  }
+  vcl_cout << "deepest cell depth in prerefine_target " << deepest_cell_depth << '\n';
+
+  //fully refine the target trees to the required depth
+  vcl_vector<vcl_string> prefixes;
+  prefixes.push_back("alpha");  prefixes.push_back("boxm2_mog3_grey"); prefixes.push_back("boxm2_num_obs");
+  boxm2_refine_block_multi_data_function(target_scene, target_blk_, prefixes, depths_to_match);
+  vcl_cout << "prefine in " << t.real() << " msec\n";
+}
 
 void boxm2_vecf_composite_face_scene::compute_target_box( vcl_string const& pc_path){
   vcl_ifstream istr(pc_path.c_str());
@@ -230,6 +319,7 @@ void boxm2_vecf_composite_face_scene::compute_target_box( vcl_string const& pc_p
   istr >> ptset;
   target_box_ = vgl_bounding_box(ptset);
 }
+
 boxm2_scene_sptr boxm2_vecf_composite_face_scene::
 construct_target_scene(vcl_string const& scene_dir,vcl_string const& scene_name, vcl_string const& data_path,
                       double sub_block_len, bool save_scene_xml){
