@@ -20,7 +20,7 @@ public:
   void map_to_target(boxm2_scene_sptr target);
 
   bool set_params(boxm2_vecf_articulated_params const& params);
-  boxm2_vecf_composite_face_params const& get_params() const {return params_;}
+  boxm2_vecf_composite_face_params const& params() const {return params_;}
 
   //: extract target cells, potentially with inverse mapping for a global transformation
   virtual void extract_unrefined_cell_info();

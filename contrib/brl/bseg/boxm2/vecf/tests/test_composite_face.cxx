@@ -59,7 +59,7 @@ void test_composite_face()
   //boxm2_cache::instance()->write_to_disk();
   
   cfscene.compute_target_box(pc_path);
-  cparams = cfscene.get_params();
+  cparams = cfscene.params();
 
   boxm2_scene_sptr tscene = cfscene.construct_target_scene(scene_dir, "target_face", "target_model", 8.44);
 

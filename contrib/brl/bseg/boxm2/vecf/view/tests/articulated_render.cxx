@@ -68,6 +68,7 @@ int main(int argc, char ** argv)
   vul_arg_info_list arglist;
   vul_arg<vcl_string> base_dir_path_arg(arglist, "-bdir", "Base model directory", "");
   vul_arg<vcl_string> model_path_arg(arglist, "-model", "model_xml_file", "");
+  vul_arg<vcl_string> target_base_dir_arg(arglist, "-tdir", "Base target directory", "");
   vul_arg<vcl_string> target_path_arg(arglist, "-target", "target_xml_file", "");
   vul_arg<vcl_string> geo_path_arg(arglist, "-geo", "geometry_data_file", "");
   vul_arg<vcl_string> camera_path_arg(arglist, "-cam", "default camera", "");
@@ -78,6 +79,7 @@ int main(int argc, char ** argv)
   arglist.parse(argc, argv, false);
   vcl_string base_dir_path = base_dir_path_arg();
   vcl_string model_path = model_path_arg();
+  vcl_string target_base_dir = target_base_dir_arg();
   vcl_string target_path = target_path_arg();
   vcl_string geo_path = geo_path_arg();
   vcl_string cam_path = camera_path_arg();
@@ -92,8 +94,12 @@ int main(int argc, char ** argv)
     return -1;
   }
   vcl_string articulated_scene_path = base_dir_path + model_path;
-  vcl_string target_scene_path = base_dir_path + target_path;
-  vcl_string geometry_path = base_dir_path + geo_path;
+  vcl_string target_scene_path;
+  if(target_base_dir == "")
+    target_scene_path = base_dir_path + target_path;
+  else
+    target_scene_path = target_base_dir + target_path;
+    vcl_string geometry_path = base_dir_path + geo_path;
   vcl_string eye_model_path = base_dir_path + "eye/eye.xml";
   vcl_string default_cam_path = base_dir_path + cam_path;
   // check for valid file paths
@@ -243,7 +249,7 @@ int main(int argc, char ** argv)
       // this constructor for the articulation passes in the global transformation between source and target
       // needed to render the face of individual subjects
       boxm2_vecf_composite_face_articulation* composite_face_articulation =
-        new boxm2_vecf_composite_face_articulation(composite_face_scene->get_params());
+        new boxm2_vecf_composite_face_articulation(composite_face_scene->params());
       composite_face_articulation->set_play_sequence("default");
       composite_face_scene->set_target_background(dark_background);
       //boxm2_scene_sptr crscn = skull_scene->scene();

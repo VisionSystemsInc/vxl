@@ -7,21 +7,10 @@ int main(int argc, char ** argv)
 {
   
   vul_arg_info_list arglist;
-  vul_arg<vcl_string> base_dir_path(arglist, "-bdir", "Base directory", "");
-  vul_arg<vcl_string> idstr(arglist, "-bid", " id string", "");
-  vul_arg<vcl_string> show_model_arg(arglist, "-smod", "Show model", "true");
-  vul_arg<vcl_string> non_lin_arg(arglist, "-nlin", "non-linear refine parameters", "true");
-  vul_arg<vcl_string> dlib_arg(arglist, "-dlib", "2-d data from dlib", "false");
+  vul_arg<vcl_string> base_dir_path(arglist, "-sdir", "Base directory for subjects", "");
+  vul_arg<vcl_string> idstr(arglist, "-sid", " subject id string", "");
 
   arglist.parse(argc, argv, false);
-  vcl_string show_model_str = show_model_arg();
-  bool show_model = show_model_str == "true";
-
-  vcl_string non_lin_str = non_lin_arg();
-  bool do_non_lin = non_lin_str == "true";
-
-  vcl_string dlib_str = dlib_arg();
-  bool from_dlib = dlib_str == "true";
 
   vcl_string base_dir = base_dir_path();
 
