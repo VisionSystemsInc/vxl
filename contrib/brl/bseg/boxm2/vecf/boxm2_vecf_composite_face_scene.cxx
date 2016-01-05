@@ -104,9 +104,42 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   mstr.close();
   mouth_geo_ = boxm2_vecf_mouth(ptset);
 }
-
+bool  boxm2_vecf_composite_face_scene::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf, vcl_string& anatomy_type) const{
+  vgl_vector_3d<double> mandible_inv_vf, cranium_inv_vf, skin_inv_vf;
+  bool mandible_valid=false, cranium_valid=false, skin_valid=false, in_mouth = false;
+  if(mandible_)
+    mandible_valid = mandible_->inverse_vector_field(target_pt, mandible_inv_vf);
+  if(cranium_)
+    cranium_valid = cranium_->inverse_vector_field(target_pt, cranium_inv_vf);
+  if(skin_){
+    if(coupling_box_.contains(target_pt)){
+      skin_valid = mandible_->coupled_vector_field(target_pt, skin_inv_vf);
+      in_mouth = mouth_geo_.in(target_pt);
+    }else
+      skin_valid = skin_->inverse_vector_field(target_pt, skin_inv_vf);
+  }
+  bool not_valid = (!mandible_valid&&!cranium_valid&&!skin_valid);
+  if(not_valid){
+    return false;
+  }
+  bool mouth_skin_invalid = skin_valid&&in_mouth;
+  if(mouth_skin_invalid){
+    anatomy_type = "mouth";
+    inv_vf.set(0.0, 0.0, 0.0);
+  }else if(mandible_valid){
+    anatomy_type="mandible";
+    inv_vf.set(mandible_inv_vf.x(), mandible_inv_vf.y(), mandible_inv_vf.z());
+  }else if(skin_valid){
+    anatomy_type="skin";
+    inv_vf.set(skin_inv_vf.x(), skin_inv_vf.y(), skin_inv_vf.z());
+  }else if(cranium_valid){
+    anatomy_type="cranium";
+    inv_vf.set(cranium_inv_vf.x(), cranium_inv_vf.y(), cranium_inv_vf.z());
+  }
+  return true;
+}
 //: compute the inverse vector field, first undoing the affine map to the target
-void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<vcl_string>& type) const{
+void  boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<vcl_string>& type) const{
   vul_timer t;
 
   //the target cell centers. the vector field could potentially be defined at all target points
@@ -115,7 +148,15 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
   type.resize(nt, "invalid");
   unsigned mandible_cnt = 0, skin_cnt = 0, cranium_cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
+    vgl_vector_3d<double> inv_vf;
+    vcl_string anatomy_type;
     const vgl_point_3d<double>& p_inv = target_cell_centers_[i].cell_center_;
+    bool valid = this->inverse_vector_field(p_inv, inv_vf, anatomy_type);
+    if(!valid)
+      continue;
+    vfield[i].set(inv_vf.x(), inv_vf.y(), inv_vf.z());
+    type[i]=anatomy_type;
+#if 0
     vgl_vector_3d<double> mandible_inv_vf, cranium_inv_vf, skin_inv_vf; //need to iterate over components here (left off)
     bool mandible_valid=false, cranium_valid=false, skin_valid=false, in_mouth = false;
     if(mandible_)
@@ -151,9 +192,10 @@ void boxm2_vecf_composite_face_scene::inverse_vector_field(vcl_vector<vgl_vector
       vfield[i].set(cranium_inv_vf.x(), cranium_inv_vf.y(), cranium_inv_vf.z());
       cranium_cnt++;
     }
+#endif
   }
-  vcl_cout << "computed " << mandible_cnt << " mandible pts "<< skin_cnt << " skin pts and " 
-          << cranium_cnt << " cranium pts out of " << nt << " for face vector field in " << t.real()/1000.0 << " sec.\n";
+  //  vcl_cout << "computed " << mandible_cnt << " mandible pts "<< skin_cnt << " skin pts and " 
+  //          << cranium_cnt << " cranium pts out of " << nt << " for face vector field in " << t.real()/1000.0 << " sec.\n";
 }
 void boxm2_vecf_composite_face_scene::extract_unrefined_cell_info(){
   if(!target_blk_){
