@@ -31,8 +31,11 @@ public:
   //: refine target cells to match the refinement level of the source block
   virtual int prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index);
 
+
   //: inverse vector field over all components
-  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const {return false;}
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const {
+    vcl_string type; return inverse_vector_field(target_pt, inv_vf, type);
+  }
 
   virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf){ return false;}
 
