@@ -146,7 +146,6 @@ bool boxm2_ocl_articulated_render_tableau::handle(vgui_event const &e)
     return true;
   }
 
-
   //toggle color - this is a hack to get color models to show as grey
   if (e.type == vgui_KEY_PRESS) {
     if (e.key == vgui_key('c')) {
@@ -161,17 +160,17 @@ bool boxm2_ocl_articulated_render_tableau::handle(vgui_event const &e)
       }
     }
   }
-
+   if(articulated_scene_ && scene_articulation_->handle(e))
+        return true;
+   
   if ((e.type == vgui_KEY_PRESS  && e.key == vgui_key('v'))||(e.type == vgui_TIMER&&e.timer_id == 1234)) {
 
     if(e.type == vgui_KEY_PRESS  && e.key == vgui_key('v'))
       animation_on_ = !animation_on_;
 
-    if(!animation_on_){
-                 if (boxm2_cam_tableau::handle(e))
-                         return true;
-    return false;
-    }
+    if(!animation_on_)
+      return boxm2_cam_tableau::handle(e);
+ 
     if(articulated_scene_){
       unsigned nsa = static_cast<unsigned>(scene_articulation_->size());
       opencl_cache_->clear_cache();
@@ -195,9 +194,7 @@ bool boxm2_ocl_articulated_render_tableau::handle(vgui_event const &e)
      e.origin->post_timer(0.2f, 1234);
     }
   }
-  if (boxm2_cam_tableau::handle(e)) {
-    return true;
-  }
+  
 
   return false;
 }
