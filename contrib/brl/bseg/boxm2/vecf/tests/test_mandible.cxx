@@ -161,7 +161,7 @@ void test_mandible()
   vcl_vector<unsigned> data_indices;
   blk->leaf_neighbors(probe, 1.5, nbrs, nbr_edge_lengths, data_indices);
 #endif
-#if 1//kkkk
+#if 1
   vcl_string target_scene_path = scene_dir + "target_mandible_8.xml";
 //vcl_string target_scene_path = scene_dir + "../skull/target_skull_8.xml";
  // vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";

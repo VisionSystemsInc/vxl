@@ -73,7 +73,7 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
     vcl_cout << "FATAL - mouth_path not defined\n";
     return;
   }else
-    mouth_path = pit->second;
+    mouth_path = base_path + pit->second;
 
   if(!vul_file::exists(mouth_path)){
     vcl_cout << "FATAL - " << mouth_path << " does not exist\n";
