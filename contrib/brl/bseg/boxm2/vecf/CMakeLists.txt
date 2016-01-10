@@ -47,6 +47,15 @@ SET(boxm2_vecf_sources
     boxm2_vecf_skull_params.h               boxm2_vecf_skull_params.cxx
     boxm2_vecf_skull_scene.h                boxm2_vecf_skull_scene.cxx
     boxm2_vecf_skull_articulation.h         boxm2_vecf_skull_articulation.cxx
+    boxm2_vecf_skin.h                       boxm2_vecf_skin.cxx  
+    boxm2_vecf_skin_params.h                boxm2_vecf_skin_params.cxx
+    boxm2_vecf_skin_scene.h                 boxm2_vecf_skin_scene.cxx  
+    boxm2_vecf_composite_face_scene.h       boxm2_vecf_composite_face_scene.cxx
+    boxm2_vecf_composite_face_params.h      boxm2_vecf_composite_face_params.cxx
+    boxm2_vecf_composite_face_articulation.h    boxm2_vecf_composite_face_articulation.cxx
+    boxm2_vecf_mouth_params.h               boxm2_vecf_mouth_params.cxx
+    boxm2_vecf_mouth.h                      boxm2_vecf_mouth.cxx
+    boxm2_vecf_fit_face.h                   boxm2_vecf_fit_face.cxx
 )
 
 AUX_SOURCE_DIRECTORY(Templates boxm2_vecf_sources)

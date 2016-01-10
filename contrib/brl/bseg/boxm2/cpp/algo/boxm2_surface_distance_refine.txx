@@ -70,8 +70,7 @@ void boxm2_surface_distance_refine(D const& dist_functor, boxm2_scene_sptr scene
           }
         }
       }
-//      boxm2_cache::instance()->replace_data_base(scene, id, boxm2_data_traits<BOXM2_ALPHA>::prefix(), alpha_base);
-        }
+    }
 }
 #undef BOXM2_SURFACE_DISTANCE_REFINE_INSTANTIATE
 #define BOXM2_SURFACE_DISTANCE_REFINE_INSTANTIATE(D) \

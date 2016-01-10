@@ -175,7 +175,6 @@ plane_coord_vectors(vgl_vector_3d<T>& uvec, vgl_vector_3d<T>& vvec) const
 {
   vgl_vector_3d<T> Y((T)0, (T)1, (T)0);
   vgl_vector_3d<T> n = this->normal();
-
   // Since we have an int Template definition, we need to static cast input so VS is happy.
   // Note* currently there are only float and double Template defs. If long double is ever created,
   // this cast will need to get expanded to prevent loss of precision issues.

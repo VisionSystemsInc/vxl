@@ -14,7 +14,7 @@
 #include <boxm2/boxm2_scene.h>
 #include <boxm2/io/boxm2_cache.h>
 
-//#define BUILD_TEST_CRANIUM
+#define BUILD_TEST_CRANIUM
 void test_cranium()
 {
 #ifdef BUILD_TEST_CRANIUM
@@ -43,13 +43,14 @@ void test_cranium()
       return;
     }
 
-  //  boxm2_vecf_cranium_scene crscene(cranium_scene_path, cranium_geo_path);
-  //const boxm2_vecf_cranium& crand = crscene.cranium_geo();
+  //boxm2_vecf_cranium_scene crscene(cranium_scene_path, cranium_geo_path);
+  ///const boxm2_vecf_cranium& crand = crscene.cranium_geo();
   boxm2_vecf_cranium_scene crscene(cranium_scene_path);
   boxm2_scene_sptr scene = crscene.scene();
   if(!scene)
     return;
   vcl_string target_scene_path = scene_dir + "target_cranium_8.xml";
+  //vcl_string target_scene_path = scene_dir + "../composite_face/target_face.xml";
 
   if(!vul_file::exists(target_scene_path))
     {
