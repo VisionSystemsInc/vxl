@@ -26,7 +26,7 @@ static void test_spline_region()
   knots.push_back(p0); knots.push_back(p1); knots.push_back(p2); knots.push_back(p3);
   knots.push_back(p4); knots.push_back(p5); knots.push_back(p6); knots.push_back(p7);
   knots.push_back(p8); knots.push_back(p9); 
-  bvgl_spline_region_3d<double> spl_reg(knots);
+  bvgl_spline_region_3d<double> spl_reg(knots, 0.5);
   vgl_point_3d<double> p_pos(0.0, -40.0, 65.0);
   spl_reg.set_point_positive(p_pos);
   vgl_point_3d<double> p3d(0.0, -65.8559, 77.0);
