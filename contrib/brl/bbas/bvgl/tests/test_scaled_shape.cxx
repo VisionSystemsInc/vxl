@@ -2,52 +2,22 @@
 // \file
 #include <testlib/testlib_test.h>
 #include <bvgl/bvgl_spline_region_3d.h>
+#include <bvgl/bvgl_scaled_shape_3d.h>
 #include <vcl_iostream.h>
 #include <vcl_string.h>
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_vector_3d.h>
-#define TEST_SPLINE_REGION 1
+#define TEST_SCALED_SHAPE 1
 //: Test changes
-static void test_spline_region()
+static void test_scaled_shape()
 {
-#if TEST_SPLINE_REGION
-  vcl_string base_dir = "d:/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/mouth/";
-  vgl_point_3d<double> p0(-27.048786163330,-58.756767272949,61.351360321045);
-  vgl_point_3d<double> p1(-22.989215850830,-61.527729034424,69.345726013184);
-  vgl_point_3d<double> p2(-16.756101608276,-63.819145202637,72.460670471191);
-  vgl_point_3d<double> p3(-10.471982955933,-66.513549804688,75.632919311523);
-  vgl_point_3d<double> p4(-4.012704849243,-65.970741271973,77.426780700684);
-  vgl_point_3d<double> p5(1.456362962723,-65.779235839844,77.438545227051);
-  vgl_point_3d<double> p6(9.006361961365,-64.448524475098,76.230621337891);
-  vgl_point_3d<double> p7(14.902037620544,-64.017341613770,73.427680969238);
-  vgl_point_3d<double> p8(22.068965911865,-61.970176696777,69.302963256836);
-  vgl_point_3d<double> p9(25.956886291504,-59.957836151123,62.066261291504);
-  vcl_vector<vgl_point_3d<double> > knots;
-  knots.push_back(p0); knots.push_back(p1); knots.push_back(p2); knots.push_back(p3);
-  knots.push_back(p4); knots.push_back(p5); knots.push_back(p6); knots.push_back(p7);
-  knots.push_back(p8); knots.push_back(p9); 
-  bvgl_spline_region_3d<double> spl_reg(knots, 0.5);
-  vgl_point_3d<double> p_pos(0.0, -40.0, 65.0);
-  spl_reg.set_point_positive(p_pos);
-  vgl_point_3d<double> p3d(0.0, -65.8559, 77.0);
-  bool inside = spl_reg.in(p3d);
-  double sd;
-  vgl_point_3d<double> psd(1.08,-60.0 , 68.39);
-  bool good = spl_reg.signed_distance(psd, sd);
-  if(good)
-    vcl_cout << "signed distance " << sd << '\n';
-  vgl_point_3d<double> cent = spl_reg.centroid();
-  vcl_cout << "centroid " << cent << '\n';
-  vgl_pointset_3d<double> ptset = spl_reg.random_pointset(1000);
-  vcl_string pt_path = base_dir + "lower_mouth_plane.txt";
-  vcl_ofstream ostr(pt_path.c_str());
-  if(ostr){
-    ostr << ptset;
-    ostr.close();
-  }
-  // test 2d constructor
-  vgl_vector_3d<double> normal(-0.73911, 0.100747, -0.666008);
-  vgl_point_3d<double> origin(23.56,5.32,94.1);
+#if TEST_SCALED_SHAPE
+  vcl_string base_dir = "d:/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/fat_pocket/";
+  vcl_string display_random_path = base_dir + "random_pocket_points.txt";
+  //vgl_vector_3d<double> normal(-0.73911, 0.100747, -0.666008);//from pts
+  vgl_vector_3d<double> normal(-0.73911, 0.2, -0.666008);//from pts but 2 x y comp
+  //vgl_point_3d<double> origin(23.56,5.32,94.1);// manual
+  vgl_point_3d<double> origin(16.1689, 0.0, 87.4399); // move 10 along normal zero out y
   vcl_vector<vgl_point_2d<double > > knots2d;
   vgl_point_2d<double> p00(4.806863675505915, 6.582528807225162);
   vgl_point_2d<double> p01(11.01628093103361, 10.276435637911343);
@@ -77,12 +47,7 @@ static void test_spline_region()
   vgl_point_2d<double> p25(-0.2848759846009665, -3.760463510848136);
   vgl_point_2d<double> p26(-0.03648662715599116,-0.06649018997197387);
   vgl_point_2d<double> p27(2.8198419572980784,  4.218425775978408);
-  vgl_point_2d<double> p28(32.87338943342705,  15.152382902522577);
-  vgl_point_2d<double> p29(1.081209596535218, -11.00035866292951);
-  vgl_point_2d<double> p30(0.9570149178127298, -10.70492058548739);
-  vgl_point_2d<double> p31(11.140475609756098,  10.128672272396967);
-  vgl_point_2d<double> p32(19.585285312666212, -65.37470621820825);
-  vgl_point_2d<double> p33(56.34501013094244, -58.13458943216029);
+
   knots2d.push_back(p00);   knots2d.push_back(p01);   knots2d.push_back(p02);
   knots2d.push_back(p03);   knots2d.push_back(p04);   knots2d.push_back(p05);
   knots2d.push_back(p06);   knots2d.push_back(p07);   knots2d.push_back(p08);
@@ -92,16 +57,23 @@ static void test_spline_region()
   knots2d.push_back(p18);   knots2d.push_back(p19);   knots2d.push_back(p20);
   knots2d.push_back(p21);   knots2d.push_back(p22);   knots2d.push_back(p23);
   knots2d.push_back(p24);   knots2d.push_back(p25);   knots2d.push_back(p26);
-  knots2d.push_back(p27);   knots2d.push_back(p28);   knots2d.push_back(p29);
-  knots2d.push_back(p30);   knots2d.push_back(p31);   knots2d.push_back(p32);
-  knots2d.push_back(p33);
+  knots2d.push_back(p27);
   bvgl_spline_region_3d<double> kf2d(knots2d, normal, origin, 0.5);
-  for(double t = 0.0; t<=kf2d.max_t(); t+=0.5)
-    vcl_cout << t << ' ' << kf2d(t) <<'\n';
-  bool isin = kf2d.in(origin);
+  double max_norm_distance = 30.0, scale_at_midpt = 0.8, scale_at_max = 0.25;
+  bvgl_scaled_shape_3d<double> ss3d(kf2d, max_norm_distance, scale_at_midpt, scale_at_max,0.5);
+  unsigned indx = 0;
+  vgl_point_3d<double> pt(50.23, -14.95, 83.64);
+  bool inpt = ss3d.in(pt);
+  vgl_pointset_3d<double> ptset = ss3d.random_pointset(100000);
+  vcl_ofstream ostr(display_random_path.c_str());
+  if(ostr){
+          ostr << ptset;
+          ostr.close();
+  }else
+   vcl_cout << "couldn't open " << display_random_path << '\n';
 #endif
 }
 
-TESTMAIN( test_spline_region );
+TESTMAIN( test_scaled_shape );
 
 

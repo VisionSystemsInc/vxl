@@ -10,7 +10,8 @@ SET(bvgl_test_sources
   test_grid_index_3d.cxx
   test_spline_region.cxx
   test_poly_region.cxx
- )
+  test_scaled_shape.cxx
+)
 
 #Make sure expat library is found
 INCLUDE( ${BRL_MODULE_PATH}/FindEXPAT.cmake )
@@ -28,7 +29,8 @@ ADD_TEST(bvgl_test_intersection           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_al
 ADD_TEST(bvgl_test_gen_cylinder           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_gen_cylinder)	
 ADD_TEST(bvgl_test_grid_index_3d          ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_grid_index_3d)	
 ADD_TEST(bvgl_test_spline_region          ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_spline_region)
-ADD_TEST(bvgl_test_poly_region            ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_poly_region)	
+ADD_TEST(bvgl_test_poly_region            ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_poly_region)
+ADD_TEST(bvgl_test_scaled_shape           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_scaled_shape)             
 
 IF(EXPAT_FOUND)
   ADD_TEST(bvgl_test_labelme_parser       ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_bvgl_labelme_parser)

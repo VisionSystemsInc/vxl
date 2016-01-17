@@ -27,7 +27,8 @@ SET(bvgl_sources
  bvgl_gen_cylinder.h                     bvgl_gen_cylinder.cxx
  bvgl_grid_index_3d.h                    bvgl_grid_index_3d.cxx
  bvgl_spline_region_3d.h                 bvgl_poly_region_3d.txx
- bvgl_poly_region_3d.h                   bvgl_poly_region_3d.txx 
+ bvgl_poly_region_3d.h                   bvgl_poly_region_3d.txx
+ bvgl_scaled_shape_3d.h                  bvgl_scaled_shape_3d.txx       
 )
 AUX_SOURCE_DIRECTORY(Templates bvgl_sources)
 

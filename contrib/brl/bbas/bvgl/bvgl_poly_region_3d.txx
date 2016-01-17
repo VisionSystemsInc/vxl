@@ -95,12 +95,12 @@ void bvgl_poly_region_3d<Type>::set_point_positive(vgl_point_3d<Type> const& p_p
 }
 
 template <class Type>
-bool bvgl_poly_region_3d<Type>::in(vgl_point_3d<Type> const& p3d) const{
-  vgl_point_3d<Type> cp = vgl_closest_point(plane_, p3d);
-  Type len = (p3d-cp).length();
+bool bvgl_poly_region_3d<Type>::in(vgl_point_3d<Type> const& p) const{
+  vgl_point_3d<Type> cp = vgl_closest_point(plane_, p);
+  Type len = (p-cp).length();
   if(len>tolerance_)
     return false;
-  vgl_vector_3d<Type> del = p3d-origin_;
+  vgl_vector_3d<Type> del = p-origin_;
   Type pu = dot_product(del, u_vec_), pv = dot_product(del, v_vec_);
   vgl_point_2d<Type> p2d(pu, pv);
   return poly_2d_.contains(p2d);
@@ -136,9 +136,8 @@ vgl_point_3d<Type> bvgl_poly_region_3d<Type>::centroid() const{
   cx /= n; cy /= n; cz /= n;
   return vgl_point_3d<Type>(cx, cy, cz);
 }
-
 template <class Type>       
-vgl_pointset_3d<Type> bvgl_poly_region_3d<Type>::random_pointset(unsigned n_pts) const{
+vgl_box_2d<Type> bvgl_poly_region_3d<Type>::bounding_box_2d() const{
   // get a bounding box for the planar polygon
   vgl_box_2d<Type> bb;
   vcl_vector<vgl_point_2d<Type> > verts = poly_2d_[0];
@@ -149,6 +148,30 @@ vgl_pointset_3d<Type> bvgl_poly_region_3d<Type>::random_pointset(unsigned n_pts)
     pts.push_back(p_i); // poly pts are part of the set
     bb.add(p_i);
   }
+  return bb;
+}
+
+template <class Type>       
+vgl_box_3d<Type> bvgl_poly_region_3d<Type>::bounding_box_3d() const{
+  vgl_box_2d<Type> bb = this->bounding_box_2d();
+  Type umin = bb.min_x(), umax = bb.max_x();
+  Type vmin = bb.min_y(), vmax = bb.max_y();
+  vgl_vector_3d<Type> del_min = umin*u_vec_ + vmin*v_vec_;
+  vgl_point_3d<Type> pmin_3d = origin_ + del_min;
+  vgl_vector_3d<Type> del_max = umax*u_vec_ + vmax*v_vec_;
+  vgl_point_3d<Type> pmax_3d = origin_ + del_max;
+  vgl_box_3d<Type> ret;
+  ret.add(pmin_3d); ret.add(pmax_3d);
+  return ret;
+}
+
+template <class Type>       
+vgl_pointset_3d<Type> bvgl_poly_region_3d<Type>::random_pointset(unsigned n_pts) const{
+  vgl_box_2d<double> bb = this->bounding_box_2d();
+  vcl_vector<vgl_point_2d<Type> > pts;
+  unsigned n = static_cast<unsigned>(poly_2d_[0].size());
+  for(unsigned i = 0; i<n; ++i)
+   pts.push_back(poly_2d_[0][i]);
   unsigned n_req = n_pts - n, niter = 0;
   Type xmin = bb.min_x(), xmax = bb.max_x();
   Type ymin = bb.min_y(), ymax = bb.max_y();

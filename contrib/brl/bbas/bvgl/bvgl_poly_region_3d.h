@@ -11,6 +11,7 @@
 #include <vgl/vgl_pointset_3d.h>
 #include <vgl/vgl_polygon.h>
 #include <vgl/vgl_point_3d.h>
+#include <vgl/vgl_box_3d.h>
 #include <vgl/vgl_vector_3d.h>
 #include <vcl_vector.h>
 #include <vnl/vnl_vector.h>
@@ -27,17 +28,22 @@ class bvgl_poly_region_3d
   bvgl_poly_region_3d(vnl_vector<Type> const& u_coefs, vnl_vector<Type> const& v_coefs,  vgl_vector_3d<Type> const& normal,
                       vgl_point_3d<Type> const& origin, Type tolerance = 0.5);
 
+  vgl_vector_3d<Type> normal() const {return unit_normal_;}
   Type u(Type t) const;
   Type v(Type t) const;
   vgl_point_3d<Type> p(Type t) const;
 
-  bool in(vgl_point_3d<Type> const& p_3d) const;
+  bool in(vgl_point_3d<Type> const& p) const;
 
   bool signed_distance(vgl_point_3d<Type> const& p, Type& dist) const;
 
   vgl_point_3d<Type> centroid() const;
 
-  vgl_pointset_3d<Type> random_pointset(unsigned n_pts) const;
+  vgl_box_2d<Type> bounding_box_2d() const;
+
+  vgl_box_3d<Type> bounding_box_3d() const;
+
+ vgl_pointset_3d<Type> random_pointset(unsigned n_pts) const;
 
   void set_point_positive(vgl_point_3d<Type> const& p_pos);
 

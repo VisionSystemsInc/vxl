@@ -56,6 +56,8 @@ SET(boxm2_vecf_sources
     boxm2_vecf_mouth_params.h               boxm2_vecf_mouth_params.cxx
     boxm2_vecf_mouth.h                      boxm2_vecf_mouth.cxx
     boxm2_vecf_fit_face.h                   boxm2_vecf_fit_face.cxx
+    boxm2_vecf_fat_pocket.h                 boxm2_vecf_fat_pocket.cxx
+    boxm2_vecf_fat_pocket_params.h          boxm2_vecf_fat_pocket_params.cxx       
 )
 
 AUX_SOURCE_DIRECTORY(Templates boxm2_vecf_sources)

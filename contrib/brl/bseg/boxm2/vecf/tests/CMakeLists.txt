@@ -10,7 +10,8 @@ ADD_EXECUTABLE( boxm2_vecf_test_all
   test_skin.cxx
   test_composite_face.cxx
   test_mouth.cxx
- )
+  test_fat_pocket.cxx
+)
 TARGET_LINK_LIBRARIES(boxm2_vecf_test_all testlib  boxm2_vecf brdb vpgl_algo vpgl_pro vil_pro sdet vnl vgl vil vul vpl )
 
 ##- #depends on OPENCL being found...
@@ -27,6 +28,7 @@ ADD_TEST( boxm2_vecf_test_cranium      ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test
 ADD_TEST( boxm2_vecf_test_skin      ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_skin  )
 ADD_TEST( boxm2_vecf_test_composite_face      ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_composite_face  )
 ADD_TEST( boxm2_vecf_test_mouth      ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_mouth  )
+ADD_TEST( boxm2_vecf_test_fat_pocket   ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_fat_pocket  )
 
 #ADD_EXECUTABLE( boxm2_vecf_test_include test_include.cxx )
 #TARGET_LINK_LIBRARIES( boxm2_vecf_test_include boxm2_vecf )

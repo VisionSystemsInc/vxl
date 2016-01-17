@@ -9,6 +9,7 @@ DECLARE(test_gen_cylinder);
 DECLARE(test_grid_index_3d);
 DECLARE(test_spline_region);
 DECLARE(test_poly_region);
+DECLARE(test_scaled_shape);
 
 void
 register_tests()
@@ -22,6 +23,7 @@ register_tests()
   REGISTER(test_grid_index_3d);
   REGISTER(test_spline_region);
   REGISTER(test_poly_region);
+  REGISTER(test_scaled_shape);
 }
 
 DEFINE_MAIN;
