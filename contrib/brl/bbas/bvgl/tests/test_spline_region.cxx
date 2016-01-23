@@ -6,6 +6,7 @@
 #include <vcl_string.h>
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_vector_3d.h>
+#include <vcl_cmath.h>
 #define TEST_SPLINE_REGION 1
 //: Test changes
 static void test_spline_region()
@@ -45,6 +46,17 @@ static void test_spline_region()
     ostr << ptset;
     ostr.close();
   }
+  // test area
+  vgl_point_3d<double> a0(0.0, 0.0, 0.0);
+  vgl_point_3d<double> a1(1.0, 0.0, 0.0);
+  vgl_point_3d<double> a2(1.0, 1.0, 0.0);
+  vgl_point_3d<double> a3(0.0, 1.0, 0.0);
+  vcl_vector<vgl_point_3d<double> > aknots;
+  aknots.push_back(a0);   aknots.push_back(a1);
+  aknots.push_back(a2);   aknots.push_back(a3);
+  bvgl_spline_region_3d<double> aspl_reg(aknots, 0.5);
+  double area = aspl_reg.area();
+  vcl_cout << area << '\n';
   // test 2d constructor
   vgl_vector_3d<double> normal(-0.73911, 0.100747, -0.666008);
   vgl_point_3d<double> origin(23.56,5.32,94.1);
@@ -99,6 +111,23 @@ static void test_spline_region()
   for(double t = 0.0; t<=kf2d.max_t(); t+=0.5)
     vcl_cout << t << ' ' << kf2d(t) <<'\n';
   bool isin = kf2d.in(origin);
+  vgl_vector_3d<double> L1(0.55,0.68,-0.42);
+  double lambda = 0.85, gamma = 0.2;
+  double su = lambda, sv = vcl_pow(lambda,-gamma), sw = 1.0/(su*sv);
+  vgl_vector_3d<double> dv = (sw-1.0)*normal;
+  // test inverse vector field
+  
+  bvgl_spline_region_3d<double> def_reg = kf2d.scale(su, sv, dv, L1);
+
+   vgl_point_3d<double> p_targ = (def_reg.knots())[0]+dv;
+   kf2d.set_principal_eigenvector(L1);
+   kf2d.set_deformation_eigenvalues(su, sv);
+   kf2d.set_offset_vector(dv);
+  vgl_vector_3d<double> inv;
+  good = kf2d.inverse_vector_field(p_targ, inv);
+  vgl_point_3d<double> p_source = p_targ + inv;
+  vgl_point_3d<double> p3d_source_act = (kf2d.knots())[0];
+  double diff = (p_source - p3d_source_act).length();
 #endif
 }
 

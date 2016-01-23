@@ -11,10 +11,8 @@
 #include <vcl_limits.h>
 template <class Type>
 void bvgl_spline_region_3d<Type>::plane_to_world(Type u, Type v, vgl_point_3d<Type>& p3d) const{
-  Type x = u*u_vec_.x() + origin_.x();
-  Type y = v*v_vec_.y() + origin_.y();
-  Type z = -(plane_.a()*x + plane_.b()*y + plane_.d())/plane_.c();
-  p3d.set(x, y, z);
+  vgl_vector_3d<Type> plane_vec = u*u_vec_ + v*v_vec_;
+  p3d =  origin_+ plane_vec;
 }
 template <class Type>
 bool bvgl_spline_region_3d<Type>::world_to_plane(vgl_point_3d<Type> p3d, Type& u, Type& v) const{
@@ -23,15 +21,15 @@ bool bvgl_spline_region_3d<Type>::world_to_plane(vgl_point_3d<Type> p3d, Type& u
   Type len = (p3d-cp).length();
   if(len>tolerance_)
     return false;
-  vgl_vector_3d<Type> del = p3d-origin_;
-  u = dot_product(del, u_vec_);
-  v = dot_product(del, v_vec_);
+  vgl_vector_3d<Type> plane_vec = cp-origin_;
+  u = dot_product(plane_vec, u_vec_);
+  v = dot_product(plane_vec, v_vec_);
   return true;
 }
 
 template <class Type>
 bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type> > const& knots, Type tolerance):
-  tolerance_(tolerance){
+  tolerance_(tolerance),cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0))){
   if(knots.size()<3){
           vcl_cout << "FATAL - two few points to construct spline region\n";
           return;
@@ -77,8 +75,22 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type>
   unit_normal_/=length(newn);
   plane_ = vgl_plane_3d<Type>(unit_normal_,origin_);
 
-  // planar polygon approximation to the spline
-  poly_2d_.new_sheet();
+  // create the spline on the plane
+  bool closed = true;
+  vcl_vector<vgl_point_2d<Type> > knots_2d;
+  for(vcl_vector<vgl_point_3d<Type> >::iterator kit=planar_knots.begin();
+      kit != planar_knots.end(); ++kit){
+    Type u, v;
+    if(!this->world_to_plane(*kit, u, v))
+      continue;
+    vgl_point_2d<Type> p2d(u, v);
+    knots_2d.push_back(p2d);
+  }
+  spline_2d_.set_knots(knots_2d, closed);
+  spline_3d_.set_s(Type(0.5));  
+
+  // planar polygon approximation to the spline and 2-d spline spec.
+      poly_2d_.new_sheet();
   for(Type t = Type(0); t<=spline_3d_.max_t(); t+=tolerance_){
     vgl_point_3d<Type> p3d = spline_3d_(t);
     Type u, v;
@@ -87,16 +99,19 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type>
     vgl_point_2d<Type> p2d(u, v);
     poly_2d_.push_back(p2d);
   }
+  centroid_2d_ = this->compute_centroid_2d();
+  centroid_3d_ = this->compute_centroid();
 }
 template <class Type>
-bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset, Type tolerance){
+bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset, Type tolerance):
+  cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0))){
   vcl_vector<vgl_point_3d<Type> > knots = ptset.points();
   *this = bvgl_spline_region_3d<Type>(knots, tolerance);
 }
 
 template <class Type>
 bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_2d<Type> > const& knots_2d, vgl_vector_3d<Type> const& normal,
-                                                   vgl_point_3d<Type> const& origin, Type tolerance):tolerance_(tolerance), origin_(origin){
+                                                   vgl_point_3d<Type> const& origin, Type tolerance):tolerance_(tolerance), origin_(origin),cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0))){
   bool closed = true;
   spline_2d_.set_knots(knots_2d, closed);
   spline_2d_.set_s(Type(0.5));
@@ -128,6 +143,8 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_2d<Type>
   }
   spline_3d_.set_knots(knots_3d, closed);
   spline_3d_.set_s(Type(0.5));
+  centroid_2d_ = this->compute_centroid_2d();
+  centroid_3d_ = this->compute_centroid();
 }
 template <class Type>
 void bvgl_spline_region_3d<Type>::set_point_positive(vgl_point_3d<Type> const& p_pos){
@@ -151,6 +168,17 @@ bool bvgl_spline_region_3d<Type>::in(vgl_point_3d<Type> const& p3d) const{
   vgl_point_2d<Type> p2d(u, v);
   return poly_2d_.contains(p2d);
 }    
+
+template <class Type>
+vgl_point_3d<Type>  bvgl_spline_region_3d<Type>::closest_point(vgl_point_3d<Type> const& p) const{
+  vgl_point_3d<Type> cp = vgl_closest_point(plane_, p);
+  if(this->in(cp))
+    return cp;
+  return vgl_closest_point(spline_3d_,p);
+}
+
+
+
 template <class Type>
 bool bvgl_spline_region_3d<Type>::signed_distance(vgl_point_3d<Type> const& p, Type& dist) const{
   vgl_point_3d<Type> cp = vgl_closest_point(plane_, p);
@@ -170,9 +198,22 @@ vgl_point_3d<Type> bvgl_spline_region_3d<Type>::operator () (Type t) const{
   this->plane_to_world(p2d.x(), p2d.y(), ret);
   return ret;
 }
-
 template <class Type>
-vgl_point_3d<Type> bvgl_spline_region_3d<Type>::centroid() const{
+vgl_point_2d<Type> bvgl_spline_region_3d<Type>::compute_centroid_2d() const{
+  Type cx=Type(0), cy=Type(0);
+  vcl_vector<vgl_point_2d<Type> > pts = spline_2d_.knots();
+  if(pts.size()==0)
+    return vgl_point_2d<Type>(cx, cy);
+  double n = Type(0);
+  for(vcl_vector<vgl_point_2d<Type> >::iterator pit = pts.begin();
+      pit != pts.end(); ++pit, n+=Type(1)){
+    cx += pit->x(); cy += pit->y();
+  }
+  cx /= n; cy /= n;
+  return vgl_point_2d<Type>(cx, cy);
+}
+template <class Type>
+vgl_point_3d<Type> bvgl_spline_region_3d<Type>::compute_centroid() const{
   Type cx=Type(0), cy=Type(0), cz=Type(0);
   vcl_vector<vgl_point_3d<Type> > pts = spline_3d_.knots();
   if(pts.size()==0)
@@ -185,19 +226,111 @@ vgl_point_3d<Type> bvgl_spline_region_3d<Type>::centroid() const{
   cx /= n; cy /= n; cz /= n;
   return vgl_point_3d<Type>(cx, cy, cz);
 }
+// approximate using the polgon
+template <class Type>
+Type bvgl_spline_region_3d<Type>::area() const{
+  unsigned n = static_cast<unsigned>(poly_2d_[0].size());
+  vgl_point_2d<Type> pm = poly_2d_[0][0];
+  Type a = Type(0);
+  for(unsigned i = 1; i<n; ++i){
+    vgl_point_2d<Type> pi = poly_2d_[0][i];
+    a += pm.x()*pi.y()-pi.x()*pm.y();
+    pm = pi;
+  }
+  vgl_point_2d<Type> pn = poly_2d_[0][n-1];
+  a += pn.x()*pm.y()-pm.x()*pn.y();
+  return vcl_fabs(a/Type(2));
+}
+template <class Type>
+void bvgl_spline_region_3d<Type>::set_principal_eigenvector(vgl_vector_3d<Type> const& L1){
+  if(L1.length()==Type(0)){
+    sang_ = Type(0);
+    cang_ = Type(1);
+    return;
+  }
+  //find the angle needed to rotate u_vec_ to L1
+  // insure unit vectors
+  vgl_vector_3d<Type> u_unit = u_vec_/u_vec_.length();
+  vgl_vector_3d<Type> L1_unit = L1/L1.length();
+  // compute sine of angle
+  vgl_vector_3d<Type> cp = cross_product(u_unit,L1_unit);
+  sang_ = dot_product(unit_normal_,cp);
+  // compute cosine of angle
+  cang_ = dot_product(u_unit,L1_unit);
+  // normalize to produce a valid rotation
+  Type den = vcl_sqrt(sang_*sang_ + cang_*cang_);
+  sang_/=den; cang_/=den;
+}
+template <class Type>
+bool bvgl_spline_region_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const{
+  // map target point to plane coordinates
+  Type u, v;
+  vgl_point_3d<Type> pmt = p-tv_;
+  if(!this->world_to_plane(pmt, u, v))
+    return false;
+  Type su_inv = Type(1)/su_, sv_inv = Type(1)/sv_;
+  vgl_point_2d<double> c = this->centroid_2d();
+  Type dvx = u-c.x(), dvy = v-c.y();
+  // rotate around the centroid by the negative rotation angle
+  Type sang = -sang_;
+  Type rdvx = cang_*dvx - sang*dvy;
+  Type rdvy = sang*dvx + cang_*dvy;
+  // undo anisotropic scaling
+  Type srdvx = su_inv*rdvx, srdvy = sv_inv*rdvy;
+  // rotate back to original plane coordinate frame
+  Type rinv_srdvx =  cang_*srdvx + sang*srdvy;
+  Type rinv_srdvy = -sang*srdvx + cang_*srdvy;
+  Type uinv = rinv_srdvx + c.x(), vinv = rinv_srdvy + c.y();
+  // convert back to 3d coordinates, i.e. the source point corresponding to the target
+  vgl_point_3d<Type> p3d;
+  this->plane_to_world(uinv, vinv, p3d);
+  // the difference is the inverse vector field
+  inv = p3d-p;
+  return true;
+}
+
+template <class Type>
+bvgl_spline_region_3d<Type> bvgl_spline_region_3d<Type>::scale(Type su, Type sv, vgl_vector_3d<Type> const& tv,
+                                                               vgl_vector_3d<Type> const& L1, bool verbose) const{
+  Type old_sang = sang_, old_cang = cang_;
+  // bad practice, but harmless in this case. saves repeating code for the eigenvector rotation
+  // cang and sang will be reset to their original values
+  bvgl_spline_region_3d<Type>* nconst = const_cast<bvgl_spline_region_3d<Type>* >(this);
+  nconst->set_principal_eigenvector(L1);
+  // negate the angle since the cross section is to be rotated in the opposite sense
+  Type sang = -sang_;
+  vgl_point_2d<double> c = this->centroid_2d();
+  vcl_vector<vgl_point_2d<Type> > pts = spline_2d_.knots();
+  vcl_vector<vgl_point_3d<Type> > scaled_pts;
+  unsigned k = 0;
+  for(vcl_vector<vgl_point_2d<Type> >::iterator kit = pts.begin();
+      kit != pts.end(); ++kit, k++){
+    // subtract off the centroid, i.e. rotate about the centroid
+    vgl_vector_2d<Type> dv = (*kit)-c;
+    Type dvx = dv.x(), dvy = dv.y();
+    // rotate around the centroid by negative rotation angle
+    Type rdvx = cang_*dvx - sang*dvy;
+    Type rdvy = sang*dvx + cang_*dvy;
+    // anisotropic scaling along the principal direction
+    Type srdvx = su*rdvx, srdvy = sv*rdvy;
+    // rotate back to original plane coordinate frame
+    Type rinv_srdvx =  cang_*srdvx + sang*srdvy;
+    Type rinv_srdvy = -sang*srdvx + cang_*srdvy;
+    Type uinv = rinv_srdvx+c.x(), vinv = rinv_srdvy+c.y();
+    // convert back to 3d
+    vgl_point_3d<Type> p3d;
+    this->plane_to_world(uinv, vinv, p3d);
+    //translate the point 3-d to the position defined by tv
+    scaled_pts.push_back(p3d + tv);
+  }    
+  // set state back to const correctness
+  nconst->sang_ = old_sang; nconst->cang_ = old_cang;
+  return bvgl_spline_region_3d<Type>(scaled_pts, tolerance_);
+}
 
 template <class Type>       
-bvgl_spline_region_3d<Type> bvgl_spline_region_3d<Type>::scale(Type s, vgl_vector_3d<Type>const& v) const{
-  vgl_point_3d<double> c = this->centroid();
-  vcl_vector<vgl_point_3d<Type> > pts = spline_3d_.knots(), scaled_pts;
-  for(vcl_vector<vgl_point_3d<Type> >::iterator kit = pts.begin();
-      kit != pts.end(); ++kit){
-    vgl_vector_3d<Type> vs = ((*kit)-c)*s;
-    vgl_point_3d<Type> ps = c+vs;
-    // now translate
-    scaled_pts.push_back(ps + v);
-  }    
-  return bvgl_spline_region_3d<Type>(scaled_pts, tolerance_);
+bvgl_spline_region_3d<Type> bvgl_spline_region_3d<Type>::scale(Type s, vgl_vector_3d<Type>const& tv) const{
+  return this->scale(s, s, tv, vgl_vector_3d<Type>(Type(0), Type(0), Type(0)));
 }
 
 template <class Type>       
@@ -214,7 +347,7 @@ vgl_box_2d<Type> bvgl_spline_region_3d<Type>::bounding_box_2d() const{
 }
 
 template <class Type>       
-vgl_box_3d<Type> bvgl_spline_region_3d<Type>::bounding_box_3d() const{
+vgl_box_3d<Type> bvgl_spline_region_3d<Type>::bounding_box() const{
   vgl_box_2d<Type> bb = this->bounding_box_2d();
   vgl_point_2d<Type> pmin = bb.min_point(), pmax = bb.max_point();
   vgl_point_3d<Type> pmin_3d, pmax_3d;

@@ -48,19 +48,28 @@ template <class Type>
 bool bvgl_scaled_shape_3d<Type>::nearest_cross_section_index(vgl_point_3d<Type> const& p3d, unsigned& index) const{
   // assume for the time being that the base is the maximum cross section
   index = 0;
+  unsigned n =static_cast<unsigned>(cross_sections_.size()); 
   Type dist;
   if(!base_.signed_distance(p3d, dist))
     return false;
-  if(dist<-tolerance_)
+  if(dist<-tolerance_)//tolerance below the bottom of the base
     return false;
-  if(dist>max_norm_distance_)
+  if(dist>max_norm_distance_){
+    index = n-1;
     return false;
+  }
   Type dindex = vcl_floor(dist/tolerance_);
   index = static_cast<unsigned>(dindex);
-  unsigned n =static_cast<unsigned>(cross_sections_.size()); 
+
   if(index >= n)
     index = n-1;
   return true;
+}
+template <class Type>
+vgl_point_3d<Type>  bvgl_scaled_shape_3d<Type>::closest_point(vgl_point_3d<Type> const& p) const{
+  unsigned index;
+  this->nearest_cross_section_index(p, index);
+  return cross_sections_[index].closest_point(p);
 }
 
 template <class Type>
@@ -72,14 +81,28 @@ bool bvgl_scaled_shape_3d<Type>::in(vgl_point_3d<Type> const& p3d) const{
 }
 
 template <class Type>
-bool bvgl_scaled_shape_3d<Type>::signed_distance(vgl_point_3d<Type> const& p, Type& dist) const{
-  dist = Type(0);
-  return false;
+void bvgl_scaled_shape_3d<Type>::uv_bounds(Type& u_min, Type& u_max, Type& v_min, Type& v_max) const{
+  vgl_box_2d<Type> bb_2d = base_.bounding_box_2d();
+  u_min = bb_2d.min_x(); u_max = bb_2d.max_x();
+  v_min = bb_2d.min_y(); v_max = bb_2d.max_y();
 }
 
 template <class Type>
-vgl_point_3d<Type> bvgl_scaled_shape_3d<Type>::operator () (Type u, Type v) const{
-  return vgl_point_3d<Type>(Type(0), Type(0), Type(0));
+bool bvgl_scaled_shape_3d<Type>::operator () (Type u, Type v, Type w, vgl_point_3d<Type>& p) const{
+  p.set(Type(0), Type(0), Type(0));
+   unsigned n = static_cast<unsigned>(cross_sections_.size());
+  Type dindex = vcl_floor(w*Type(n-1));
+  unsigned index = 0;
+  if(dindex>=Type(0))
+    index = static_cast<unsigned>(dindex);
+  else
+    return false;
+  if(index>=n)
+    return false;
+
+  const bvgl_spline_region_3d<Type>& csect = cross_sections_[index];
+  csect.plane_to_world(u,v,p);
+  return csect.in(p);
 }
 
 template <class Type>
@@ -88,9 +111,76 @@ vgl_point_3d<Type> bvgl_scaled_shape_3d<Type>::centroid() const{
   return vgl_point_3d<Type>(cx, cy, cz);
 }
 
-template <class Type>       
-vgl_box_3d<Type> bvgl_scaled_shape_3d<Type>::bounding_box_3d() const{
-  vgl_box_3d<Type> bb = base_.bounding_box_3d();
+template <class Type>
+Type bvgl_scaled_shape_3d<Type>::volume() const{
+  unsigned n =static_cast<unsigned>(cross_sections_.size()); 
+  // determine the spacing between the cross sections
+  Type dw = max_norm_distance_/(static_cast<Type>(n-1)); // n-1 spaces for n cross sections
+  Type vol = Type(0);
+  Type am = cross_sections_[0].area();
+  for(unsigned i = 1; i<n; ++i){
+    Type ai = cross_sections_[i].area();
+    vol += (am+ai)*dw/Type(2);
+    am = ai;
+  }
+ return vol;
+}
+template <class Type>
+bvgl_scaled_shape_3d<Type> bvgl_scaled_shape_3d<Type>::deform(Type lambda, Type gamma, vgl_vector_3d<Type> const& L1)const{
+  Type su = lambda, sv = vcl_pow(lambda,-gamma), sw = Type(1)/(su*sv);
+  unsigned n = static_cast<unsigned>(cross_sections_.size());
+  Type dn = max_norm_distance_/static_cast<Type>(n-1);
+  Type max_nd = max_norm_distance_*sw;
+  vgl_vector_3d<Type> dv = (sw-Type(1))*dn*base_.normal();
+  bvgl_scaled_shape_3d<Type> ret = (*this);
+  const vcl_vector<bvgl_spline_region_3d<Type> >& csections = ret.cross_sections();
+  vcl_vector<bvgl_spline_region_3d<Type> > scaled_csects;
+  for(unsigned i =0; i<n; ++i){
+    Type mul = static_cast<Type>(i);
+    scaled_csects.push_back(csections[i].scale(su, sv, mul*dv, L1));
+  }
+  ret.set_cross_sections(scaled_csects);
+  ret.set_max_norm_distance(max_nd);
+  return ret;
+}
+template <class Type>
+void bvgl_scaled_shape_3d<Type>::apply_parameters_to_cross_sections(){
+  Type su = lambda_, sv = vcl_pow(lambda_,-gamma_), sw = Type(1)/(su*sv);
+  max_nd_ = max_norm_distance_*sw;
+  unsigned n = static_cast<unsigned>(cross_sections_.size());
+  Type dn = max_norm_distance_/static_cast<Type>(n-1);
+  vgl_vector_3d<Type> dv = (sw-Type(1))*dn*base_.normal();
+  
+  for(unsigned i = 0; i<n; ++i){
+    Type mul = static_cast<Type>(i);
+    cross_sections_[i].set_principal_eigenvector(L1_);
+    cross_sections_[i].set_deformation_eigenvalues(su, sv);
+    cross_sections_[i].set_offset_vector(mul*dv);
+  }
+}
+template <class Type>
+bool bvgl_scaled_shape_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const{
+  Type dist;
+  if(!cross_sections_[0].signed_distance(p, dist))
+    return false;
+  unsigned n = static_cast<unsigned>(cross_sections_.size()), index = 0;
+  Type csect_separation_dist = max_nd_/(static_cast<Type>(n)-Type(1));
+  if(dist<-tolerance_){//tolerance below the bottom of the base
+    return false;
+  }
+  if(dist>(max_nd_+tolerance_)){//tolerance above the apex
+    return false;
+  }
+  Type dindex = vcl_floor(dist/csect_separation_dist);
+  index = static_cast<unsigned>(dindex);
+  if(index >= n)
+    index = n-1;
+  return cross_sections_[index].inverse_vector_field(p, inv);
+}
+
+template <class Type>
+vgl_box_3d<Type> bvgl_scaled_shape_3d<Type>::bounding_box() const{
+  vgl_box_3d<Type> bb = base_.bounding_box();
   // assume the scale monotonically decreases so bounding box is defined by the base
   vgl_vector_3d<Type> nv = max_norm_distance_*base_.normal();
   vcl_vector<vgl_point_3d<Type> > knots = base_.knots();
@@ -107,24 +197,23 @@ vgl_pointset_3d<Type> bvgl_scaled_shape_3d<Type>::random_pointset(unsigned n_pts
   vgl_vector_3d<Type> norm = base_.normal();
   vgl_pointset_3d<Type> ret;
   vcl_vector<vgl_point_3d<Type> > pts;
-  vgl_box_3d<Type> bb = this->bounding_box_3d();
-  Type xmin = bb.min_x(), xmax = bb.max_x();
-  Type ymin = bb.min_y(), ymax = bb.max_y();
-  Type zmin = bb.min_z(), zmax = bb.max_z();
   unsigned n_req = n_pts, niter = 0;
+  Type umin=Type(0), umax=Type(0), vmin=Type(0), vmax=Type(0), wmin = Type(0), wmax = Type(1);
+  this->uv_bounds(umin, umax, vmin, vmax);
   while(n_req>0 && niter < 100*n_pts){
-    Type x = (xmax-xmin)*(static_cast<Type>(vcl_rand())/static_cast<Type>(RAND_MAX)) + xmin;
-    Type y = (ymax-ymin)*(static_cast<Type>(vcl_rand())/static_cast<Type>(RAND_MAX)) + ymin;
-    Type z = (zmax-zmin)*(static_cast<Type>(vcl_rand())/static_cast<Type>(RAND_MAX)) + zmin;
-    vgl_point_3d<Type> p(x, y, z);
-    if(this->in(p)){
-      pts.push_back(vgl_point_3d<Type>(x,y,z));
+    Type u = (umax-umin)*(static_cast<Type>(vcl_rand())/static_cast<Type>(RAND_MAX)) + umin;
+    Type v = (vmax-vmin)*(static_cast<Type>(vcl_rand())/static_cast<Type>(RAND_MAX)) + vmin;
+    Type w = (wmax-wmin)*(static_cast<Type>(vcl_rand())/static_cast<Type>(RAND_MAX)) + wmin;
+    vgl_point_3d<Type> p;
+    if((*this)(u, v, w, p)){
+      pts.push_back(p);
       n_req--;
     }else niter++;
   }
   if(n_req !=0)
     vcl_cout << "Warning! Insufficient number of points " << pts.size() << " instead of " << n_pts << '\n';
   //map the 2-d points back to the 3-d space
+
 
   for(vcl_vector<vgl_point_3d<Type> >::iterator pit = pts.begin();
       pit != pts.end(); ++pit){

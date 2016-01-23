@@ -14,10 +14,12 @@ static void test_scaled_shape()
 #if TEST_SCALED_SHAPE
   vcl_string base_dir = "d:/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/fat_pocket/";
   vcl_string display_random_path = base_dir + "random_pocket_points.txt";
+  vcl_string knot_path = base_dir + "fat_pocket_knots_2d.txt";
   //vgl_vector_3d<double> normal(-0.73911, 0.100747, -0.666008);//from pts
   vgl_vector_3d<double> normal(-0.73911, 0.2, -0.666008);//from pts but 2 x y comp
   //vgl_point_3d<double> origin(23.56,5.32,94.1);// manual
-  vgl_point_3d<double> origin(16.1689, 0.0, 87.4399); // move 10 along normal zero out y
+//vgl_point_3d<double> origin(16.1689, 0.0, 87.4399); // move 10 along normal zero out y
+ vgl_point_3d<double> origin(26.14, -7.45, 72.1); // from skull
   vcl_vector<vgl_point_2d<double > > knots2d;
   vgl_point_2d<double> p00(4.806863675505915, 6.582528807225162);
   vgl_point_2d<double> p01(11.01628093103361, 10.276435637911343);
@@ -58,19 +60,53 @@ static void test_scaled_shape()
   knots2d.push_back(p21);   knots2d.push_back(p22);   knots2d.push_back(p23);
   knots2d.push_back(p24);   knots2d.push_back(p25);   knots2d.push_back(p26);
   knots2d.push_back(p27);
+  vgl_vector_3d<double> L1(0.55,0.68,-0.42);
   bvgl_spline_region_3d<double> kf2d(knots2d, normal, origin, 0.5);
-  double max_norm_distance = 30.0, scale_at_midpt = 0.8, scale_at_max = 0.25;
-  bvgl_scaled_shape_3d<double> ss3d(kf2d, max_norm_distance, scale_at_midpt, scale_at_max,0.5);
+  bvgl_spline_region_3d<double> temp = kf2d.scale(1.0, 0.6,vgl_vector_3d<double>(0.0, 0.0, 0.0),L1);
+  vcl_vector<vgl_point_2d<double> > sknots2d = temp.knots_2d();
+  vcl_ofstream kistr(knot_path.c_str());
+  for(vcl_vector<vgl_point_2d<double> >::iterator kit = sknots2d.begin();
+      kit != sknots2d.end(); ++kit)
+    kistr << kit->x() << ',' << kit->y() << '\n';
+  kistr.close();
+  bvgl_spline_region_3d<double> skf2d(sknots2d, normal, origin, 0.5);
+  double max_norm_distance = 25.0, scale_at_midpt = 0.85, scale_at_max = 0.1;
+  bvgl_scaled_shape_3d<double> ss3d(skf2d, max_norm_distance, scale_at_midpt, scale_at_max,0.5);
   unsigned indx = 0;
   vgl_point_3d<double> pt(50.23, -14.95, 83.64);
   bool inpt = ss3d.in(pt);
-  vgl_pointset_3d<double> ptset = ss3d.random_pointset(100000);
+  vgl_point_3d<double> tpt(56.0, -28.0, 85.0);
+  vgl_point_3d<double> cp = ss3d.closest_point(tpt);
+  double volume = ss3d.volume();
+  vcl_cout << "Volume before deformation " << volume << " mm^3\n";
+  double lambda = 0.85, gamma = 0.2;
+  //double lambda = 1.0, gamma = 0.2;
+  bvgl_scaled_shape_3d<double> ss3d_deformed = ss3d.deform(lambda, gamma,L1);
+  volume = ss3d_deformed.volume();
+  vcl_cout << "Volume after deformation " << volume << " mm^3  max norm distance " << ss3d_deformed.max_norm_distance() << '\n';;
+  // set deformation parameters
+  ss3d.set_lambda(lambda);
+  ss3d.set_gamma(gamma);
+  ss3d.set_principal_eigenvector(L1);
+  ss3d.apply_parameters_to_cross_sections();
+  // get a point in the deformed volume
+  const vcl_vector<bvgl_spline_region_3d<double> >& csects_def = ss3d_deformed.cross_sections();
+  vgl_point_3d<double> p_targ = (csects_def[csects_def.size()-1].knots())[0];
+  vgl_vector_3d<double> inv;
+  bool good = ss3d.inverse_vector_field(p_targ, inv);
+  const vcl_vector<bvgl_spline_region_3d<double> >& csects = ss3d.cross_sections();
+  vgl_point_3d<double> p_source_act = (csects[csects.size()-1].knots())[0];
+  vgl_point_3d<double> p_source = p_targ + inv;
+  double dif = (p_source-p_source_act).length();
+#if 0
+  vgl_pointset_3d<double> ptset = ss3d_deformed.random_pointset(100000);
   vcl_ofstream ostr(display_random_path.c_str());
   if(ostr){
           ostr << ptset;
           ostr.close();
   }else
    vcl_cout << "couldn't open " << display_random_path << '\n';
+#endif
 #endif
 }
 

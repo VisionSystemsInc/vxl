@@ -50,25 +50,52 @@ class bvgl_spline_region_3d
 
   //: signed distance. If the closest planar is ::in return true, otherwise false
   bool signed_distance(vgl_point_3d<Type> const& p, Type& dist) const;
-  
+
+  //: closest point in the region to p, including on the boundary
+  vgl_point_3d<Type> closest_point(vgl_point_3d<Type> const& p) const;
+
   Type max_t() const {return spline_2d_.max_t();}
+  //: a point on the spline curve at parameter t
   vgl_point_3d<Type> operator () (Type t) const;
 
   //: centroid of the region
-  vgl_point_3d<Type> centroid() const;
+  vgl_point_3d<Type> compute_centroid() const;
+  vgl_point_2d<Type> compute_centroid_2d() const;
+
+  vgl_point_3d<Type> centroid() const{return centroid_3d_;}
+  vgl_point_2d<Type> centroid_2d() const{return centroid_2d_;}
+
+  //: area of the region
+  Type area() const;
+
   //: plane normal
   vgl_vector_3d<Type> normal() const{ return unit_normal_;}
   //: bounding box methods
   vgl_box_2d<Type> bounding_box_2d() const;
-  vgl_box_3d<Type> bounding_box_3d() const;
+  vgl_box_3d<Type> bounding_box() const;
 
   //: accessors
   vcl_vector<vgl_point_3d<Type> > knots() const {return spline_3d_.knots();}
+  vcl_vector<vgl_point_2d<Type> > knots_2d() const {return spline_2d_.knots();}
   const vgl_plane_3d<Type>& plane() const{return plane_;}
 
-  //: scale the boundary around the centroid and translate by vector v
+
+  //: set parameters for scaling for efficiency. apply these calls before computing vector field values
+  // if |L1| == 0 then the principal axis is u.
+  void set_principal_eigenvector(vgl_vector_3d<Type> const& L1);
+  void set_deformation_eigenvalues(Type su, Type sv){su_ = su; sv_ = sv;}
+  void set_offset_vector(vgl_vector_3d<Type> const& tv){tv_ = tv;}
+
+  //: inverse vector  field for the scale transformation
+  bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const;
+
+  //: scale the boundary isotropically around the centroid and translate by vector tv
   // useful for generalized cylinder applications
-  bvgl_spline_region_3d<Type> scale(Type s, vgl_vector_3d<Type> const& v) const;
+  bvgl_spline_region_3d<Type> scale(Type s,vgl_vector_3d<Type> const& tv) const;
+
+  //: anisotropically scale the boundary about the centroid with principal axis L1 and translate by vector tv
+  // if |L1| == 0 then the principal axis is u.
+  bvgl_spline_region_3d<Type> scale(Type su, Type sv, vgl_vector_3d<Type> const& tv, vgl_vector_3d<Type> const& L1, bool verbose = false)const;
 
   // for debug purposes
   // generate a random poinset drawn from the region
@@ -77,6 +104,8 @@ class bvgl_spline_region_3d
   
   Type tolerance_;
   vgl_polygon<Type> poly_2d_;  // to test inside
+  vgl_point_2d<Type> centroid_2d_;
+  vgl_point_3d<Type> centroid_3d_;
   vgl_cubic_spline_2d<Type> spline_2d_;
   vgl_cubic_spline_3d<Type> spline_3d_;
   vgl_plane_3d<Type> plane_;
@@ -87,8 +116,12 @@ class bvgl_spline_region_3d
   //cache plane coordinate vectors for convenience
   vgl_vector_3d<Type> u_vec_;
   vgl_vector_3d<Type> v_vec_;
-
-
+  // parameters for deformation
+  Type su_; //first principal eigenvalue
+  Type sv_; //second principal eigenvalue
+  vgl_vector_3d<Type> tv_;//translation vector
+  Type sang_; //principal_axis_sine
+  Type cang_; // principal_axis_cosine;
 };
 
 template <class Type>
