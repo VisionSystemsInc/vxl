@@ -80,6 +80,8 @@ class bvgl_scaled_shape_3d
 
   vgl_box_3d<Type> bounding_box() const;
 
+  Type surface_distance(vgl_point_3d<Type> const& p) const;
+  
   // for debug purposes
   // generate a random poinset drawn from the region
   vgl_pointset_3d<Type> random_pointset(unsigned n_pts) const;

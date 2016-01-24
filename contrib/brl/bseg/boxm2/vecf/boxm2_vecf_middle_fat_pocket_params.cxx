@@ -1,11 +1,11 @@
-#include "boxm2_vecf_fat_pocket_params.h"
-vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_fat_pocket_params const& fat_pr){
+#include "boxm2_vecf_middle_fat_pocket_params.h"
+vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_middle_fat_pocket_params const& middle_fat_pr){
     if(!s){
     vcl_cout << "FATAL! Bad parameter file stream\n";
     return s;
   }
   // bad practice --- but easy
-  boxm2_vecf_fat_pocket_params & pr = const_cast<boxm2_vecf_fat_pocket_params &>(fat_pr);
+  boxm2_vecf_middle_fat_pocket_params & pr = const_cast<boxm2_vecf_middle_fat_pocket_params &>(middle_fat_pr);
   s << "origin: " << pr.origin_.x() << ' ' << pr.origin_.y() << ' ' << pr.origin_.z() << '\n';
   s << "normal: " << pr.normal_.x() << ' ' << pr.normal_.y() << ' ' << pr.normal_.z() << '\n';
   s << "principal_eigenvector: " << pr.principal_eigenvector_.x() << ' '
@@ -18,7 +18,7 @@ vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_fat_pocket_params const& f
   s << "scale_at_max: " << pr.scale_at_max_ << '\n';
   return s;}
 
-vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_fat_pocket_params& pr){
+vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_middle_fat_pocket_params& pr){
   if(!s){
     vcl_cout << "Bad parameter file stream\n";
     return s;

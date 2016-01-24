@@ -79,6 +79,11 @@ bool bvgl_scaled_shape_3d<Type>::in(vgl_point_3d<Type> const& p3d) const{
     return false;
   return cross_sections_[indx].in(p3d);
 }
+template <class Type>
+Type bvgl_scaled_shape_3d<Type>::surface_distance(vgl_point_3d<Type> const& p) const{
+  vgl_point_3d<Type> cp = this->closest_point(p);
+  return (p-cp).length();
+}
 
 template <class Type>
 void bvgl_scaled_shape_3d<Type>::uv_bounds(Type& u_min, Type& u_max, Type& v_min, Type& v_max) const{

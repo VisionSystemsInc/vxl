@@ -49,6 +49,8 @@
 #include "../../boxm2_vecf_skull_articulation.h"
 #include "../../boxm2_vecf_composite_face_articulation.h"
 #include "../../boxm2_vecf_composite_head_model_articulation.h"
+#include "../../boxm2_vecf_middle_fat_pocket_scene.h"
+#include "../../boxm2_vecf_middle_fat_pocket_articulation.h"
 #include "../boxm2_ocl_articulated_render_tableau.h"
 
 int main(int argc, char ** argv)
@@ -255,6 +257,14 @@ int main(int argc, char ** argv)
       //boxm2_scene_sptr crscn = skull_scene->scene();
       //boxm2_lru_cache::instance()->write_to_disk(crscn);
       bit_tableau->init(device, opencl_cache, composite_face_scene, composite_face_articulation,target_scene, ni, nj, pcam, "");
+    }else if(scene_t == "fat_pocket"){
+      boxm2_vecf_middle_fat_pocket_scene* fat_pocket_scene = new boxm2_vecf_middle_fat_pocket_scene(articulated_scene_path, geometry_path);
+      boxm2_vecf_middle_fat_pocket_articulation* fat_pocket_articulation =new boxm2_vecf_middle_fat_pocket_articulation();
+      fat_pocket_articulation->set_play_sequence("default");
+      fat_pocket_scene->set_target_background(dark_background);
+      //boxm2_scene_sptr crscn = skull_scene->scene();
+      //boxm2_lru_cache::instance()->write_to_disk(crscn);
+      bit_tableau->init(device, opencl_cache, fat_pocket_scene, fat_pocket_articulation,target_scene, ni, nj, pcam, "");
     }
       //create window, attach the new tableau and status bar
       vgui_window* win = vgui::produce_window(ni, nj, "OpenCl Volume Visualizer (Render)");
