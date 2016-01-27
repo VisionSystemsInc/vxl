@@ -42,8 +42,11 @@ class bvgl_spline_region_3d
 
   //: mapping from/to the spline plane coordinates
   void plane_to_world(Type u, Type v, vgl_point_3d<Type>& p3d) const;
-  bool world_to_plane(vgl_point_3d<Type>, Type& u, Type& v) const;
+  bool world_to_plane(vgl_point_3d<Type>, Type& u, Type& v, Type tolerance) const;
 
+  //: plane coordinate vectors
+  void plane_coordinate_vectors(vgl_vector_3d<Type>& uvec, vgl_vector_3d<Type>& vvec) const{
+    uvec = u_vec_; vvec = v_vec_;}
 
   //: is a point inside the region (on the plane and within or on the spline boundary
   bool in(vgl_point_3d<Type> const& p3d) const;
@@ -87,7 +90,7 @@ class bvgl_spline_region_3d
   void set_offset_vector(vgl_vector_3d<Type> const& tv){tv_ = tv;}
 
   //: inverse vector  field for the scale transformation
-  bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const;
+  bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv, Type tolerance = Type(-1)) const;
 
   //: scale the boundary isotropically around the centroid and translate by vector tv
   // useful for generalized cylinder applications

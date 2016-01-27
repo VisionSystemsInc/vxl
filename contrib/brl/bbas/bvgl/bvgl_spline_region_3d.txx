@@ -15,11 +15,11 @@ void bvgl_spline_region_3d<Type>::plane_to_world(Type u, Type v, vgl_point_3d<Ty
   p3d =  origin_+ plane_vec;
 }
 template <class Type>
-bool bvgl_spline_region_3d<Type>::world_to_plane(vgl_point_3d<Type> p3d, Type& u, Type& v) const{
+bool bvgl_spline_region_3d<Type>::world_to_plane(vgl_point_3d<Type> p3d, Type& u, Type& v, Type tolerance) const{
   u = Type(0); v = Type(0);
   vgl_point_3d<Type> cp = vgl_closest_point(plane_, p3d);
   Type len = (p3d-cp).length();
-  if(len>tolerance_)
+  if(len>tolerance)
     return false;
   vgl_vector_3d<Type> plane_vec = cp-origin_;
   u = dot_product(plane_vec, u_vec_);
@@ -81,7 +81,7 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type>
   for(vcl_vector<vgl_point_3d<Type> >::iterator kit=planar_knots.begin();
       kit != planar_knots.end(); ++kit){
     Type u, v;
-    if(!this->world_to_plane(*kit, u, v))
+    if(!this->world_to_plane(*kit, u, v, tolerance_))
       continue;
     vgl_point_2d<Type> p2d(u, v);
     knots_2d.push_back(p2d);
@@ -94,7 +94,7 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type>
   for(Type t = Type(0); t<=spline_3d_.max_t(); t+=tolerance_){
     vgl_point_3d<Type> p3d = spline_3d_(t);
     Type u, v;
-    if(!this->world_to_plane(p3d, u, v))
+    if(!this->world_to_plane(p3d, u, v, tolerance_))
       continue;
     vgl_point_2d<Type> p2d(u, v);
     poly_2d_.push_back(p2d);
@@ -162,7 +162,7 @@ void bvgl_spline_region_3d<Type>::set_point_positive(vgl_point_3d<Type> const& p
 template <class Type>
 bool bvgl_spline_region_3d<Type>::in(vgl_point_3d<Type> const& p3d) const{
   Type u, v;
-  if(!world_to_plane(p3d, u, v))
+  if(!world_to_plane(p3d, u, v, tolerance_))
     return false;
 
   vgl_point_2d<Type> p2d(u, v);
@@ -262,11 +262,13 @@ void bvgl_spline_region_3d<Type>::set_principal_eigenvector(vgl_vector_3d<Type> 
   sang_/=den; cang_/=den;
 }
 template <class Type>
-bool bvgl_spline_region_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const{
+bool bvgl_spline_region_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv, Type tolerance) const{
   // map target point to plane coordinates
-  Type u, v;
+  Type u, v, tol=tolerance;
+  if(tolerance<Type(0))
+    tol = tolerance_;
   vgl_point_3d<Type> pmt = p-tv_;
-  if(!this->world_to_plane(pmt, u, v))
+  if(!this->world_to_plane(pmt, u, v, tol))
     return false;
   Type su_inv = Type(1)/su_, sv_inv = Type(1)/sv_;
   vgl_point_2d<double> c = this->centroid_2d();

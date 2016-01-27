@@ -70,31 +70,24 @@ void boxm2_vecf_middle_fat_pocket_scene::cache_cell_centers_from_anatomy_labels(
   }
 }
 
-// constructors
-boxm2_vecf_middle_fat_pocket_scene::boxm2_vecf_middle_fat_pocket_scene(vcl_string const& scene_file): boxm2_vecf_articulated_scene(scene_file){
-  source_model_exists_=true;
-  boxm2_lru_cache::create(base_model_);
-  vul_timer t;
-  this->rebuild();
-  vcl_cout << "Create middle_fat_pocket scene in " << t.real()/1000.0 << "seconds\n";
-}  
-
-boxm2_vecf_middle_fat_pocket_scene::boxm2_vecf_middle_fat_pocket_scene(vcl_string const& scene_file, vcl_string const& geometry_file):
+boxm2_vecf_middle_fat_pocket_scene::boxm2_vecf_middle_fat_pocket_scene(vcl_string const& scene_file, vcl_string const& geometry_file, bool initialize):
   boxm2_vecf_articulated_scene(scene_file){
+  source_model_exists_=!initialize;//on articulated scene
   middle_fat_pocket_geo_ = boxm2_vecf_middle_fat_pocket(geometry_file);
-  source_model_exists_=false;
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
-  this->build_middle_fat_pocket();
-  vcl_vector<vcl_string> prefixes;
-  prefixes.push_back("alpha");
-  prefixes.push_back("boxm2_mog3_grey");
-  prefixes.push_back("boxm2_num_obs");
-  prefixes.push_back("boxm2_pixel_middle_fat_pocket");
-  double nrad = params_.neighbor_radius();
-  boxm2_surface_distance_refine<boxm2_vecf_middle_fat_pocket>(middle_fat_pocket_geo_, base_model_, prefixes, nrad);
-  boxm2_surface_distance_refine<boxm2_vecf_middle_fat_pocket>(middle_fat_pocket_geo_, base_model_, prefixes, nrad);
-  boxm2_surface_distance_refine<boxm2_vecf_middle_fat_pocket>(middle_fat_pocket_geo_, base_model_, prefixes, nrad);
+  if(initialize){
+    this->build_middle_fat_pocket();
+    vcl_vector<vcl_string> prefixes;
+    prefixes.push_back("alpha");
+    prefixes.push_back("boxm2_mog3_grey");
+    prefixes.push_back("boxm2_num_obs");
+    prefixes.push_back("boxm2_pixel_middle_fat_pocket");
+    double nrad = params_.neighbor_radius();
+    boxm2_surface_distance_refine<boxm2_vecf_middle_fat_pocket>(middle_fat_pocket_geo_, base_model_, prefixes, nrad);
+    boxm2_surface_distance_refine<boxm2_vecf_middle_fat_pocket>(middle_fat_pocket_geo_, base_model_, prefixes, nrad);
+    boxm2_surface_distance_refine<boxm2_vecf_middle_fat_pocket>(middle_fat_pocket_geo_, base_model_, prefixes, nrad);
+  }
   this->rebuild();
 }
 
@@ -110,7 +103,7 @@ void boxm2_vecf_middle_fat_pocket_scene::cache_neighbors(){
 
 
 void boxm2_vecf_middle_fat_pocket_scene::build_middle_fat_pocket(){
-  double len_coef = params_.neighbor_radius();
+  double len_coef = 0.5*params_.neighbor_radius(); //JLM experiment
   vgl_box_3d<double> bb = middle_fat_pocket_geo_.bounding_box();
    // cell in a box centers are in global coordinates
   vcl_vector<cell_info> ccs = blk_->cells_in_box(bb);
@@ -230,7 +223,8 @@ void boxm2_vecf_middle_fat_pocket_scene::inverse_vector_field(vcl_vector<vgl_vec
   unsigned cnt = 0;
   for(unsigned i = 0; i<nt; ++i){
     vgl_vector_3d<double> inv_vf;
-    if(!inverse_vector_field(box_cell_centers_[i].cell_center_, inv_vf))
+    const vgl_point_3d<double> p = box_cell_centers_[i].cell_center_;
+    if(!inverse_vector_field(p, inv_vf))
       continue;
     cnt++;
     valid[i]=true;
@@ -308,6 +302,7 @@ bool boxm2_vecf_middle_fat_pocket_scene::apply_vector_field(cell_info const& tar
 void boxm2_vecf_middle_fat_pocket_scene::apply_vector_field_to_target(vcl_vector<vgl_vector_3d<double> > const& vf,
                                                               vcl_vector<bool> const& valid){
   unsigned n = static_cast<unsigned>(box_cell_centers_.size());
+  //clear target
   int valid_count = 0;
   if(n==0)
     return;//shouldn't happen
@@ -320,7 +315,7 @@ void boxm2_vecf_middle_fat_pocket_scene::apply_vector_field_to_target(vcl_vector
       target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
       continue;
     }
-    // cells have vector field defined but not mandible cells
+    // cells have vector field defined but not fat pocket
     if(!this->apply_vector_field(box_cell_centers_[j], vf[j])){
       target_alpha_data_[box_cell_centers_[j].data_index_] = 0.0f;
       continue;
@@ -336,7 +331,6 @@ int boxm2_vecf_middle_fat_pocket_scene::prerefine_target_sub_block(vgl_point_3d<
     return -1;
   // map the target back to source
   vgl_point_3d<double> pt_in_source = sub_block_pt +  vfield_unrefined_[pt_index];
-
   // sub_block axis-aligned corners in source
   vgl_point_3d<double> sbc_min(pt_in_source.x()-0.5*targ_dims_.x(),
                                pt_in_source.y()-0.5*targ_dims_.y(),
@@ -352,7 +346,6 @@ int boxm2_vecf_middle_fat_pocket_scene::prerefine_target_sub_block(vgl_point_3d<
 
   // the source blocks intersecting the inverse mapped target box
   vcl_vector<vgl_point_3d<int> > int_sblks = blk_->sub_blocks_intersect_box(target_box_in_source);
-
   // iterate through each intersecting source tree and find the maximum tree depth 
   int max_depth = 0;
   for(vcl_vector<vgl_point_3d<int> >::iterator bit = int_sblks.begin();
@@ -374,11 +367,8 @@ void boxm2_vecf_middle_fat_pocket_scene::inverse_vector_field_unrefined(vcl_vect
   unsigned n = static_cast<unsigned>(unrefined_target_pts.size());
   vfield_unrefined_.resize(n, vgl_vector_3d<double>(0.0, 0.0, 0.0));
   valid_unrefined_.resize(n, false);
-  vgl_point_3d<double> ptest(48.83,-42.0,73.85);
   for(unsigned vf_index = 0; vf_index<n; ++vf_index){
     const vgl_point_3d<double>& p = unrefined_target_pts[vf_index];
-    if((p-ptest).length()<8.0)
-      vcl_cout << ' ';
     vgl_vector_3d<double> invf;
     if(!middle_fat_pocket_geo_.inverse_vector_field(p, invf))
       continue;
@@ -392,10 +382,9 @@ void boxm2_vecf_middle_fat_pocket_scene::inverse_vector_field_unrefined(vcl_vect
   }
 }
 
-  void boxm2_vecf_middle_fat_pocket_scene::map_to_target(boxm2_scene_sptr target_scene){
+void boxm2_vecf_middle_fat_pocket_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
-  middle_fat_pocket_geo_.apply_deformation_params();
-  this->clear_target(target_scene);//on articulated scene
+  //middle_fat_pocket_geo_.apply_deformation_params();
   // initially extract unrefined target data 
   if(!target_data_extracted_)
     this->extract_target_block_data(target_scene);
@@ -441,7 +430,7 @@ void boxm2_vecf_middle_fat_pocket_scene::determine_target_box_cell_centers(){
     return;
   }
     
-vgl_box_3d<double> offset_box(source_bb_.centroid()  ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
+  vgl_box_3d<double> offset_box(source_bb_.centroid()  ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
     box_cell_centers_ = target_blk_->cells_in_box(source_bb_);
   }else{
@@ -449,22 +438,7 @@ vgl_box_3d<double> offset_box(source_bb_.centroid()  ,source_bb_.width(),source_
     return;
   } 
 }
-
-void boxm2_vecf_middle_fat_pocket_scene::export_point_cloud(vcl_ostream& ostr) const{
-  vgl_pointset_3d<double> ptset;
-  unsigned n = static_cast<unsigned>(middle_fat_pocket_cell_centers_.size());
-  for(unsigned i = 0; i<n; ++i) 
-    ptset.add_point(middle_fat_pocket_cell_centers_[i]);
-  ostr << ptset;
-}
-
-void boxm2_vecf_middle_fat_pocket_scene::export_point_cloud_with_appearance(vcl_ostream& ostr) const{
-  boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
-  unsigned n = static_cast<unsigned>(middle_fat_pocket_cell_centers_.size());
-  for(unsigned i = 0; i<n; ++i){
-    const vgl_point_3d<double>& p = middle_fat_pocket_cell_centers_[i];
-    unsigned dindx = middle_fat_pocket_cell_data_index_[i];
-    double a = static_cast<double>(app_data_[dindx][0]);
-    ostr << p.x() << ',' << p.y() << ',' << p.z() << ',' << a << '\n';
-  }
+//for debug purposes can be removed
+void boxm2_vecf_middle_fat_pocket_scene::print_vf_centroid_scan(double off_coef) const{
+  middle_fat_pocket_geo_.print_vf_centroid_scan(off_coef);
 }

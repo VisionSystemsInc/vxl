@@ -41,6 +41,9 @@ class bvgl_scaled_shape_3d
   Type linear_scale(Type w) const;
   Type quadratic_scale(Type w) const;
   
+  //: return the base spline region
+  bvgl_spline_region_3d<Type> base() const{ return base_;}
+
   //:bounds on u, v parameters. Currently assumes that the base is the largest cross section
   // and the axis is the base plane normal. 
   void uv_bounds(Type& u_min, Type& u_max, Type& v_min, Type& v_max) const;

@@ -97,6 +97,23 @@ boxm2_vecf_middle_fat_pocket boxm2_vecf_middle_fat_pocket::deform() const{
   pocket_.set_principal_eigenvector(params_.principal_eigenvector_);
   pocket_.apply_parameters_to_cross_sections();
 }
-bool boxm2_vecf_middle_fat_pocket::inverse_vector_field(vgl_point_3d<double> p, vgl_vector_3d<double> inv_v) const{
+bool boxm2_vecf_middle_fat_pocket::inverse_vector_field(vgl_point_3d<double> p, vgl_vector_3d<double>& inv_v) const{
   return pocket_.inverse_vector_field(p, inv_v);
+}
+//for debug purposes can be removed 
+void boxm2_vecf_middle_fat_pocket::print_vf_centroid_scan(double off_coef) const{
+  bvgl_spline_region_3d<double> base = pocket_.base();
+  vgl_point_3d<double> c = base.centroid();
+  vgl_vector_3d<double> n = base.normal(), uvec, vvec;
+  base.plane_coordinate_vectors(uvec, vvec);
+  vgl_vector_3d<double> off = off_coef*uvec;
+  c = c+ off;
+  double h = pocket_.max_norm_distance();
+  double dh = h/100.0;
+  for(double t = 0.0; t<h; t+=dh){
+    vgl_point_3d<double> p = c + t*n;
+    vgl_vector_3d<double> vf(0.0, 0.0, 0.0);    
+    bool valid = pocket_.inverse_vector_field(p, vf);
+    vcl_cout << t << ' ' << vf.x() << ' ' << vf.y() << ' ' << vf.z() << ' ' << valid << '\n';
+  }
 }

@@ -50,8 +50,10 @@ class boxm2_vecf_middle_fat_pocket{
   void apply_deformation_params();
 
   // deformation vector field
-  bool inverse_vector_field(vgl_point_3d<double> p, vgl_vector_3d<double> inv_v) const;
+  bool inverse_vector_field(vgl_point_3d<double> p, vgl_vector_3d<double>& inv_v) const;
 
+  //: for debug purposes
+  void print_vf_centroid_scan(double off_coef) const;
  private:
   void read_middle_fat_pocket(vcl_istream& istr);
   bvgl_spline_region_3d<double> base_;

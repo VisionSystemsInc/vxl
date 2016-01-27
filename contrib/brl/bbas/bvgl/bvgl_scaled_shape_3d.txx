@@ -22,7 +22,7 @@ Type bvgl_scaled_shape_3d<Type>::quadratic_scale(Type w) const{
   // how does the scale of the base vary with the normal parameter
   // for now assume quadratic range of 0.1-1.0
   Type s1 = Type(4)*scale_at_midpt_-scale_at_max_-Type(3);
-  Type s2 = Type(2)*(Type(1)+scale_at_max_)-Type(4)*scale_at_midpt_;;
+  Type s2 = Type(2)*(Type(1)+scale_at_max_)-Type(4)*scale_at_midpt_;
   Type s = Type(1)+ w*s1 + w*w*s2;
   if(s > Type(1))
     return Type(1);
@@ -169,18 +169,23 @@ bool bvgl_scaled_shape_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const& 
   if(!cross_sections_[0].signed_distance(p, dist))
     return false;
   unsigned n = static_cast<unsigned>(cross_sections_.size()), index = 0;
-  Type csect_separation_dist = max_nd_/(static_cast<Type>(n)-Type(1));
+  Type csect_separation_dist = max_nd_/static_cast<Type>(n-1);
+
   if(dist<-tolerance_){//tolerance below the bottom of the base
     return false;
   }
+  
   if(dist>(max_nd_+tolerance_)){//tolerance above the apex
     return false;
   }
   Type dindex = vcl_floor(dist/csect_separation_dist);
-  index = static_cast<unsigned>(dindex);
+  if(dindex<Type(0))
+    index =0;
+  else
+    index = static_cast<unsigned>(dindex);
   if(index >= n)
     index = n-1;
-  return cross_sections_[index].inverse_vector_field(p, inv);
+  return cross_sections_[index].inverse_vector_field(p, inv, csect_separation_dist);
 }
 
 template <class Type>

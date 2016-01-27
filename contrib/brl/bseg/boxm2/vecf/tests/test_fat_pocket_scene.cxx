@@ -33,14 +33,22 @@ void test_fat_pocket_scene()
       return;
     }
 
-  boxm2_vecf_middle_fat_pocket_scene fpscene(middle_fat_pocket_scene_path, middle_fat_pocket_geo_path);
+  boxm2_vecf_middle_fat_pocket_scene fpscene(middle_fat_pocket_scene_path, middle_fat_pocket_geo_path, true);
  // boxm2_vecf_middle_fat_pocket_scene fpscene(middle_fat_pocket_scene_path);
   boxm2_scene_sptr scene = fpscene.scene();
   if(!scene)
     return;
   //  boxm2_cache::instance()->write_to_disk();
 
-#if 1  
+#if 0  // debug
+  boxm2_vecf_middle_fat_pocket_params params;
+  boxm2_vecf_articulated_params& aparams = params;
+  params.lambda_ = 0.5;
+  //params.lambda_ = 1.0;
+  fpscene.set_params(aparams);
+  fpscene.print_vf_centroid_scan(25.0);
+
+
   vcl_string target_scene_path = scene_dir + "target_fat_pocket_8.xml";
 
   if(!vul_file::exists(target_scene_path))

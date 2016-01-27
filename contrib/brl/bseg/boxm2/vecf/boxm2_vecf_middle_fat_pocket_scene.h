@@ -7,7 +7,6 @@
 // \author J.L. Mundy
 // \date   23 Jan 2016
 //
-// For the time being, the middle_fat_pocket map to target is only global transformations
 //
 #include <boxm2/boxm2_block.h>
 #include <boxm2/vecf/boxm2_vecf_articulated_scene.h>
@@ -35,9 +34,7 @@ class boxm2_vecf_middle_fat_pocket_scene : public boxm2_vecf_articulated_scene
 
   //: construct from scene file specification, use exising database unless initialize == true
   // otherwise compute voxel contents from the middle_fat_pocket parameters
-  boxm2_vecf_middle_fat_pocket_scene(vcl_string const& scene_file);
-
-  boxm2_vecf_middle_fat_pocket_scene(vcl_string const& scene_file, vcl_string const& geometry_file);
+  boxm2_vecf_middle_fat_pocket_scene(vcl_string const& scene_file, vcl_string const& geometry_file, bool initialize = false);
 
   //: find the inverse vector field for unrefined target block centers
   virtual void inverse_vector_field_unrefined(vcl_vector<vgl_point_3d<double> > const& unrefined_target_pts);
@@ -85,10 +82,6 @@ class boxm2_vecf_middle_fat_pocket_scene : public boxm2_vecf_articulated_scene
 
   void create_anatomy_labels();
 
-  void export_point_cloud(vcl_ostream& ostr) const;
-
-  void export_point_cloud_with_appearance(vcl_ostream& ostr) const;
-
   //should be implemented on params class
   bool vfield_params_change_check(const boxm2_vecf_middle_fat_pocket_params& params){return false;}
  
@@ -96,18 +89,22 @@ class boxm2_vecf_middle_fat_pocket_scene : public boxm2_vecf_articulated_scene
 
  //: cache index of neighboring cells
  void find_cell_neigborhoods();
- //: set manible anatomy flags
+ //: set middle fat pocket anatomy flags
  void cache_cell_centers_from_anatomy_labels();
 
- //: scan dense set of points on the manbible
+ //: scan dense set of points on the fat pocket
  void build_middle_fat_pocket();
  //: assign appearance to parts of the middle_fat_pocket
  void paint_middle_fat_pocket();
 
-  //: members
+ //: debug purposes can be removed
+ void print_vf_centroid_scan(double off_coef) const;
+
+
+ //: members
   // =============  middle_fat_pocket ===============
-  boxm2_data_base* middle_fat_pocket_base_;
-  boxm2_data<BOXM2_PIXEL>::datatype* middle_fat_pocket_data_;        // is voxel a middle_fat_pocket point
+ boxm2_data_base* middle_fat_pocket_base_;
+ boxm2_data<BOXM2_PIXEL>::datatype* middle_fat_pocket_data_;        // is voxel a middle_fat_pocket point
 
   vcl_vector<cell_info> box_cell_centers_;       // cell centers in the target block
 

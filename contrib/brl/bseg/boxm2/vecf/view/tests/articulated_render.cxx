@@ -258,7 +258,9 @@ int main(int argc, char ** argv)
       //boxm2_lru_cache::instance()->write_to_disk(crscn);
       bit_tableau->init(device, opencl_cache, composite_face_scene, composite_face_articulation,target_scene, ni, nj, pcam, "");
     }else if(scene_t == "fat_pocket"){
-      boxm2_vecf_middle_fat_pocket_scene* fat_pocket_scene = new boxm2_vecf_middle_fat_pocket_scene(articulated_scene_path, geometry_path);
+      // assumes source scene exists, i.e. initialize is false
+      bool initialize = false;
+      boxm2_vecf_middle_fat_pocket_scene* fat_pocket_scene = new boxm2_vecf_middle_fat_pocket_scene(articulated_scene_path, geometry_path, initialize);
       boxm2_vecf_middle_fat_pocket_articulation* fat_pocket_articulation =new boxm2_vecf_middle_fat_pocket_articulation();
       fat_pocket_articulation->set_play_sequence("default");
       fat_pocket_scene->set_target_background(dark_background);
