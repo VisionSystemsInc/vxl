@@ -424,7 +424,7 @@ void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(vcl_vector<vgl_po
     vgl_vector_3d<double> inv_vf;
     if(!mandible_geo_.inverse_vector_field(p, inv_vf))
       continue;
-    vgl_point_3d<double> rot_p_in_source = p + inv_vf
+    vgl_point_3d<double> rot_p_in_source = p + inv_vf;
     if(!source_bb_.contains(rot_p_in_source))
       continue;
     valid_unrefined_[vf_index] = true;
@@ -603,7 +603,6 @@ bool boxm2_vecf_mandible_scene::set_params(boxm2_vecf_articulated_params const& 
     boxm2_vecf_mandible_params const& params_ref = dynamic_cast<boxm2_vecf_mandible_params const &>(params);
     intrinsic_change_ = this->vfield_params_change_check(params_ref); 
     params_ = boxm2_vecf_mandible_params(params_ref);
-    //this->set_inv_rot();
     mandible_geo_.set_params(params_);
 #if _DEBUG
     vcl_cout<< "intrinsic change? "<<intrinsic_change_<<vcl_endl;

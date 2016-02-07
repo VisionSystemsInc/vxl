@@ -310,9 +310,12 @@ static void test_math()
   const float ninf_f = - vcl_numeric_limits<float>::infinity();
   const double pinf_d =   vcl_numeric_limits<double>::infinity();
   const double ninf_d = - vcl_numeric_limits<double>::infinity();
+#if 0
   const long double pinf_q =   HUGE_VALL; //vcl_numeric_limits<long double>::infinity();
   const long double ninf_q = - HUGE_VALL; //vcl_numeric_limits<long double>::infinity();
-
+#endif
+   const long double pinf_q =   vcl_numeric_limits<long double>::infinity();
+  const long double ninf_q = - vcl_numeric_limits<long double>::infinity();
   // Create NaN
   const float qnan_f = vcl_numeric_limits<float>::quiet_NaN();
   const double qnan_d = vcl_numeric_limits<double>::quiet_NaN();

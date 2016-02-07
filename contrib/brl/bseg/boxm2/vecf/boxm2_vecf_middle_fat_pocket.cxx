@@ -91,7 +91,7 @@ boxm2_vecf_middle_fat_pocket boxm2_vecf_middle_fat_pocket::deform() const{
   return boxm2_vecf_middle_fat_pocket(sshape, params_);
 }
 
-  void boxm2_vecf_middle_fat_pocket::apply_deformation_params(){
+void boxm2_vecf_middle_fat_pocket::apply_deformation_params(){
   pocket_.set_lambda(params_.lambda_);
   pocket_.set_gamma(params_.gamma_);
   pocket_.set_principal_eigenvector(params_.principal_eigenvector_);

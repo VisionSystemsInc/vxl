@@ -18,7 +18,7 @@ void boxm2_vecf_mandible::fill_boundary_map(){
   boundary_knots_["left_ramus_start"] = 0;
 }
 
-void boxm2_vecf_mandible_scene::set_inv_rot(){
+void boxm2_vecf_mandible::set_inv_rot(){
   // set rotation from params
   vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
   vnl_quaternion<double> Q(X,params_.jaw_opening_angle_rad_);
