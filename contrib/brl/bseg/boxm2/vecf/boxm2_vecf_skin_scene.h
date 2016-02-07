@@ -103,6 +103,8 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  void build_skin();
  //: assign appearance to parts of the skin
  void paint_skin();
+ //: assign appearance from skin point cloud with appearance
+ void repaint_skin();
 
   //: members
   // =============  skin ===============

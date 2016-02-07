@@ -105,13 +105,14 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_fil
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
   this->cache_cell_centers_from_anatomy_labels();
-  this->set_inv_rot();
+  mandible_geo_.set_params(params_);
 }
 boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file):
   boxm2_vecf_articulated_scene(scene_file),mandible_base_(0), 
   left_ramus_(0), left_angle_(0), body_(0), right_angle_(0), right_ramus_(0), intrinsic_change_(false)
 {
   mandible_geo_ = boxm2_vecf_mandible(geometry_file);
+  mandible_geo_.set_params(params_);
   this->extrinsic_only_ = true;
   target_blk_ = 0;
   target_data_extracted_ = false;
@@ -129,7 +130,6 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_fil
   boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes, params_.neighbor_radius());
   //boxm2_surface_distance_refine<boxm2_vecf_mandible>(mandible_geo_, base_model_, prefixes);
   this->rebuild();
-  this->set_inv_rot();
  }
 
 boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_file, vcl_string const& geometry_file, vcl_string const& params_file_name):
@@ -141,7 +141,7 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(vcl_string const& scene_fil
     return;
   }
   params_file >> this->params_;
-  this->set_inv_rot();
+  mandible_geo_.set_params(params_);
   this->extrinsic_only_ = true;
   target_blk_ = 0;
   target_data_extracted_ = false;
@@ -308,8 +308,9 @@ bool boxm2_vecf_mandible_scene::find_nearest_data_index(boxm2_vecf_mandible_scen
 }
 
 bool boxm2_vecf_mandible_scene::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
-  vgl_point_3d<double> p = target_pt-params_.offset_;
-  vgl_point_3d<double> rp = inv_rot_ * p;// rotated point
+  if(!mandible_geo_.inverse_vector_field(target_pt, inv_vf))
+    return false;
+  vgl_point_3d<double> rp = target_pt + inv_vf;
   if(!source_bb_.contains(rp))
     return false;
   unsigned dindx = 0;
@@ -317,15 +318,13 @@ bool boxm2_vecf_mandible_scene::inverse_vector_field(vgl_point_3d<double> const&
     return false;
   if(!is_type_data_index(dindx, MANDIBLE))
     return false;
-  inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
   return true;
 }
 
 bool boxm2_vecf_mandible_scene::coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
-  vgl_point_3d<double> p = target_pt-params_.offset_;
-  vgl_point_3d<double> rp = inv_rot_ * p;// rotated point
-   inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
-   return true;// for now the coupled vector field extends through all of target space
+  if(!mandible_geo_.inverse_vector_field(target_pt, inv_vf))
+    return false;
+  return true;// for now the coupled vector field extends through all of target space
 }
 
 void  boxm2_vecf_mandible_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf, vcl_vector<bool>& valid) const{
@@ -422,18 +421,16 @@ void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(vcl_vector<vgl_po
   valid_unrefined_.resize(n, false);
   for(unsigned vf_index = 0; vf_index<n; ++vf_index){
     const vgl_point_3d<double>& p = unrefined_target_pts[vf_index];
-    vgl_point_3d<double> p_in_source = p-params_.offset_;
-    // rotate the target center back to source
-    vgl_point_3d<double> rot_p_in_source = inv_rot_*p_in_source;
+    vgl_vector_3d<double> inv_vf;
+    if(!mandible_geo_.inverse_vector_field(p, inv_vf))
+      continue;
+    vgl_point_3d<double> rot_p_in_source = p + inv_vf
     if(!source_bb_.contains(rot_p_in_source))
       continue;
     valid_unrefined_[vf_index] = true;
-    vfield_unrefined_[vf_index].set(rot_p_in_source.x() - p.x(),
-                                    rot_p_in_source.y() - p.y(),
-                                    rot_p_in_source.z() - p.z());
+    vfield_unrefined_[vf_index].set(inv_vf.x(), inv_vf.y(), inv_vf.z());
   }
 }
-
 // interpolate data around the inverted position of the target in the source reference frame. Interpolation weights are based
 // on a Gaussian distribution with respect to distance from the source location
 //
@@ -548,7 +545,7 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<double> c
 
   // rotate the target box in source by the inverse rotation
   // the box is rotated about its centroid
-  vgl_orient_box_3d<double> target_obox(target_box_in_source, inv_rot_.as_quaternion());
+  vgl_orient_box_3d<double> target_obox(target_box_in_source, mandible_geo_.inv_rot().as_quaternion());
   vgl_box_3d<double> rot_target_box_in_source = target_obox.enclosing_box();
   vgl_box_3d<double> int_box = vgl_intersection(source_bb_, rot_target_box_in_source);
   if(int_box.is_empty())
@@ -570,13 +567,6 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<double> c
     }
   }
   return max_depth;
-}
-void boxm2_vecf_mandible_scene::set_inv_rot(){
-  // set rotation from params
-  vnl_vector_fixed<double,3> X(1.0, 0.0, 0.0);
-  vnl_quaternion<double> Q(X,params_.jaw_opening_angle_rad_);
-  vgl_rotation_3d<double> rot(Q);
-  inv_rot_ = rot.inverse();
 }
 
 void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
@@ -613,7 +603,8 @@ bool boxm2_vecf_mandible_scene::set_params(boxm2_vecf_articulated_params const& 
     boxm2_vecf_mandible_params const& params_ref = dynamic_cast<boxm2_vecf_mandible_params const &>(params);
     intrinsic_change_ = this->vfield_params_change_check(params_ref); 
     params_ = boxm2_vecf_mandible_params(params_ref);
-    this->set_inv_rot();
+    //this->set_inv_rot();
+    mandible_geo_.set_params(params_);
 #if _DEBUG
     vcl_cout<< "intrinsic change? "<<intrinsic_change_<<vcl_endl;
 #endif

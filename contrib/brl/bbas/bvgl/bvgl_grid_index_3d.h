@@ -2,7 +2,7 @@
 #define bvgl_grid_index_3d_h_
 //:
 // \file
-// \brief  A simple grid index to store a pointset, optionally with normals
+// \brief  A simple grid index to store a pointset, optionally with normals and optional scalar value
 //
 // \author J.L. Mundy
 // \date   6 November 2015
@@ -32,8 +32,8 @@ class bvgl_grid_index_3d{
   bool closest_point(vgl_point_3d<double> const& p, vgl_point_3d<double>& pc) const;
   bool closest_point(vgl_point_3d<double> const& p, vgl_point_3d<double>& pc, double& scalar) const;
   //: the distance from p to the closest point or optionally its normal plane
-  double surface_distance(vgl_point_3d<double> const& p) const;
-  double surface_distance(vgl_point_3d<double> const& p, double& scalar) const;
+  double distance(vgl_point_3d<double> const& p) const;
+  double distance(vgl_point_3d<double> const& p, double& scalar) const;
   //: accessors
   vgl_box_3d<double> bounding_box() const {return bbox_;}
   unsigned npts() const {return npts_;}  
@@ -43,8 +43,8 @@ class bvgl_grid_index_3d{
   bool has_scalars_;
   bool has_normals_;
   vbl_array_3d<vcl_vector<vgl_point_3d<double > > >   p_grid_;
-  vbl_array_3d<vcl_vector<vgl_vector_3d<double > > >  n_grid_;//optional
-  vbl_array_3d<vcl_vector<double> >  s_grid_;//optional scalar
+  vbl_array_3d<vcl_vector<vgl_vector_3d<double > > >  n_grid_;//optional normal grid
+  vbl_array_3d<vcl_vector<double> >  s_grid_;//optional scalar grid
   vgl_box_3d<double> bbox_;
   double xmin_;
   double ymin_;

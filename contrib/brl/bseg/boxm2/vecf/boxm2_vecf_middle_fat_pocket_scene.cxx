@@ -111,7 +111,7 @@ void boxm2_vecf_middle_fat_pocket_scene::build_middle_fat_pocket(){
       cit != ccs.end(); ++cit){
     const vgl_point_3d<double>& cell_center = cit->cell_center_;
     unsigned indx = cit->data_index_;
-   double d = middle_fat_pocket_geo_.surface_distance(cell_center);
+   double d = middle_fat_pocket_geo_.distance(cell_center);
    double d_thresh = len_coef*cit->side_length_;
     if(d < d_thresh){
       if(!is_type_global(cell_center, MIDDLE_FAT_POCKET)){

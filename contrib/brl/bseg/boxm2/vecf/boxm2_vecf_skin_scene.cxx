@@ -64,7 +64,7 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
       if(!skin){
         if(skin_geo_.has_appearance()){
           double a = 0.0;
-          double d = skin_geo_.surface_distance(p, a);
+          double d = skin_geo_.distance(p, a);
           params_.app_[0]=static_cast<unsigned char>(a);
         }else
           params_.app_[0]=params_.skin_intensity_;
@@ -103,12 +103,14 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(vcl_string const& scene_file, vcl_s
   boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
   boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
   this->rebuild();
+  if(skin_geo_.has_appearance())
+    this->repaint_skin();
 }
 
 void boxm2_vecf_skin_scene::rebuild(){
-this->extract_block_data();
-this->cache_cell_centers_from_anatomy_labels();
-//this->cache_neighbors();
+  this->extract_block_data();
+  this->cache_cell_centers_from_anatomy_labels();
+  //this->cache_neighbors();
 }
 void boxm2_vecf_skin_scene::cache_neighbors(){
   this->find_cell_neigborhoods();
@@ -127,7 +129,7 @@ void boxm2_vecf_skin_scene::build_skin(){
     const vgl_point_3d<double>& cell_center = cit->cell_center_;
     unsigned indx = cit->data_index_;
     double a = 0.0;
-    double d = skin_geo_.surface_distance(cell_center, a);
+    double d = skin_geo_.distance(cell_center, a);
     unsigned char apc = static_cast<unsigned char>(a);
     double d_thresh = len_coef*cit->side_length_;
     if(d < d_thresh){
@@ -186,7 +188,22 @@ void boxm2_vecf_skin_scene::paint_skin(){
     nobs_data_[indx] = nobs;
   }
 }
-
+void boxm2_vecf_skin_scene::repaint_skin(){
+  unsigned ns = static_cast<unsigned>(skin_cell_centers_.size());
+  double len_coef = params_.neighbor_radius();
+  for(unsigned i = 0; i<ns; ++i){
+    unsigned indx = skin_cell_data_index_[i];
+    const vgl_point_3d<double>& p = skin_cell_centers_[i];
+    double a = 0.0;
+    double d = skin_geo_.distance(p, a);
+    unsigned char apc = static_cast<unsigned char>(a);
+    double d_thresh = len_coef*8.0;
+    if(d < d_thresh){
+      params_.app_[0]=apc;
+      app_data_[indx] = params_.app_;
+    }
+  }
+}
 bool boxm2_vecf_skin_scene::is_type_data_index(unsigned data_index, boxm2_vecf_skin_scene::anat_type type) const{
 
    if(type == SKIN){
@@ -219,7 +236,8 @@ bool boxm2_vecf_skin_scene::find_nearest_data_index(boxm2_vecf_skin_scene::anat_
   return true;
 }
 bool boxm2_vecf_skin_scene::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
-  vgl_point_3d<double> rp = target_pt-params_.offset_;
+  skin_geo_.inverse_vector_field(target_pt, inv_vf);
+  vgl_point_3d<double> rp = target_pt + inv_vf;
   if(!source_bb_.contains(rp))
     return false;
   unsigned dindx = 0;
@@ -227,7 +245,6 @@ bool boxm2_vecf_skin_scene::inverse_vector_field(vgl_point_3d<double> const& tar
     return false;
   if(!is_type_data_index(dindx, SKIN))
     return false;
-  inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
   return true;
 }
 void boxm2_vecf_skin_scene::inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vf,

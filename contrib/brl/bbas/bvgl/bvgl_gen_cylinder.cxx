@@ -177,7 +177,7 @@ vcl_vector<unsigned> bvgl_gen_cylinder::cross_section_contains(vgl_point_3d<doub
    return true;
 }
 
-double bvgl_gen_cylinder::surface_distance(vgl_point_3d<double> const& p, double dist_thresh) const{
+double bvgl_gen_cylinder::distance(vgl_point_3d<double> const& p, double dist_thresh) const{
   vgl_point_3d<double> cp;
   if(!this->closest_point(p, cp, dist_thresh))
     return vcl_numeric_limits<double>::max();

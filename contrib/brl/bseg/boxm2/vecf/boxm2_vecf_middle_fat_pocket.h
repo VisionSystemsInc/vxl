@@ -17,7 +17,8 @@
 #include <bvgl/bvgl_spline_region_3d.h>
 #include <bvgl/bvgl_scaled_shape_3d.h>
 #include "boxm2_vecf_middle_fat_pocket_params.h"
-class boxm2_vecf_middle_fat_pocket{
+#include "boxm2_vecf_geometry_base.h"
+class boxm2_vecf_middle_fat_pocket : public boxm2_vecf_geometry_base{
  public:
   boxm2_vecf_middle_fat_pocket(){}
   boxm2_vecf_middle_fat_pocket(vcl_string const& geometry_file);
@@ -33,10 +34,11 @@ class boxm2_vecf_middle_fat_pocket{
     return pocket_.in(pt);}
     
   bool has_appearance() const {return false;}
-  double surface_distance(vgl_point_3d<double> const& p) const {return pocket_.surface_distance(p);}
+  double distance(vgl_point_3d<double> const& p) const {return pocket_.distance(p);}
 
   //: the functor operator for surface distance.
-  double operator() (vgl_point_3d<double> p) const{ return pocket_.surface_distance(p);}
+  virtual double operator() (vgl_point_3d<double> const& p) const{ return pocket_.distance(p);}
+
 
   //: returns a deformed fat pocket
   boxm2_vecf_middle_fat_pocket deform() const;
@@ -49,8 +51,7 @@ class boxm2_vecf_middle_fat_pocket{
   // ::inverse_vector_fieldx
   void apply_deformation_params();
 
-  // deformation vector field
-  bool inverse_vector_field(vgl_point_3d<double> p, vgl_vector_3d<double>& inv_v) const;
+  virtual bool inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const;
 
   //: for debug purposes
   void print_vf_centroid_scan(double off_coef) const;

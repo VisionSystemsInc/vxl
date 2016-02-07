@@ -112,3 +112,9 @@ void boxm2_vecf_skin::display_vrml(vcl_ofstream& ostr) const{
   }
   ostr.close();
 }
+
+bool boxm2_vecf_skin::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
+  const vgl_point_3d<double>& off = params_.offset_;
+  inv_vf.set(-off.x(), -off.y(), -off.z());
+  return true;
+}

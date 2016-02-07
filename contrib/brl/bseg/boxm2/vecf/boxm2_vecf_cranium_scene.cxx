@@ -54,6 +54,7 @@ void boxm2_vecf_cranium_scene::cache_cell_centers_from_anatomy_labels(){
 // constructors
 boxm2_vecf_cranium_scene::boxm2_vecf_cranium_scene(vcl_string const& scene_file): boxm2_vecf_articulated_scene(scene_file), cranium_data_(0){
   boxm2_lru_cache::create(base_model_);
+  cranium_geo_.set_params(params_);
   vul_timer t;
   this->rebuild();
   vcl_cout << "Create cranium scene in " << t.real()/1000.0 << "seconds\n";
@@ -63,6 +64,7 @@ boxm2_vecf_cranium_scene::boxm2_vecf_cranium_scene(vcl_string const& scene_file,
   boxm2_vecf_articulated_scene(scene_file), cranium_data_(0)
 {
   cranium_geo_ = boxm2_vecf_cranium(geometry_file);
+  cranium_geo_.set_params(params_);
   target_blk_ = 0;
   target_data_extracted_ = false;
   boxm2_lru_cache::create(base_model_);
@@ -101,7 +103,7 @@ void boxm2_vecf_cranium_scene::build_cranium(){
       cit != ccs.end(); ++cit){
     const vgl_point_3d<double>& cell_center = cit->cell_center_;
     unsigned indx = cit->data_index_;
-    double d = cranium_geo_.surface_distance(cell_center);
+    double d = cranium_geo_.distance(cell_center);
     double d_thresh = len_coef*cit->side_length_;
     if(d < d_thresh){
       if(!is_type_global(cell_center, CRANIUM)){
@@ -246,24 +248,25 @@ void boxm2_vecf_cranium_scene::inverse_vector_field_unrefined(vcl_vector<vgl_poi
   valid_unrefined_.resize(n, false);
   for(unsigned vf_index = 0;vf_index<n; ++vf_index){
     const vgl_point_3d<double>& p = unrefined_target_pts[vf_index];
-    vgl_point_3d<double> p_in_source = p - params_.offset_;
+    vgl_vector_3d<double> inv_vf;
+    cranium_geo_.inverse_vector_field(p, inv_vf);
+    vgl_point_3d<double> p_in_source = p + inv_vf;
     if(!source_bb_.contains(p_in_source))
       continue;
     valid_unrefined_[vf_index] = true;
-    vfield_unrefined_[vf_index].set(p_in_source.x() - p.x(), // really just the offset for now, but keep for
-                                    p_in_source.y() - p.y(), // extended local vector field adjustments
-                                    p_in_source.z() - p.z());
+    vfield_unrefined_[vf_index].set(inv_vf.x(), inv_vf.y(), inv_vf.z());
   }
 }
 
 bool boxm2_vecf_cranium_scene::inverse_vector_field(vgl_point_3d<double> const&  target_pt, vgl_vector_3d<double>& inv_vf) const{
-  vgl_point_3d<double> tp = target_pt-params_.offset_;
+  if(!cranium_geo_.inverse_vector_field(target_pt, inv_vf))
+    return false;
+  vgl_point_3d<double> tp = target_pt + inv_vf;
   if(!source_bb_.contains(tp))
     return false;
   // vf only defined for cells on the cranium
   if(!is_type_global(tp, CRANIUM))
     return false;
-  inv_vf.set(tp.x() - target_pt.x(), tp.y() - target_pt.y(), tp.z() - target_pt.z());
   return true;
 }
 
@@ -404,6 +407,7 @@ bool boxm2_vecf_cranium_scene::set_params(boxm2_vecf_articulated_params const& p
     boxm2_vecf_cranium_params const& params_ref = dynamic_cast<boxm2_vecf_cranium_params const &>(params);
     bool change = this->vfield_params_change_check(params_ref); 
     params_ = boxm2_vecf_cranium_params(params_ref);
+    cranium_geo_.set_params(params_);
 #if _DEBUG
     //vcl_cout<< "intrinsic change? "<<intrinsic_change_<<vcl_endl;
 #endif

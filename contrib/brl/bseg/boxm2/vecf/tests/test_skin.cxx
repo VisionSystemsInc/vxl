@@ -18,8 +18,8 @@
 void test_skin()
 {
 #ifdef BUILD_TEST_SKIN
-  vcl_string pc_dir = "c:/Users/mundy/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/skull/";
-  vcl_string scene_dir = "c:/Users/mundy/VisionSystems/Janus/experiments/vector_flow/skin/";
+  vcl_string pc_dir = "d:/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/skull/";
+  vcl_string scene_dir = "d:/VisionSystems/Janus/experiments/vector_flow/skin/";
   vcl_string skin_scene_path = scene_dir + "skin.xml";
   //vcl_string skin_scene_path = scene_dir + "skin_orig.xml";
   vcl_string vrml_path = pc_dir + "skin_vrml.wrl";

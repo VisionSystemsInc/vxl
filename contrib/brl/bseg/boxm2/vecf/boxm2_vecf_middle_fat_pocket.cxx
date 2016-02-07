@@ -97,7 +97,7 @@ boxm2_vecf_middle_fat_pocket boxm2_vecf_middle_fat_pocket::deform() const{
   pocket_.set_principal_eigenvector(params_.principal_eigenvector_);
   pocket_.apply_parameters_to_cross_sections();
 }
-bool boxm2_vecf_middle_fat_pocket::inverse_vector_field(vgl_point_3d<double> p, vgl_vector_3d<double>& inv_v) const{
+bool boxm2_vecf_middle_fat_pocket::inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const{
   return pocket_.inverse_vector_field(p, inv_v);
 }
 //for debug purposes can be removed 
