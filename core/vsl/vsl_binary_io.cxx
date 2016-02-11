@@ -647,7 +647,7 @@ void* vsl_b_istream::get_serialisation_pointer(unsigned long serial_number) cons
         serialisation_records_.find(serial_number);
   if (entry == serialisation_records_.end())
   {
-    return 0;
+    return VXL_NULLPTR;
   }
   else
   {
@@ -723,8 +723,8 @@ bool vsl_b_istream_test(vcl_istream &is)
   is.read( ( char* )&m1, 2 );
   vsl_swap_bytes(( char* )&m1, sizeof(long) );
   is.read( ( char* )&m2, 2 );
-  vsl_swap_bytes(( char* )&m2, sizeof(long) ); 
-  
+  vsl_swap_bytes(( char* )&m2, sizeof(long) );
+
   is.seekg(0);
 
   if (!is || m2 != vsl_magic_number_part_2 || m1 != vsl_magic_number_part_1 || v>1)

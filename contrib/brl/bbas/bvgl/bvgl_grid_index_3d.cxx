@@ -30,14 +30,15 @@ bvgl_grid_index_3d::bvgl_grid_index_3d(unsigned nx, unsigned ny, unsigned nz, vg
   delta_z_ = bbox_.depth()/dnz;
   unsigned ix =0, iy=0, iz =0;
   unsigned npts = ptset.npts();
-  for(unsigned i = 0; i<npts; ++i){
+  for (unsigned int i = 0; i<npts; ++i)
+    {
     vgl_point_3d<double> pi = ptset.p(i);
     this->index(pi, ix, iy, iz);
     p_grid_[ix][iy][iz].push_back(pi);
     npts_++;
     if(has_normals_)
-      n_grid_[ix][iy][iz].push_back(ptset.n(i));    
-  }
+      n_grid_[ix][iy][iz].push_back(ptset.n(i));
+    }
 }
 bvgl_grid_index_3d::bvgl_grid_index_3d(unsigned nx, unsigned ny, unsigned nz,
                                        vgl_pointset_3d<double> ptset, vcl_vector<double> scalars, double thresh):
@@ -62,7 +63,7 @@ bvgl_grid_index_3d::bvgl_grid_index_3d(unsigned nx, unsigned ny, unsigned nz,
     p_grid_[ix][iy][iz].push_back(pi);
     npts_++;
     if(has_normals_)
-      n_grid_[ix][iy][iz].push_back(ptset.n(i));    
+      n_grid_[ix][iy][iz].push_back(ptset.n(i));
     s_grid_[ix][iy][iz].push_back(scalars[i]);
   }
 }

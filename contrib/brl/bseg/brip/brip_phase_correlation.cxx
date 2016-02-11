@@ -11,14 +11,21 @@ static bool peak_greater(const peak& pa, const peak& pb){
   return pa.score_ > pb.score_;
 }
 
-brip_phase_correlation::brip_phase_correlation(vil_image_view<float> const&img0, vil_image_view<float> const&img1,
-                                               float gauss_sigma, int peak_radius, float alpha):
-  gauss_sigma_(gauss_sigma), peak_radius_(peak_radius), alpha_(alpha){
+brip_phase_correlation::
+brip_phase_correlation(vil_image_view<float> const&img0,
+                       vil_image_view<float> const&img1,
+                       float gauss_sigma,
+                       int peak_radius,
+                       float alpha):
+  alpha_(alpha),
+  peak_radius_(peak_radius),
+  gauss_sigma_(gauss_sigma)
+{
   float fill_value = 0.0f;
   int ni0 = img0.ni(), nj0 = img0.nj();
   int ni1 = img1.ni(), nj1 = img1.nj();
   //find smallest image colum
-  int ni = ni0; 
+  int ni = ni0;
   if(ni>ni1) ni = ni1;
   int nj = nj0;
   if(nj>nj1) nj = nj1;
@@ -41,7 +48,7 @@ brip_phase_correlation::brip_phase_correlation(vil_image_view<float> const&img0,
         img0_(i,j) = fill_value;
       else
         img0_(i,j) = img0(di0, dj0);
-      
+
       if(di1<0||dj1<0||di1>=ni1||dj1>=nj1)
         img1_(i,j) = fill_value;
       else
@@ -102,7 +109,7 @@ bool brip_phase_correlation::extract_correlation_peaks(){
         temp(i,j) = corr_(i,j);
 
   //smooth remaining peaks with a gaussian
-  temp1 = brip_vil_float_ops::gaussian(temp, gauss_sigma_, "periodic"); 
+  temp1 = brip_vil_float_ops::gaussian(temp, gauss_sigma_, "periodic");
 
 
   // determine local maxima by iterating through the smoothed correlation image
@@ -142,7 +149,7 @@ bool brip_phase_correlation::extract_correlation_peaks(){
            }
          }
        corr_peaks_(i,j) = cv;
-      
+
        if(is_peak){
                    //don't include peak in background sum
          avg_sum -= cv;

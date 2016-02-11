@@ -11,7 +11,10 @@
 static bool is_intersect(vgl_box_2d<double> const& box, vcl_vector<vgl_point_2d<double> > const& line)
 {
   if (box.min_x() == 0.375 && box.min_y() == 0.5)
-    unsigned i = 1;
+  // FIXME: There is a warning here due to the unused variable i.
+  // I is declared to be 1, then shadowed by another which is declared to be 0.
+  // Is the loop that follows correct?
+  unsigned i = 1;
   unsigned n_line_segs = line.size()-1;
   for (unsigned i = 0; i < n_line_segs; i++) {
     vgl_point_2d<double> s = line[i];  vgl_point_2d<double> e = line[i+1];
@@ -294,7 +297,7 @@ void bvgl_2d_geo_index::get_leaves(bvgl_2d_geo_index_node_sptr root, vcl_vector<
     for (unsigned i = 0; i < root->children_.size(); i++) {
       if (!root->children_[i])    // the node has children but child i is empty
         continue;
-      else { 
+      else {
         get_leaves(root->children_[i], leaves, poly);    // check the intersection of child i and its following children with poly
         at_least_one_child = true;
       }

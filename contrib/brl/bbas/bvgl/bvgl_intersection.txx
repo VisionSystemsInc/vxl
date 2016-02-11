@@ -7,7 +7,7 @@
 //
 //  implementation based on code from Tomas Akenine-Moller
 //  http://jgt.akpeters.com/papers/AkenineMoller01/tribox.html
-// 
+//
 //  \modifications
 //   11 June 2015 dec: incorporated bug fixes included in v3, available at: http://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/code/tribox3.txt
 //
@@ -53,19 +53,21 @@ namespace bvgl_intersection_helpers
 
   template <typename T>
   bool planeBoxIntersect(T normal[3], T vert[3], T maxbox[3]) {
-    int q;
     T vmin[3],vmax[3],v;
-    for (int q=X;q<=Z;q++) {
+    for (int q=X;q<=Z;++q)
+      {
       v = vert[q];
-      if (normal[q]>0.0f) {
+      if (normal[q]>0.0f)
+        {
         vmin[q]=-maxbox[q] - v;
         vmax[q]=maxbox[q] - v;
-      }
-      else {
+        }
+      else
+        {
         vmin[q]=maxbox[q] - v;
         vmax[q]=-maxbox[q] - v;
+        }
       }
-    }
     return ( (dot(normal,vmin) <= 0.0f) && (dot(normal,vmax) >= 0.0f) );
   }
 

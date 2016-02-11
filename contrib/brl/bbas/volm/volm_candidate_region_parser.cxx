@@ -98,105 +98,105 @@ void volm_candidate_region_parser::charData(const XML_Char* s, int len)
   if (len == 0 || len <= leadingSpace)
     return; // called with whitespace between elements
   if (last_tag == KML_LON_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> longitude_;
     last_tag = "";
   }
   else if (last_tag == KML_LAT_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> latitude_;
     last_tag = "";
   }
   else if (last_tag == KML_ALT_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> altitude_;
     last_tag = "";
   }
   else if (last_tag == KML_PLACEMARK_NAME_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     current_name_ = str.str();
     last_tag = "";
   }
   else if (last_tag == KML_HEAD_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> heading_;
     last_tag = "";
   }
   else if (last_tag == KML_HEAD_DEV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> heading_dev_;
     last_tag = "";
   }
   else if (last_tag == KML_TILT_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> tilt_;
     last_tag = "";
   }
   else if (last_tag == KML_TILT_DEV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> tilt_dev_;
     last_tag = "";
   }
   else if (last_tag == KML_ROLL_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> roll_;
     last_tag = "";
   }
   else if (last_tag == KML_ROLL_DEV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> roll_dev_;
     last_tag = "";
   }
   else if (last_tag == KML_TFOV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> top_fov_;
     last_tag = "";
   }
   else if (last_tag == KML_TFOV_DEV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> top_fov_dev_;
     last_tag = "";
   }
   else if (last_tag == KML_RFOV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> right_fov_;
     last_tag = "";
   }
   else if (last_tag == KML_RFOV_DEV_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> right_fov_dev_;
     last_tag = "";
   }
   else if (last_tag == KML_NEAR_TAG) {
-    vcl_stringstream str; 
+    vcl_stringstream str;
     for (int i = 0; i < len; i++)
       str << s[i];
     str >> near_;
@@ -209,7 +209,7 @@ void volm_candidate_region_parser::charData(const XML_Char* s, int len)
     vcl_string str_s;
     str_s = s;
     vcl_size_t cord_end = str_s.find(KML_POLYCORE_END_TAG);
-    
+
     if (str_s[len] == '<')
       cord_end = len;
     else {
@@ -217,8 +217,6 @@ void volm_candidate_region_parser::charData(const XML_Char* s, int len)
         cord_end--;
       while (str_s[cord_end-1] == ' ')
         cord_end--;
-      if ((int)cord_end > len)
-        len = (int)cord_end;
     }
     for (unsigned int i=0; i<cord_end; ++i)
       str << s[i];
@@ -384,11 +382,11 @@ vgl_polygon<double> volm_candidate_region_parser::parse_polygon_with_inner(vcl_s
   // create the outer boundary polygon
   if (parser->polyouter_.find(name) != parser->polyouter_.end()) {
     vcl_vector<vcl_vector<vgl_point_3d<double> > > out_sheets = parser->polyouter_[name];
-    unsigned n_sheet = out_sheets.size();
-    for (unsigned i = 0; i < n_sheet; i++) {
-      unsigned n_pts = out_sheets[i].size();
+    unsigned int n_sheet = out_sheets.size();
+    for (unsigned int i = 0; i < n_sheet; ++i) {
+      unsigned int n_pts = out_sheets[i].size();
       outer.new_sheet();
-      for (unsigned k = 0; k < out_sheets[i].size(); k++)
+      for (unsigned int k = 0; k < n_pts; ++k)
         outer.push_back(out_sheets[i][k].x(), out_sheets[i][k].y());
     }
   }

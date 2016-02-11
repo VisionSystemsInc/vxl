@@ -11,7 +11,7 @@
 // depending on which version of ffmpeg we have.
 
 extern "C" {
-// some versions of FFMPEG require this definition before including 
+// some versions of FFMPEG require this definition before including
 // the headers for C++ compatibility
 #define __STDC_CONSTANT_MACROS
 #if FFMPEG_IN_SEVERAL_DIRECTORIES
@@ -27,8 +27,10 @@ extern "C" {
 # include "vidl_ffmpeg_istream_v2.txx"
 #elif LIBAVFORMAT_BUILD < ((53<<16)+(24<<8)+0)  // before ver 53.24.0
 # include "vidl_ffmpeg_istream_v3.txx"
+#elif LIBAVFORMAT_VERSION_MAJOR < 56            // before avformat ver 57.0
+# include "vidl_ffmpeg_istream_v3.txx"
 #else
-# include "vidl_ffmpeg_istream_v0.9.txx"
+# include "vidl_ffmpeg_istream_v56.txx"
 #endif
 
 #else // VIDL_HAS_FFMPEG

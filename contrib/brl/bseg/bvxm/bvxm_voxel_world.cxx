@@ -643,10 +643,6 @@ bool bvxm_voxel_world::heightmap(vpgl_camera_double_sptr virtual_camera, vil_ima
   bvxm_util::write_slab_as_image(heightmap_rough,"./heightmap_rough.tiff");
 #endif
   // now clean up height map
-  unsigned n_smooth_iterations = 70;
-  float conf_thresh = 0.1f;
-  int medfilt_halfsize = 4;
-  float med_diff_thresh = 8.0;
 
   // convert confidence and heightmap to vil images
   //vil_image_view<float>* conf_img = new vil_image_view<float>(heightmap.ni(),heightmap.nj());
@@ -756,7 +752,7 @@ bool bvxm_voxel_world::heightmap_exp(vpgl_camera_double_sptr virtual_camera, vil
   bvxm_voxel_slab<float> x_slab(grid_size.x(),grid_size.y(),1);
   bvxm_voxel_slab<float> y_slab(grid_size.x(),grid_size.y(),1);
   bvxm_voxel_slab<float> z_slab(grid_size.x(),grid_size.y(),1);
-  
+
   for (unsigned i = 0; i < grid_size.x(); i++)
     for (unsigned j = 0; j < grid_size.y(); j++) {
       vgl_point_3d<float> pt = this->voxel_index_to_xyz(i, j, -1, 0);
@@ -774,7 +770,7 @@ bool bvxm_voxel_world::heightmap_exp(vpgl_camera_double_sptr virtual_camera, vil
   bvxm_voxel_slab<float> exp_depth(heightmap.ni(),heightmap.nj(),1);
   bvxm_voxel_slab<float> exp_depth_square(heightmap.ni(),heightmap.nj(),1);
   bvxm_voxel_slab<ocp_datatype> slice_prob_img(heightmap.ni(),heightmap.nj(),1);
- 
+
   bvxm_voxel_slab<float> slab_x_virtual(heightmap.ni(), heightmap.nj(), 1);
   bvxm_voxel_slab<float> slab_y_virtual(heightmap.ni(), heightmap.nj(), 1);
   bvxm_voxel_slab<float> slab_z_virtual(heightmap.ni(), heightmap.nj(), 1);
@@ -790,8 +786,8 @@ bool bvxm_voxel_world::heightmap_exp(vpgl_camera_double_sptr virtual_camera, vil
   //heightmap_rough.fill((float)grid_size.z());
   visX_accum_virtual.fill(1.0f);
   depth.fill(0.0f);  // depth from the ceiling of the scene! so start with 0
-  exp_depth.fill(0.0f);  
-  exp_depth_square.fill(0.0f);  
+  exp_depth.fill(0.0f);
+  exp_depth_square.fill(0.0f);
 
   // get occupancy probability grid
   bvxm_voxel_grid_base_sptr ocp_grid_base = this->get_grid<OCCUPANCY>(0,scale_idx);
@@ -841,7 +837,7 @@ bool bvxm_voxel_world::heightmap_exp(vpgl_camera_double_sptr virtual_camera, vil
       float PXvisX = (*visX_it) * (*PX_it);
       *exp_depth_it += *depth_it * PXvisX;
       *exp_depth_square_it += *depth_it * *depth_it * PXvisX;
-      
+
       // update virtual visX
       *visX_it *= (1.0f - *PX_it);
     }
@@ -856,7 +852,7 @@ bool bvxm_voxel_world::heightmap_exp(vpgl_camera_double_sptr virtual_camera, vil
       y_slab(i, j) = pt.y();
       z_slab(i, j) = pt.z();
     }
-  
+
   bvxm_util::warp_slab_bilinear(x_slab,Hi2p,slab_x_virtual);
   bvxm_util::warp_slab_bilinear(y_slab,Hi2p,slab_y_virtual);
   bvxm_util::warp_slab_bilinear(z_slab,Hi2p,slab_z_virtual);
@@ -880,7 +876,7 @@ bool bvxm_voxel_world::heightmap_exp(vpgl_camera_double_sptr virtual_camera, vil
     *hmap_it = *exp_depth_it + *depth_it * *visX_it;
     *var_it = *exp_depth_square_it + *depth_it * *depth_it * *visX_it - (*exp_depth_it * *exp_depth_it);
   }
-  // return the max depth for the ray (0,0) 
+  // return the max depth for the ray (0,0)
   max_depth = *(depth.begin());
 
   return true;
@@ -911,11 +907,11 @@ bool bvxm_voxel_world::uncertainty(vpgl_camera_double_sptr virtual_camera, vil_i
   bvxm_voxel_slab<float> uncer(uncertainty.ni(),uncertainty.nj(),1);
   bvxm_voxel_slab<float> uncer_cnt(uncertainty.ni(),uncertainty.nj(),1);
   bvxm_voxel_slab<ocp_datatype> slice_prob_img(uncertainty.ni(),uncertainty.nj(),1);
- 
+
   visX_accum_virtual.fill(1.0f);
   uncer.fill(0.0f);  // depth from the ceiling of the scene! so start with 0
   uncer_cnt.fill(0.0f);
-  
+
   // get occupancy probability grid
   bvxm_voxel_grid_base_sptr ocp_grid_base = this->get_grid<OCCUPANCY>(0,scale_idx);
   bvxm_voxel_grid<ocp_datatype> *ocp_grid  = static_cast<bvxm_voxel_grid<ocp_datatype>*>(ocp_grid_base.ptr());
@@ -941,7 +937,7 @@ bool bvxm_voxel_world::uncertainty(vpgl_camera_double_sptr virtual_camera, vil_i
       //*uncer_cnt_it += 1.0f;
       *uncer_it += *visX_it * ratio;
       *uncer_cnt_it += *visX_it;
-     
+
       // update virtual visX
       *visX_it *= (1.0f - *PX_it);
     }

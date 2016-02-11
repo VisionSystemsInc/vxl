@@ -77,14 +77,6 @@ void vnl_vector_test_int()
   TEST("v.min_value()", v.min_value(), -2);
   TEST("v.arg_max()",   v.arg_max(),   2);
   TEST("v.arg_min()",   v.arg_min(),   1);
-#if 0
-  TEST("v.abs()",
-       ((v1 = v.abs()),
-        (v1(0)==0 && v1(1)==2 && v1(2)==2 && v1(3)==0)), true);
-  TEST("v.sign()",
-       ((v1 = v.sign()),
-        (v1(0)==0 && v1(1)==-1 && v1(2)==1 && v1(3)==0)), true);
-#endif
   TEST("element_product(v,v)",
        ((v1 = element_product(v,v)),
         (v1(0)==0 && v1(1)==4 && v1(2)==4 && v1(3)==0)), true);
@@ -92,12 +84,6 @@ void vnl_vector_test_int()
        ((v2 = 2),
         (v1 = element_quotient(v,v2)),
         (v1(0)==0 && v1(1)==-1 && v1(2)==1 && v1(3)==0)), true);
-#if 0
-  TEST("v.update(v.abs())",
-       ((v1 = v.abs()),
-        (v2.update(v1)),
-        (v2==v1)), true);
-#endif
   TEST("v.extract(1,3)",
        ((v1 = v.extract(1,3)),
         (v1.size()==1 && v1(0)==v(3))), true);
@@ -140,11 +126,129 @@ void vnl_vector_test_int()
   }
   {
     int vvalues [] = {1,0,0,0};
-    vnl_vector<int> v (4,4,vvalues);
+    vnl_vector<int> v(4,4,vvalues);
     TEST("v.squared_magnitude", (v.squared_magnitude()==1), true);
     TEST("v.magnitude", (v.magnitude()==1), true);
     // normalize not sensible for ints
     //TEST("v.normalize", (v1 = 3 * v, v1.normalize(), v1), v);
+  }
+
+  //////////
+  // FLIP //
+  //////////
+
+  {
+  int vvalues [] = {0,1,2,3};
+  vnl_vector<int> v(4,4,vvalues);
+  TEST("v",
+       (0 == v[0] && 1 == v[1] && 2 == v[2] && 3 == v[3]), true);
+  v.flip();
+  TEST("v.flip()",
+       (3 == v[0] && 2 == v[1] && 1 == v[2] && 0 == v[3]), true);
+  v.flip(0,v.size());
+  TEST("v.flip(0,v.size())",
+       (0 == v[0] && 1 == v[1] && 2 == v[2] && 3 == v[3]), true);
+  v.flip(0,3);
+  TEST("v.flip(0,3)",
+       (2 == v[0] && 1 == v[1] && 0 == v[2] && 3 == v[3]), true);
+  v.flip(1,4);
+  TEST("v.flip(1,4)",
+       (2 == v[0] && 3 == v[1] && 0 == v[2] && 1 == v[3]), true);
+  }
+
+  //////////
+  // ROLL //
+  //////////
+
+  {
+  int vvalues [] = {0,1,2,3};
+  vnl_vector<int> v(4,4,vvalues);
+  vnl_vector<int> v_temp;
+
+  //
+  // Check special cases
+  //
+
+  v_temp = v;
+  TEST("v[0]",
+       (0 == v_temp[0] && 1 == v_temp[1] && 2 == v_temp[2] && 3 == v_temp[3]), true);
+  v_temp = v.roll(0);
+  TEST("v.roll(0)",
+       (0 == v_temp[0] && 1 == v_temp[1] && 2 == v_temp[2] && 3 == v_temp[3]), true);
+  v_temp = v.roll(v.size());
+  TEST("v.roll(v.size())",
+       (0 == v_temp[0] && 1 == v_temp[1] && 2 == v_temp[2] && 3 == v_temp[3]), true);
+  v_temp = v.roll(-v.size());
+  TEST("v.roll(-v.size())",
+       (0 == v_temp[0] && 1 == v_temp[1] && 2 == v_temp[2] && 3 == v_temp[3]), true);
+
+  //
+  // Check:
+  // -- Positive, in range
+  // -- Positive, out of range
+  // -- Negative, in range
+  // -- Negative, out of range
+  //
+
+  v_temp = v.roll(1); // Positive, in range
+  TEST("v.roll(1)",
+       (3 == v_temp[0] && 0 == v_temp[1] && 1 == v_temp[2] && 2 == v_temp[3]), true);
+  v_temp = v.roll(5); // Positive, in range
+  TEST("v.roll(5)",
+       (3 == v_temp[0] && 0 == v_temp[1] && 1 == v_temp[2] && 2 == v_temp[3]), true);
+  v_temp = v.roll(-1); // Positive, in range
+  TEST("v.roll(-1)",
+       (1 == v_temp[0] && 2 == v_temp[1] && 3 == v_temp[2] && 0 == v_temp[3]), true);
+  v_temp = v.roll(-5); // Positive, in range
+  TEST("v.roll(-5)",
+       (1 == v_temp[0] && 2 == v_temp[1] && 3 == v_temp[2] && 0 == v_temp[3]), true);
+  }
+
+  //////////////////
+  // ROLL INPLACE //
+  //////////////////
+
+  {
+  int vvalues [] = {0,1,2,3};
+  vnl_vector<int> v(4,4,vvalues);
+  vnl_vector<int> v_temp = v;
+
+  //
+  // Check special cases
+  //
+
+  TEST("v[0]",
+       (0 == v[0] && 1 == v[1] && 2 == v[2] && 3 == v[3]), true);
+  v.roll_inplace(0);
+  TEST("v.roll_inplace(0)",
+       (0 == v[0] && 1 == v[1] && 2 == v[2] && 3 == v[3]), true);
+  v.roll_inplace(v.size());
+  TEST("v.roll_inplace(v.size())",
+       (0 == v[0] && 1 == v[1] && 2 == v[2] && 3 == v[3]), true);
+  v.roll_inplace(-v.size());
+  TEST("v.roll_inplace(-v.size())",
+       (0 == v[0] && 1 == v[1] && 2 == v[2] && 3 == v[3]), true);
+
+  //
+  // Check:
+  // -- Positive, in range
+  // -- Positive, out of range
+  // -- Negative, in range
+  // -- Negative, out of range
+  //
+
+  v = v_temp, v.roll_inplace(1); // Positive, in range
+  TEST("v.roll_inplace(1)",
+       (3 == v[0] && 0 == v[1] && 1 == v[2] && 2 == v[3]), true);
+  v = v_temp, v.roll_inplace(5); // Positive, in range
+  TEST("v.roll_inplace(5)",
+       (3 == v[0] && 0 == v[1] && 1 == v[2] && 2 == v[3]), true);
+  v = v_temp, v.roll_inplace(-1); // Positive, in range
+  TEST("v.roll_inplace(-1)",
+       (1 == v[0] && 2 == v[1] && 3 == v[2] && 0 == v[3]), true);
+  v = v_temp, v.roll_inplace(-5); // Positive, in range
+  TEST("v.roll_inplace(-5)",
+       (1 == v[0] && 2 == v[1] && 3 == v[2] && 0 == v[3]), true);
   }
 }
 
@@ -166,9 +270,6 @@ void vnl_vector_test_float()
   TEST("vnl_vector<float> v1(2)", v1.size(), 2);
   vnl_vector<float> v2(2,2);
   TEST("vnl_vector<float> v2(2,2)", (v2.get(0)==2 && v2.get(1)==2), true);
-#if 0
-  TEST("v0.set_compare", (v0.set_compare(float_equal), true), true);
-#endif
 
   float vcvalues[2] = {1};
   vnl_vector<float> vc(2,2,vcvalues);
@@ -230,14 +331,6 @@ void vnl_vector_test_float()
   TEST("v.min_value()", v.min_value(), -2);
   TEST("v.arg_max()",   v.arg_max(),   2);
   TEST("v.arg_min()",   v.arg_min(),   1);
-#if 0
-  TEST("v.abs()",
-       ((v1 = v.abs()),
-        (v1(0)==0 && v1(1)==2 && v1(2)==2 && v1(3)==0)), true);
-  TEST("v.sign()",
-       ((v1 = v.sign()),
-        (v1(0)==0 && v1(1)==-1 && v1(2)==1 && v1(3)==0)), true);
-#endif
   TEST("element_product(v,v)",
        ((v1 = element_product(v,v)),
         (v1(0)==0 && v1(1)==4 && v1(2)==4 && v1(3)==0)), true);
@@ -245,12 +338,6 @@ void vnl_vector_test_float()
        ((v2 = 2),
         (v1 = element_quotient(v,v2)),
         (v1(0)==0 && v1(1)==-1 && v1(2)==1 && v1(3)==0)), true);
-#if 0
-  TEST("v.update(v.abs())",
-       ((v1 = v.abs()),
-        (v2.update(v1)),
-        (v2==v1)), true);
-#endif
   TEST("v.extract(1,3)",
        ((v1 = v.extract(1,3)),
         (v1.size()==1 && v1(0)==v(3))), true);
@@ -323,10 +410,6 @@ void vnl_vector_test_float()
     ang2 *= vnl_math::deg_per_rad; // == 180/pi
     vcl_cout << "angle(v1,v3) in degrees = " << ang2 << vcl_endl;
     TEST_NEAR("angle(v1,v3)", ang2, 135.0, 1e-6);
-#if 0
-    TEST("squared_distance_2d", squared_distance_2d(v1,v2), 2);
-    TEST("squared_distance_3d", squared_distance_3d(v1,v2), 2);
-#endif
     TEST_NEAR("mean", vnl_c_vector<float>::mean(v.begin(), v.size()), 2.0, 1e-6);
     TEST_NEAR("std", vnl_c_vector<float>::std(v.begin(), v.size()), 1.0, 1e-6);
   }
@@ -509,53 +592,6 @@ void vnl_vector_test_conversion()
     }
     TEST("block[i]==matrix(i)", check, true);
   }
-#if 0
-  {
-    // convert from a vnl_vector to a block array:
-    vnl_vector<double> v1 (12, 12,
-                           1.0,2.0,3.0, 4.0,5.0,6.0,
-                           7.0,8.0,9.0, 10.0,11.0,12.0);
-    const double* data = v1.data_block();
-    {
-      check = true;
-      for (int d = 0; d < 12; d++)
-     if (data[d] != d+1)
-       check = false;
-    }
-    TEST("(const double*) m.data_block", check, true);
-
-    typedef double block [12];
-    block& v2 = *((block*) data);
-    {
-      check = true;
-      for (int i = 0; i < 12; i++)
-        if (v1(i) != v2[i])
-          check = false;
-    }
-    TEST("matrix(i)==block[i]", check, true);
-
-    // convert from a block array to a vnl_vector:
-    block b1;
-    for (int i = 0; i < 12; i++)
-      b1[i] = i;
-    data = ((const double*) b1);             // & in ((const double*) &b1)
-    {                                                // is not needed
-      check = true;
-      for (int d = 0; d < 12; d++)
-     if (data[d] != d)
-       check = false;
-    }
-    TEST("(const double*) block", check, true);
-    vnl_vector<double> b2(data, 12);
-    {
-      check = true;
-    for (int i = 0; i < 12; i++)
-      if (b1[i] != b2(i))
-     check = false;
-    }
-    TEST("block[i]==matrix(i)", check, true);
-  }
-#endif
 }
 
 static void vnl_vector_test_io()

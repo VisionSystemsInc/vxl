@@ -6,9 +6,14 @@
 #include <vgl/vgl_bounding_box.h>
 #include <vcl_cmath.h>
 #include <vcl_limits.h>
-bvgl_gen_cylinder::bvgl_gen_cylinder(vgl_cubic_spline_3d<double> const& axis, vcl_vector<bvgl_cross_section> const& cross_sects,
-                                     double cross_section_interval):
-  axis_(axis), cross_sections_(cross_sects), cross_section_interval_(cross_section_interval){
+bvgl_gen_cylinder
+::bvgl_gen_cylinder(vgl_cubic_spline_3d<double> const& axis,
+                    vcl_vector<bvgl_cross_section> const& cross_sects,
+                    double cross_section_interval):
+  cross_section_interval_(cross_section_interval),
+  axis_(axis),
+  cross_sections_(cross_sects)
+{
   for(vcl_vector<bvgl_cross_section>::const_iterator cit = cross_sects.begin();
       cit != cross_sects.end(); ++cit)
     bbox_.add(cit->bounding_box());
@@ -207,7 +212,7 @@ void bvgl_gen_cylinder::display_axis_spline(vcl_ofstream& ostr) const{
     vgl_point_3d<double> p = knots[i];
     vgl_point_3d<float> pf(static_cast<float>(p.x()), static_cast<float>(p.y()), static_cast<float>(p.z()));
     vgl_sphere_3d<float> sp(pf, r);
-    bvrml_write::write_vrml_sphere(ostr, sp, 0.0f, 1.0f, 0.0f);      
+    bvrml_write::write_vrml_sphere(ostr, sp, 0.0f, 1.0f, 0.0f);
   }
   // display the spline points
   for(double t = 0; t<=nd; t+=0.05){

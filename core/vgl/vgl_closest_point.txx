@@ -42,17 +42,10 @@ const double SMALL_DOUBLE = 1e-12;
 // vgl_distance2_to_linesegment. The workaround is to make the T const
 // parameter a T parameter.
 //
-#ifdef VCL_BORLAND_55
-# define DIST_SQR_TO_LINE_SEG_2D( T, x1, y1, x2, y2, x, y ) \
-     vgl_distance2_to_linesegment(T(x1), T(y1), T(x2), T(y2), T(x), T(y) );
-# define DIST_SQR_TO_LINE_SEG_3D( T, x1, y1, z1, x2, y2, z2, x, y, z ) \
-     vgl_distance2_to_linesegment(T(x1), T(y1), T(z1), T(x2), T(y2), T(z2), T(x), T(y), T(z) );
-#else
-# define DIST_SQR_TO_LINE_SEG_2D( T, x1, y1, x2, y2, x, y ) \
+#define DIST_SQR_TO_LINE_SEG_2D( T, x1, y1, x2, y2, x, y ) \
      vgl_distance2_to_linesegment(x1, y1, x2, y2, x, y );
-# define DIST_SQR_TO_LINE_SEG_3D( T, x1, y1, z1, x2, y2, z2, x, y, z ) \
+#define DIST_SQR_TO_LINE_SEG_3D( T, x1, y1, z1, x2, y2, z2, x, y, z ) \
      vgl_distance2_to_linesegment(x1, y1, z1, x2, y2, z2, x, y, z );
-#endif
 
 
 template <class T>
@@ -661,7 +654,7 @@ vgl_point_3d<T> vgl_closest_point(vgl_pointset_3d<T> const& ptset,
   if(!ptset.has_normals())
     return pc;
   const vgl_vector_3d<T>& norm = ptset.n(iclose);
-  //otherwise construct the plane and find closest point on that 
+  //otherwise construct the plane and find closest point on that
   if(vcl_numeric_limits<T>::is_integer){
     // closest point can be templated over int so cast to double for plane computations
     vgl_point_3d<double> pd(static_cast<double>(p.x()), static_cast<double>(p.y()), static_cast<double>(p.z()));

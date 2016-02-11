@@ -23,22 +23,8 @@
 
 #if defined(VCL_WIN32) && !defined(__CYGWIN__)
 #include <direct.h> // for getcwd, mkdir
-#if defined(VCL_VC_8)
-#define getcwd _getcwd // getcwd is now "deprecated" by Visual Studio
-#define chdir  _chdir  // idem
-#define mkdir  _mkdir  // idem
-#endif
 #else
 #include <unistd.h>
-#endif
-
-#if defined(como4301) && defined(__linux__)
-# ifndef S_IFMT
-#  define S_IFMT 0170000
-# endif
-# ifndef S_IFDIR
-#  define S_IFDIR 0040000
-# endif
 #endif
 
 #include <vul/vul_user_info.h>
@@ -207,8 +193,6 @@ vcl_string vul_file::basename(char const* fn, char const * suffix)
   if (suffix) {
     int start = (int)(self.size() - vcl_strlen(suffix));
     if (start >= 0)
-      // egcs, 2.95, 2.96 have no method which can do
-      //   self.compare(start, vcl_string::npos, suffix) == 0
       if (vcl_string(self.begin()+start, self.end()) == suffix)
         self.erase(start, vcl_string::npos);
   }
@@ -412,8 +396,6 @@ std::wstring vul_file::basename(wchar_t const* fn, wchar_t const * suffix)
   if (suffix) {
     int start = (int)self.size() - (int)wcslen(suffix);
     if (start >= 0)
-      // egcs, 2.95, 2.96 have no method which can do
-      //   self.compare(start, std::wstring::npos, suffix) == 0
       if (std::wstring(self.begin()+start, self.end()) == suffix)
         self.erase(start, std::wstring::npos);
   }

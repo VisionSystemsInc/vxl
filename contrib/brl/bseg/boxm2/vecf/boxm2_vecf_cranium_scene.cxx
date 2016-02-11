@@ -58,7 +58,7 @@ boxm2_vecf_cranium_scene::boxm2_vecf_cranium_scene(vcl_string const& scene_file)
   vul_timer t;
   this->rebuild();
   vcl_cout << "Create cranium scene in " << t.real()/1000.0 << "seconds\n";
-}  
+}
 
 boxm2_vecf_cranium_scene::boxm2_vecf_cranium_scene(vcl_string const& scene_file, vcl_string const& geometry_file):
   boxm2_vecf_articulated_scene(scene_file), cranium_data_(0)
@@ -376,7 +376,7 @@ void boxm2_vecf_cranium_scene::apply_vector_field_to_target(vcl_vector<vgl_vecto
 
 void boxm2_vecf_cranium_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
-  // initially extract unrefined target data 
+  // initially extract unrefined target data
   if(!target_data_extracted_)
     this->extract_target_block_data(target_scene);
   this->extract_unrefined_cell_info();//on articulated_scene
@@ -405,7 +405,7 @@ void boxm2_vecf_cranium_scene::map_to_target(boxm2_scene_sptr target_scene){
 bool boxm2_vecf_cranium_scene::set_params(boxm2_vecf_articulated_params const& params){
   try{
     boxm2_vecf_cranium_params const& params_ref = dynamic_cast<boxm2_vecf_cranium_params const &>(params);
-    bool change = this->vfield_params_change_check(params_ref); 
+    bool change = this->vfield_params_change_check(params_ref);
     params_ = boxm2_vecf_cranium_params(params_ref);
     cranium_geo_.set_params(params_);
 #if _DEBUG
@@ -432,7 +432,6 @@ void boxm2_vecf_cranium_scene::determine_target_box_cell_centers(){
     vcl_cout << "Null source block -- FATAL!\n";
     return;
   }
-    
 
   vgl_box_3d<double> offset_box(source_bb_.centroid() + params_.offset_ ,source_bb_.width(),source_bb_.height(),source_bb_.depth(),vgl_box_3d<double>::centre);
   if(target_blk_){
@@ -440,5 +439,5 @@ void boxm2_vecf_cranium_scene::determine_target_box_cell_centers(){
   }else{
    vcl_cout << "Null target block -- FATAL!\n";
     return;
-  } 
+  }
 }

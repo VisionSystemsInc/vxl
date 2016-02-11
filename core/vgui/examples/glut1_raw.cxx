@@ -6,8 +6,8 @@
 // (but not mouse or keyboard) can be used with a pure and
 // simple GLUT program.  This means that the really really hairy
 // image drawing stuff can be used in any GL program, whether or
-// not it buys into the whole VGUI framework.  The other main 
-// point is to show that vgui just makes OpenGL commands -- no 
+// not it buys into the whole VGUI framework.  The other main
+// point is to show that vgui just makes OpenGL commands -- no
 // magic happens when you send a vgui_DRAW event.
 
 #include <vgui/vgui_gl.h>
@@ -36,7 +36,7 @@ void keyboard(unsigned char k, int, int)
 void idle()
 {
   static vcl_time_t last = 0;
-  vcl_time_t now = time(0);
+  vcl_time_t now = time(VXL_NULLPTR);
   if (now > last) {
     // Advance the deck
     deck->next();

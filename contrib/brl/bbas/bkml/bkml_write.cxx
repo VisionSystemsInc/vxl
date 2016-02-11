@@ -129,7 +129,7 @@ void bkml_write::write_box(vcl_ofstream &ofs, vcl_string name, vcl_string descri
 }
 
 // write a polygon with color (only outerBoundary)
-void bkml_write::write_polygon(vcl_ofstream& ofs, vgl_polygon<double> const& poly, 
+void bkml_write::write_polygon(vcl_ofstream& ofs, vgl_polygon<double> const& poly,
                                vcl_string const& name,
                                vcl_string const& description,
                                double const& scale,  double const& line_width, double const& alpha,
@@ -315,7 +315,7 @@ void bkml_write::write_photo_overlay(vcl_ofstream& ofs, vcl_string name,
       << "</PhotoOverlay>\n" << vcl_endl;
 }
 
-void bkml_write::write_kml_style(vcl_ofstream& ofs, 
+void bkml_write::write_kml_style(vcl_ofstream& ofs,
                                  vcl_string style_name,
                                  double const& scale,
                                  double const& line_width,
@@ -354,8 +354,7 @@ void bkml_write::write_polygon(vcl_ofstream& ofs,
   int alpha_int = (int)(alpha*255);
   vcl_string poly_color = rgb_color_to_hex_color(alpha_int, (int)r, (int)g, (int)b);
 
-  unsigned num_region = polygon.size();
-  for (unsigned i = 0; i < polygon.size(); i++) {
+  for (unsigned i = 0; i < polygon.size(); ++i) {
     vgl_polygon<double> outer = polygon[i].first;
     vgl_polygon<double> inner = polygon[i].second;
     if (outer[0].empty())

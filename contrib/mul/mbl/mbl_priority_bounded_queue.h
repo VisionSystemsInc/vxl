@@ -8,7 +8,7 @@
 
 #include <vcl_vector.h>
 #include <vcl_functional.h>
-#include <vcl_algorithm.h> 
+#include <vcl_algorithm.h>
 
 //: A bounded priority queue
 // This is identical to a vcl_priority_queue, but
@@ -31,11 +31,7 @@ class mbl_priority_bounded_queue
 public:
   typedef typename C::value_type value_type;
   typedef typename C::size_type size_type;
-#if defined(VCL_SGI_CC)
-  typedef vcl_alloc allocator_type; // there is no way to find out second template argument type
-#else
   typedef typename C::allocator_type allocator_type;
-#endif
 
   explicit
   mbl_priority_bounded_queue(unsigned bound_size = 10, const O& comp = O()):

@@ -11,20 +11,20 @@ static void test_poly_radial_distortion_constructors()
     bool did_construct = false;
     vcl_try
     {
-        vpgl_poly_radial_distortion<double,3> lens (vgl_point_2d<double>(100.0,100.0), NULL );
+        vpgl_poly_radial_distortion<double,3> lens (vgl_point_2d<double>(100.0,100.0), VXL_NULLPTR );
         did_construct = true;
     }
     vcl_catch( std::exception& exception )
     {
     }
     TEST( "Centre & Coefficients Constructor with NULL pointer", did_construct, true );
-    
+
 }
 
 static void test_poly_radial_distortion()
 {
     test_poly_radial_distortion_constructors();
-    
+
   double k[3] = {0.5, 2.0, 3.0};
   vpgl_poly_radial_distortion<double,3> rd(vgl_point_2d<double>(100.0,100.0), k);
   TEST("distort r=0",rd.distort_radius(0), 1);

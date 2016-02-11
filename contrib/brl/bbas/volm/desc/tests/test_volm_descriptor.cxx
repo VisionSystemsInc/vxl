@@ -115,7 +115,7 @@ static void test_volm_desc_ex()
   is_same = is_same && desc_in->nbins() == desc->nbins();
   float score = desc->similarity(desc_in);
   vcl_cout << " for two same histogram, similarity score is " << score << vcl_endl;
-  
+
 
   TEST ("beach bin should exist", desc->count(6), 1);
   TEST ("binary io is correct", is_same, true);
@@ -128,10 +128,6 @@ static void test_volm_desc_ex()
     volm_desc_sptr desc_index = new volm_desc_ex(values_dst, values_combine, depth_interval, radius);
     /*desc_index->print();
     desc_index->visualize("./test_desc_ex_index.svg", 2);*/
-    float score_index = desc->similarity(desc_index);
-    /*if (i % 1000 == 0) {
-      vcl_cout << " i = " << i << " similarity score is " << score_index << vcl_endl;
-    }*/
   }
   vcl_cout << N << " location, visibility intersection takes " << time.all()/1000.0 << " seconds. " << vcl_endl;
 
@@ -164,7 +160,7 @@ static void params_io()
 
 static void test_volm_descriptor()
 {
-  
+
 
   vcl_cout << "======================== test the land category histogram ================== " << vcl_endl;
   test_volm_desc_land();

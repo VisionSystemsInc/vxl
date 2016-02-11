@@ -11,7 +11,7 @@ void test_int()
 {
   vcl_cout << "***********************\n"
            << "Testing vnl_matrix<int>\n"
-           << "***********************\n";
+           << "***********************" << vcl_endl;
   vnl_matrix<int> m0(2,2);
   TEST("vnl_matrix<int> m0(2,2)", (m0.rows()==2 && m0.columns()==2), true);
   vnl_matrix<int> m1(3,4);
@@ -59,7 +59,7 @@ void test_int()
   TEST("m0.set_diagonal(vnl_vector<int>))",
        (m0.set_diagonal(vnl_vector<int>(2,2,m0values)),
         (m0.get(0,0)==7 && m0.get(1,1)==9 && m0.get(0,1)==2 && m0.get(1,0)==2)), true);
-  
+
   // Flip the matrix, otherwise it is the same whichever way it is flattened
   m0.flipud();
   // | 2 9 |
@@ -178,14 +178,6 @@ void test_int()
   TEST("m.min_value()", m.min_value(), -2);
   TEST("m.arg_max()",   m.arg_max(),   2);
   TEST("m.arg_min()",   m.arg_min(),   1);
-#if 0
-  TEST("m.abs()",
-       ((m1 = m.abs()),
-        (m1(0,0)==0 && m1(0,1)==2 && m1(1,0)==2 && m1(1,1)==0)), true);
-  TEST("m.sign()",
-       ((m1 = m.sign()),
-        (m1(0,0)==0 && m1(0,1)==-1 && m1(1,0)==1 && m1(1,1)==0)), true);
-#endif // 0
   TEST("element_product(m,m)",
        ((m1 = element_product(m,m)),
         (m1(0,0)==0 && m1(0,1)==4 && m1(1,0)==4 && m1(1,1)==0)), true);
@@ -193,12 +185,6 @@ void test_int()
        ((m2 = 2),
         (m1 = element_quotient(m,m2)),
         (m1(0,0)==0 && m1(0,1)==-1 && m1(1,0)==1 && m1(1,1)==0)), true);
-#if 0
-  TEST("m.update(m.abs())",
-       ((m1 = m.abs()),
-        (m2.update(m1)),
-        (m2==m1)), true);
-#endif // 0
   TEST("m.extract(1,1,1,1)",
        ((m1 = m.extract(1,1,1,1)),
         (m1.rows()==1 && m1.columns()==1 && m1(0,0)==m(1,1))), true);
@@ -209,13 +195,6 @@ void test_int()
 
   int vvalues[] = {1,0,0,0};
   vnl_matrix<int> v (4,1,4,vvalues);
-#if 0
-  TEST("v(i)",
-       (v(0,0)==v.x() && v.x()==1 &&
-        v(1,0)==v.y() && v.y()==0 &&
-        v(2,0)==v.z() && v.z()==0 &&
-        v(3,0)==v.t() && v.t()==0), true);
-#endif // 0
   int v1values [] = {1,0,0};
   int v2values [] = {0,1,0};
   int v3values [] = {0,0,1};
@@ -251,7 +230,7 @@ void test_float()
 {
   vcl_cout << "*************************\n"
            << "Testing vnl_matrix<float>\n"
-           << "*************************\n";
+           << "*************************" << vcl_endl;
   vnl_matrix<float> d0(2,2);
   TEST("vnl_matrix<float> d0(2,2)", (d0.rows()==2 && d0.columns()==2), true);
   vnl_matrix<float> d1(3,4);
@@ -334,14 +313,6 @@ void test_float()
   TEST("m.min_value()", m.min_value(), -2);
   TEST("m.arg_max()",   m.arg_max(),   2);
   TEST("m.arg_min()",   m.arg_min(),   1);
-#if 0
-  TEST("m.abs()",
-       ((m1 = m.abs()),
-        (m1(0,0)==0 && m1(0,1)==2 && m1(1,0)==2 && m1(1,1)==0)), true);
-  TEST("m.sign()",
-       ((m1 = m.sign()),
-        (m1(0,0)==0 && m1(0,1)==-1 && m1(1,0)==1 && m1(1,1)==0)), true);
-#endif
   TEST("element_product(m,m)",
        ((m1 = element_product(m,m)),
         (m1(0,0)==0 && m1(0,1)==4 && m1(1,0)==4 && m1(1,1)==0)), true);
@@ -349,12 +320,6 @@ void test_float()
        ((m2 = 2),
         (m1 = element_quotient(m,m2)),
         (m1(0,0)==0 && m1(0,1)==-1 && m1(1,0)==1 && m1(1,1)==0)), true);
-#if 0
-  TEST("m.update(m.abs())",
-       ((m1 = m.abs()),
-        (m2.update(m1)),
-        (m2==m1)), true);
-#endif
   TEST("m.extract(1,1,1,1)",
        ((m1 = m.extract(1,1,1,1)),
         (m1.rows()==1 && m1.columns()==1 && m1(0,0)==m(1,1))), true);
@@ -365,13 +330,6 @@ void test_float()
 
   float vvalues[] = {1,0,0,0};
   vnl_matrix<float> v (4,1,4,vvalues);
-#if 0
-  TEST("v(i)",
-       (v(0,0)==v.x() && v.x()==1 &&
-        v(1,0)==v.y() && v.y()==0 &&
-        v(2,0)==v.z() && v.z()==0 &&
-        v(3,0)==v.t() && v.t()==0), true);
-#endif
   float v1values [] = {1,0,0};
   float v2values [] = {0,1,0};
   float v3values [] = {0,0,1};
@@ -392,7 +350,7 @@ void test_double()
 {
   vcl_cout << "**************************\n"
            << "Testing vnl_matrix<double>\n"
-           << "**************************\n";
+           << "**************************" << vcl_endl;
   vnl_matrix<double> d0(2,2);
   TEST("vnl_matrix<double> d0(2,2)", (d0.rows()==2 && d0.columns()==2), true);
   vnl_matrix<double> d1(3,4);
@@ -528,7 +486,7 @@ void test_matrix()
 #ifdef LEAK
   test_leak();
 #endif
-  test_extract( (double*)0 );
+  test_extract( (double*)VXL_NULLPTR );
 }
 
 TESTMAIN(test_matrix);

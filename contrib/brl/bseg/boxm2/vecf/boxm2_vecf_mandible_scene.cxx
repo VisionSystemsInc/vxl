@@ -95,7 +95,7 @@ void boxm2_vecf_mandible_scene::cache_cell_centers_from_anatomy_labels(){
           right_ramus_cell_data_index_.push_back(indx);
           right_ramus_data_index_to_cell_index_[indx] = right_ramus_index;
         }
-#endif        
+#endif
   }
 }
 // main constructors
@@ -503,7 +503,7 @@ void boxm2_vecf_mandible_scene::apply_vector_field_to_target(vcl_vector<vgl_vect
   int valid_count = 0;
   if(n==0)
     return;//shouldn't happen
-  vul_timer t; 
+  vul_timer t;
   // iterate over the target cells and interpolate info from source
   for(unsigned j = 0; j<n; ++j){
 
@@ -571,8 +571,7 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<double> c
 
 void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
-  // initially extract unrefined target data 
-
+  // initially extract unrefined target data
   if(!target_data_extracted_)
     this->extract_target_block_data(target_scene);
   this->extract_unrefined_cell_info();//on articulated_scene
@@ -601,7 +600,7 @@ void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
 bool boxm2_vecf_mandible_scene::set_params(boxm2_vecf_articulated_params const& params){
   try{
     boxm2_vecf_mandible_params const& params_ref = dynamic_cast<boxm2_vecf_mandible_params const &>(params);
-    intrinsic_change_ = this->vfield_params_change_check(params_ref); 
+    intrinsic_change_ = this->vfield_params_change_check(params_ref);
     params_ = boxm2_vecf_mandible_params(params_ref);
     mandible_geo_.set_params(params_);
 #if _DEBUG

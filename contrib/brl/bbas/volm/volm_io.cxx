@@ -431,7 +431,7 @@ bool volm_io::read_camera(vcl_string kml_file,
     // use top_fov
     top_fov_dev = parser->top_fov_dev_;
   }
-  
+
   delete parser;
   vcl_fclose(xmlFile);
   return true;
@@ -523,7 +523,6 @@ bool volm_io::read_query_tags(vcl_string xml_file,
   vcl_vector<float>& object_mindist = parser.obj_mindists();
   vcl_vector<float>& object_maxdist = parser.obj_maxdists();
   vcl_vector<float>& object_weight =  parser.obj_weights();
-  vcl_vector<unsigned>& object_frame_ids = parser.obj_frame_ids();
 
   unsigned num_objs = object_names.size();
   if (num_objs != object_land_types.size() || num_objs != object_mindist.size() ||
@@ -655,7 +654,7 @@ bool volm_io::read_conf_query_tags(vcl_string xml_file,
     double height = -1.0;
     if (object_heights[i] != -1 && object_heights[i] != 0)
       height = object_heights[i] * floor_height;
-    
+
     vsol_polygon_2d_sptr poly = bsol_algs::poly_from_vgl(polys[i]);
     vgl_vector_3d<double> np;  // surface normal
     np.set(1.0, 1.0, 1.0);
@@ -812,7 +811,7 @@ unsigned char volm_io::scale_score_to_1_255_sig(float const& kl, float const & k
 
 float volm_io::scale_score_to_0_1_sig(float const& kl, float const& ku, float const& threshold, unsigned char pix_value)
 {
-  if (pix_value < 127) 
+  if (pix_value < 127)
     if (pix_value == 1)
       return 0.0f;
     else
@@ -984,7 +983,6 @@ int volm_io::read_gt_file(vcl_string gt_file, vcl_vector<vcl_pair<vgl_point_3d<d
 
     char *tok = vcl_strtok(name_buf, "-");
     char *tok2 = vcl_strtok(tok, "_");
-    tok2 = vcl_strtok(NULL, "_"); // tokenize the remaining string
     tok2 = vcl_strtok(NULL, "_"); // tokenize the remaining string
     int img_id;
     vcl_stringstream tv(tok2); tv >> img_id;

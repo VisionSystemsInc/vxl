@@ -7,9 +7,9 @@ doxygen_add_library(core/vpgl
   DESCRIPTION "Photogrammetry Library"
   )
 
-INCLUDE_DIRECTORIES(${VXLCORE_INCLUDE_DIR})
+include_directories(${VXLCORE_INCLUDE_DIR})
 
-SET( vpgl_sources
+set( vpgl_sources
   vpgl_export.h
   vpgl_camera.h                    vpgl_camera_double_sptr.h
                                    vpgl_camera_float_sptr.h
@@ -27,24 +27,22 @@ SET( vpgl_sources
   vpgl_local_rational_camera.h     vpgl_local_rational_camera.txx
   vpgl_generic_camera.h            vpgl_generic_camera.txx
   vpgl_dll.h
-  vpgl_lvcs.h                      vpgl_lvcs.cxx	vpgl_lvcs_sptr.h
+  vpgl_lvcs.h                      vpgl_lvcs.cxx        vpgl_lvcs_sptr.h
   vpgl_utm.h                       vpgl_utm.cxx
   vpgl_earth_constants.h
   vpgl_datum_conversion.h          vpgl_datum_conversion.cxx
 )
 
-AUX_SOURCE_DIRECTORY(Templates vpgl_sources)
+aux_source_directory(Templates vpgl_sources)
 
-ADD_LIBRARY(vpgl ${vpgl_sources})
-TARGET_LINK_LIBRARIES(vpgl vnl_algo vnl vgl_algo vgl vul vsl vbl)
+vxl_add_library(LIBNAME ${VXL_LIB_PREFIX}vpgl LIBSRCS ${vpgl_sources})
+target_link_libraries(${VXL_LIB_PREFIX}vpgl ${VXL_LIB_PREFIX}vnl_algo ${VXL_LIB_PREFIX}vnl ${VXL_LIB_PREFIX}vgl_algo ${VXL_LIB_PREFIX}vgl ${VXL_LIB_PREFIX}vul ${VXL_LIB_PREFIX}vsl ${VXL_LIB_PREFIX}vbl)
 
-IF( BUILD_TESTING )
+if( BUILD_TESTING )
   add_subdirectory(tests)
-ENDIF( BUILD_TESTING )
+endif()
 
 add_subdirectory(algo)
 add_subdirectory(file_formats)
 add_subdirectory(io)
 add_subdirectory(xio)
-INSTALL_TARGETS(/lib vpgl)
-INSTALL_NOBASE_HEADER_FILES(/include/vxl/core/vpgl/ ${vpgl_sources})

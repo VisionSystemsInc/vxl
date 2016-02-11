@@ -25,12 +25,11 @@ int malloc_count = 0;
 
 // FIXME: Win32 will have different operator new in vnl dll from
 // the one generated here, so this test fails - RWMC.
-// The test also fails for gcc 3.0 - PVr
 # define reset_count malloc_count = 0
-#if !defined(VCL_WIN32) && !defined(GNU_LIBSTDCXX_V3)
-# define check_count TEST("mallocs",malloc_count<=1,true)
-#else
+#if defined(VCL_WIN32)
 # define check_count TEST("mallocs (no test)",true,true)
+#else
+# define check_count TEST("mallocs",malloc_count<=1,true)
 #endif
 
 static
@@ -76,6 +75,9 @@ test_multiply()
 static
 void test_int()
 {
+  vcl_cout << "*********************************\n"
+           << "Testing vnl_matrix_fixed<int,x,x>\n"
+           << "*********************************" << vcl_endl;
   vnl_matrix_fixed<int,2,2> m0;
   TEST("vnl_matrix_fixed<int,2,2> m0", (m0.rows()==2 && m0.columns()==2), true);
   vnl_matrix_fixed<int,3,4> m1;
@@ -181,6 +183,16 @@ void test_int()
        ((m6*=m7),
         (m6.get(0,0)==19 && m6.get(0,1)==22 && m6.get(1,0)==43 && m6.get(1,1)==50)), true);
 
+  // | 19 22 |
+  // | 43 50 |
+  vnl_vector<int> flat;
+  TEST("m6.flatten_row_major()",
+       (flat = m6.flatten_row_major(),
+       (flat.get(0)==19 && flat.get(1)==22 && flat.get(2)==43 && flat.get(3)==50)), true);
+  TEST("m6.flatten_column_major()",
+       (flat = m6.flatten_column_major(),
+       (flat.get(0)==19 && flat.get(1)==43 && flat.get(2)==22 && flat.get(3)==50)), true);
+
   // additional tests
   int mvalues [] = {0,-2,2,0};
   vnl_int_2x2 m(mvalues); m0 = m;
@@ -213,6 +225,9 @@ void test_int()
 static
 void test_float()
 {
+  vcl_cout << "***********************************\n"
+           << "Testing vnl_matrix_fixed<float,x,x>\n"
+           << "***********************************" << vcl_endl;
   vnl_matrix_fixed<float,2,2> d0;
   TEST("vnl_matrix_fixed<float,2,2> d0", (d0.rows()==2 && d0.columns()==2), true);
   vnl_matrix_fixed<float,3,4> d1;
@@ -313,6 +328,9 @@ void test_float()
 static
 void test_double()
 {
+  vcl_cout << "************************************\n"
+           << "Testing vnl_matrix_fixed<double,x,x>\n"
+           << "************************************" << vcl_endl;
   vnl_matrix_fixed<double,2,2> d0;
   TEST("vnl_matrix_fixed<double,2,2> d0", (d0.rows()==2 && d0.columns()==2), true);
   vnl_matrix_fixed<double,3,4> d1;
@@ -439,11 +457,6 @@ void test_matrix_fixed()
   check_count;
   vcl_printf("splork = [ %g %g %g ]\n", splork(0), splork(1), splork(2));
 
-  // This shouldn't compile...
-#if 0
-  vnl_matrix<double>* base = new vnl_double_3x3(datablock);
-#endif
-
   vcl_printf("Now watch the mallocs\n");
   vnl_matrix_ref<double> CX = X.as_ref();
   vnl_vector_ref<double> cv = v.as_ref();
@@ -478,7 +491,7 @@ void test_matrix_fixed()
   test_float();
   test_double();
 
-  test_extract( (double*)0 );
+  test_extract( (double*)VXL_NULLPTR );
 }
 
 #ifdef TEST_MALLOC
@@ -490,9 +503,7 @@ void test_matrix_fixed()
 
 void* operator new(vcl_size_t s)
   // [18.4.1] lib.new.delete
-#if defined(VCL_SUNPRO_CC_5) || defined(GNU_LIBSTDCXX_V3) || defined(VCL_KAI)
   throw(std::bad_alloc)
-#endif
 {
   void *r = vcl_malloc(s);
 
@@ -505,9 +516,7 @@ void* operator new(vcl_size_t s)
 }
 
 void operator delete(void* s)
-#if defined(GNU_LIBSTDCXX_V3) || defined(VCL_SUNPRO_CC_5)
   throw()
-#endif
 {
   if (verbose_malloc)
     vcl_printf("delete: %08lX\n", (unsigned long)s);

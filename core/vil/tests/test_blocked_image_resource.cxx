@@ -292,17 +292,17 @@ static void test_blocked_image_resource()
   // set sptr's to 0 so the underlying objects are destructed and the
   // temporary image files are closed.  Otherwise the unlink below will
   // fail.
-  ir = 0;
-  bir = 0;
-  lir = 0;
-  bir2 = 0;
-  bif = 0;
-  dir = 0;
-  dbif = 0;
-  flbir = 0;
-  fabir = 0;
-  cflbir = 0;
-  cfabir = 0;
+  ir = VXL_NULLPTR;
+  bir = VXL_NULLPTR;
+  lir = VXL_NULLPTR;
+  bir2 = VXL_NULLPTR;
+  bif = VXL_NULLPTR;
+  dir = VXL_NULLPTR;
+  dbif = VXL_NULLPTR;
+  flbir = VXL_NULLPTR;
+  fabir = VXL_NULLPTR;
+  cflbir = VXL_NULLPTR;
+  cfabir = VXL_NULLPTR;
   // delete temporary files
   vpl_unlink(path.c_str());
   vpl_unlink(path2.c_str());
@@ -313,27 +313,27 @@ static void test_blocked_image_resource()
     vil_image_resource_sptr imgr = vil_load_image_resource(nitf_path.c_str());
     if (imgr)
       {
-	TEST("NITF blocked resource",
-	     imgr->get_property(vil_property_size_block_i, &sbi) &&
-	     imgr->get_property(vil_property_size_block_j, &sbj),
-	     true);
+        TEST("NITF blocked resource",
+             imgr->get_property(vil_property_size_block_i, &sbi) &&
+             imgr->get_property(vil_property_size_block_j, &sbj),
+             true);
       }
     else
       {
-	TEST("NITF resource ", false, true);
+        TEST("NITF resource ", false, true);
       }
     vil_blocked_image_resource_sptr bimgr = blocked_image_resource(imgr);
     if (bimgr)
       {
-	vil_image_view<unsigned short> view = bimgr->get_block(0, 0);
-	for (unsigned bi = 0; bi<sbi; ++bi)
-	  for (unsigned bj = 0; bj<sbj; ++bj)
-	    vcl_cout << "NITF v(" << bi << ' ' << bj << ")=" << view(bi,bj) << '\n';
-	TEST("Test NITF ", view(1,0)==8191&&sbi==2, true);
+        vil_image_view<unsigned short> view = bimgr->get_block(0, 0);
+        for (unsigned bi = 0; bi<sbi; ++bi)
+          for (unsigned bj = 0; bj<sbj; ++bj)
+            vcl_cout << "NITF v(" << bi << ' ' << bj << ")=" << view(bi,bj) << '\n';
+        TEST("Test NITF ", view(1,0)==8191&&sbi==2, true);
       }
     else
       {
-	TEST("NITF blocked image resource", false, true);
+        TEST("NITF blocked image resource", false, true);
       }
   }else{
     TEST("NITF path not found", false, true);

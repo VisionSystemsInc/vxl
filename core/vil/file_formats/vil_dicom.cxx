@@ -26,10 +26,6 @@
 #include <vil/vil_image_view.h>
 #include <vil/vil_pixel_format.h>
 #include <vil/vil_exception.h>
-#ifdef __BORLANDC__
-// We do not want to fix small problems in external maintained code.
-# pragma warn -8004 // 'smask' is assigned a value that is never used in function
-#endif
 
 #include <dcfilefo.h>
 #include <dcmetinf.h>
@@ -370,12 +366,12 @@ void vil_dicom_image::correct_manufacturer_discrepancies()
 
   // By default, set the pixel spacing to 1 if it is still 0 after correcting for any discrepancies.
   // This is, for example, the case if the pixel spacing has been explicitely set to 0 in the file header
-  // without any further manufacturer-specific information. 
+  // without any further manufacturer-specific information.
   if ((header_.spacing_x_ == 0) && (header_.spacing_y_ == 0))
   {
     header_.spacing_x_ = 1;
     header_.spacing_y_ = 1;
-  } 
+  }
 }
 
 //:try and interpret the Hologic comments section to extract pixel size
@@ -919,7 +915,7 @@ read_header( DcmObject* f, vil_dicom_header_info& i )
       i.spacing_x_ = 1;
       i.spacing_y_ = 1;
       //vcl_cout<<"DICOM tags PixelSpacing and ImagerPixelSpacing missing: use PixelSpacing = 1.0."<<vcl_endl;
-    } 
+    }
     else if (ps_ips.size() > 1)
     {
       i.spacing_x_ = i.imager_spacing_x_;

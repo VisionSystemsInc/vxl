@@ -31,11 +31,6 @@
 //
 
 #include <vcl_ctime.h>
-#if defined(como4301) && defined(__linux__)
-# include <sys/types.h>
-# include <sys/select.h>
-# define __USE_BSD
-#endif
 #include <vcl_sys/time.h>
 # undef __USE_BSD
 
@@ -46,15 +41,9 @@ struct vul_timer_data
   struct timeval real0;          // wall clock mark.
 #else
  vcl_clock_t usage0;
-# if defined(VCL_BORLAND)
- struct timeb real0;
-# else
  struct _timeb real0;
-# endif
 #endif
 };
-
-#include <vxl_config.h> // VXL_TWO_ARG_GETTIME
 
 #include <vcl_climits.h>   // for CLK_TCK
 #include <vcl_iostream.h>
@@ -79,7 +68,7 @@ vul_timer::vul_timer()
 vul_timer::~vul_timer()
 {
   delete data;
-  data = 0;
+  data = VXL_NULLPTR;
 }
 
 //: Sets the reference time to now.
@@ -101,11 +90,7 @@ void vul_timer::mark()
 #else
   // Win32 section
   data->usage0 = vcl_clock();
-# if defined(VCL_BORLAND)
-  ftime(&data->real0);
-# else
   _ftime(&data->real0);
-# endif
 #endif
 }
 
@@ -135,13 +120,8 @@ long vul_timer::real()
 
 #else
   // Win32 section
-# if defined(VCL_BORLAND)
-  struct timeb real_time;
-  ftime(&real_time);
-# else
   struct _timeb real_time;
   _ftime(&real_time);
-# endif
   s = long(real_time.time - data->real0.time);
   long ms = real_time.millitm - data->real0.millitm;
 

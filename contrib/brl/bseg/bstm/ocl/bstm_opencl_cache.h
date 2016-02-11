@@ -32,10 +32,12 @@ class bstm_opencl_cache: public vbl_ref_count
 
   public:
     bstm_opencl_cache(bstm_scene_sptr scene,
-                       bocl_device_sptr device);
-    ~bstm_opencl_cache() { if (cpu_cache_) cpu_cache_ = 0;
-                            this->clear_cache();
-                           }
+                      bocl_device_sptr device);
+    ~bstm_opencl_cache()
+      {
+      if (cpu_cache_) cpu_cache_ = 0;
+      this->clear_cache();
+      }
 
     void set_context(cl_context& context);
     bstm_cache_sptr get_cpu_cache() { return cpu_cache_; }
@@ -63,10 +65,10 @@ class bstm_opencl_cache: public vbl_ref_count
     bocl_mem* get_data_new(bstm_block_id id, vcl_string type, vcl_size_t num_bytes = 0, bool read_only = true);
 
     //: returns a flat bocl_mem of a certain size
-    bocl_mem* alloc_mem(vcl_size_t num_bytes, void* cpu_buff=NULL, vcl_string id="bocl_mem in pool"); 
-    void      unref_mem(bocl_mem* mem); 
+    bocl_mem* alloc_mem(vcl_size_t num_bytes, void* cpu_buff=NULL, vcl_string id="bocl_mem in pool");
+    void      unref_mem(bocl_mem* mem);
     void      free_mem(bocl_mem* mem);
-    void      free_mem_pool(); 
+    void      free_mem_pool();
 
     //: empties out cache, deletes all bocl_mem*s
     bool clear_cache();
@@ -79,7 +81,7 @@ class bstm_opencl_cache: public vbl_ref_count
 
     //: deep_replace data replaces not only the current data on the gpu cached, but pushes a block to the cpu cache
     void deep_replace_data(bstm_block_id id, vcl_string type, bocl_mem* mem, bool read_only=true);
-    
+
     //: deep_remove_data removes this id and type from ocl cache, as well as the cpu cache
     void deep_remove_data(bstm_block_id id, vcl_string type, bool write_out=true);
 
@@ -87,7 +89,7 @@ class bstm_opencl_cache: public vbl_ref_count
     void shallow_remove_data(bstm_block_id id, vcl_string type);
 
     //: to string method prints out LRU order
-    vcl_string to_string(); 
+    vcl_string to_string();
 
     //: get max mem size
     unsigned long max_memory_in_cache() { return maxBytesInCache_; }

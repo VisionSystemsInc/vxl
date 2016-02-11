@@ -36,7 +36,7 @@ class bvgl_grid_index_3d{
   double distance(vgl_point_3d<double> const& p, double& scalar) const;
   //: accessors
   vgl_box_3d<double> bounding_box() const {return bbox_;}
-  unsigned npts() const {return npts_;}  
+  unsigned npts() const {return npts_;}
   bool has_normals() const {return has_normals_;}
   bool has_scalars() const {return has_scalars_;}
  protected:

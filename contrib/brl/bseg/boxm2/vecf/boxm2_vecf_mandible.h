@@ -39,7 +39,7 @@ class boxm2_vecf_mandible : public bvgl_gen_cylinder, public boxm2_vecf_geometry
 
  //: offset axis curve in the curve normal direction
  boxm2_vecf_spline_field offset_axis(double offset);
- 
+
  //: adjust slope of ramus relative to nominal
  boxm2_vecf_spline_field tilt_ramus(double delta_z_at_condyle);
 

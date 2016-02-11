@@ -8,12 +8,12 @@
 //
 // The vertices are to be defined in counterclockwise order.
 //
-// \author François BERTEL
+// \author Francois BERTEL
 // \date   2000-05-09
 //
 // \verbatim
 //  Modifications
-//   2000-05-09 François BERTEL Creation
+//   2000-05-09 Francois BERTEL Creation
 //   2000-06-17 Peter Vanroose  Implemented all operator==()s and type info
 //   2001-07-03 Peter Vanroose  Replaced vnl_double_3 by vgl_vector_3d
 //   2001-07-03 Peter Vanroose  Corrected the implementation of is_convex()
@@ -50,7 +50,7 @@ class vsol_polygon_3d : public vsol_region_3d
 
  public:
   //---------------------------------------------------------------------------
-  //: Default constructor. Do nothing. 
+  //: Default constructor. Do nothing.
   //---------------------------------------------------------------------------
   vsol_polygon_3d(void);
 

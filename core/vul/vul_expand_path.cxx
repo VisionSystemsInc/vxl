@@ -9,7 +9,7 @@
 #include "vul_expand_path.h"
 #include <vcl_vector.h>
 
-#if defined(VCL_WIN32) || defined(como4301)
+#if defined(VCL_WIN32)
 
 //:
 // \note This Windows version only performs some of the operations done by the Unix version.
@@ -179,7 +179,7 @@ std::wstring vul_expand_path(std::wstring path)
 
 #endif  //VXL_USE_WIN_WCHAR_T
 
-#else // #if defined(VCL_WIN32) || defined(como4301)
+#else // #if defined(VCL_WIN32)
 
 #include <vcl_functional.h>
 #include <vcl_map.h>
@@ -213,7 +213,7 @@ vcl_string vul_expand_path_internal(vcl_string path)
   // expand ./ or just .
   if ((path.size()>=2 && path[0] == '.' && path[1] == '/') || path == ".") {
     char cwd[4096];
-    if( getcwd(cwd, sizeof cwd) == NULL ) {
+    if( getcwd(cwd, sizeof cwd) == VXL_NULLPTR ) {
       path = "<error: current working directory path > 4096 characters>";
     } else {
       path = vcl_string(cwd) + path.substr(1);

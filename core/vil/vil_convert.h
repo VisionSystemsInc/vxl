@@ -479,7 +479,7 @@ inline void vil_convert_merge_alpha(const vil_image_view<inP>& src,
 
   for (unsigned j = 0; j < src.nj(); ++j)
     for (unsigned i = 0; i < src.ni(); ++i)
-      for (unsigned k = 0; k < nplanes-1; ++k)	
+      for (unsigned k = 0; k < nplanes-1; ++k)
       { vil_convert_round_pixel<double,outP>()(src(i,j,nplanes-1)/255.0*src(i,j,k), dest(i,j,k)); }
 }
 
@@ -494,7 +494,7 @@ inline void vil_convert_rgb_to_grey(const vil_image_view<rgbP >&src,
                                     vil_image_view<outP >&dest,
                                     double rw=0.2125, double gw=0.7154, double bw=0.0721)
 {
-  vil_convert_rgb_to_grey_pixel<VCL_DISAPPEARING_TYPENAME rgbP::value_type, outP>
+  vil_convert_rgb_to_grey_pixel<typename rgbP::value_type, outP>
     func(rw, gw, bw);
   assert(src.nplanes() == 1);
   vil_transform2(src, dest, func);
@@ -1014,7 +1014,7 @@ inline vil_image_view_base_sptr vil_convert_to_grey_using_average(
     return vil_image_view_base_sptr(new vil_image_view<T >(dest)); }
   macro(VIL_PIXEL_FORMAT_BYTE, vxl_byte )
   macro(VIL_PIXEL_FORMAT_SBYTE , vxl_sbyte )
-#if VXL_HAS_INT_64 && !defined(VCL_VC_6)
+#if VXL_HAS_INT_64
   macro(VIL_PIXEL_FORMAT_UINT_64 , vxl_uint_64 )
   macro(VIL_PIXEL_FORMAT_INT_64 , vxl_int_64 )
 #endif
@@ -1064,7 +1064,7 @@ inline vil_image_view_base_sptr vil_convert_to_grey_using_rgb_weighting(
     return vil_image_view_base_sptr(new vil_image_view<T >(dest)); }
   macro(VIL_PIXEL_FORMAT_BYTE, vxl_byte )
   macro(VIL_PIXEL_FORMAT_SBYTE , vxl_sbyte )
-#if VXL_HAS_INT_64 && !defined(VCL_VC_6)
+#if VXL_HAS_INT_64
   macro(VIL_PIXEL_FORMAT_UINT_64 , vxl_uint_64 )
   macro(VIL_PIXEL_FORMAT_INT_64 , vxl_int_64 )
 #endif
@@ -1183,10 +1183,10 @@ inline vil_image_view<outP> vil_convert_to_grey_using_rgb_weighting(
 // \code
 // vil_image_view<vil_rgb<float> > =
 //   vil_convert_cast(
-//     float(), 
+//     float(),
 //     vil_convert_to_component_order(
 //       vil_convert_to_n_planes(
-//         3, 
+//         3,
 //         vil_load(filename)
 //       )
 //     )
@@ -1289,7 +1289,7 @@ inline vil_image_view_base_sptr vil_convert_stretch_range(
     break; }
    macro(VIL_PIXEL_FORMAT_BYTE, vxl_byte )
    macro(VIL_PIXEL_FORMAT_SBYTE , vxl_sbyte )
-#if VXL_HAS_INT_64 && !defined(VCL_VC_6)
+#if VXL_HAS_INT_64
    macro(VIL_PIXEL_FORMAT_UINT_64 , vxl_uint_64 )
    macro(VIL_PIXEL_FORMAT_INT_64 , vxl_int_64 )
 #endif

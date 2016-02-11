@@ -52,7 +52,7 @@ vgui_viewer3D_tableau::vgui_viewer3D_tableau(vgui_tableau_sptr const& s) :
   c_restore_home(vgui_key('<'), vgui_MODIFIER_NULL),
   lock_dolly(false),
   lock_zoom(true),
-  spin_data(0)
+  spin_data(VXL_NULLPTR)
 {
   spinning = false;
   allow_spinning = true;
@@ -227,7 +227,6 @@ bool vgui_viewer3D_tableau::handle(const vgui_event& e)
 
       add_quats(spindata->delta_r, lastpos.quat, this->token.quat);
 
-      // lastpos.quat = this->token.quat; // SGI CC can't do this.
       for (unsigned i=0; i<4; ++i) lastpos.quat[i] = this->token.quat[i];
 
       this->post_redraw();

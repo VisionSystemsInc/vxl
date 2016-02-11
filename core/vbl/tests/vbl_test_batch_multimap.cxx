@@ -26,13 +26,13 @@ static void vbl_test_batch_multimap1()
 
   // All these values should sort correctly even via their string values
   // assuming the char type is ascii.
-  test_data.push_back(vcl_make_pair("3", 3));
-  test_data.push_back(vcl_make_pair("1", 1));
-  test_data.push_back(vcl_make_pair("2", 2));
-  test_data.push_back(vcl_make_pair("3", 3));
-  test_data.push_back(vcl_make_pair("-7", -7));
-  test_data.push_back(vcl_make_pair("5", 5));
-  test_data.push_back(vcl_make_pair("3", 3));
+  test_data.push_back(vcl_make_pair(vcl_string("3"), 3));
+  test_data.push_back(vcl_make_pair(vcl_string("1"), 1));
+  test_data.push_back(vcl_make_pair(vcl_string("2"), 2));
+  test_data.push_back(vcl_make_pair(vcl_string("3"), 3));
+  test_data.push_back(vcl_make_pair(vcl_string("-7"), -7));
+  test_data.push_back(vcl_make_pair(vcl_string("5"), 5));
+  test_data.push_back(vcl_make_pair(vcl_string("3"), 3));
 
 
   vbl_batch_multimap<vcl_string, int> bmmap(test_data.begin(), test_data.end());
@@ -66,13 +66,13 @@ static void vbl_test_batch_multimap2()
 
   // All these values should sort correctly even via their string values
   // assuming the char type is ascii.
-  test_data.push_back(vcl_make_pair(3, "3a"));
-  test_data.push_back(vcl_make_pair(1, "1a"));
-  test_data.push_back(vcl_make_pair(3, "3b"));
-  test_data.push_back(vcl_make_pair(2, "2a"));
-  test_data.push_back(vcl_make_pair(-7, "-7a"));
-  test_data.push_back(vcl_make_pair(5, "5a"));
-  test_data.push_back(vcl_make_pair(3, "3c"));
+  test_data.push_back(vcl_make_pair(3, vcl_string("3a")));
+  test_data.push_back(vcl_make_pair(1, vcl_string("1a")));
+  test_data.push_back(vcl_make_pair(3, vcl_string("3b")));
+  test_data.push_back(vcl_make_pair(2, vcl_string("2a")));
+  test_data.push_back(vcl_make_pair(-7, vcl_string("-7a")));
+  test_data.push_back(vcl_make_pair(5, vcl_string("5a")));
+  test_data.push_back(vcl_make_pair(3, vcl_string("3c")));
   // make sure there is enough data to force default sort heuristics into faster unstable sort range.
   for (char c='a'; c<'z'; c++)
   {
@@ -98,7 +98,7 @@ static void vbl_test_batch_multimap2()
   bmmap2.assign(test_data.begin(), test_data.end());
   TEST("batch_multimap::assign && operator ==", bmmap == bmmap2, true);
 
- 
+
   vcl_stable_sort(test_data.begin(), test_data.end(), vbl_batch_multimap<int, vcl_string>::value_compare_t(vcl_less<int>()));
   bmmap2.assign_sorted(test_data.begin(), test_data.end());
   TEST("Check assign_sorted() kept stable sort value order",
