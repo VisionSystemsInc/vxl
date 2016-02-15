@@ -8,7 +8,7 @@ boxm2_vecf_middle_fat_pocket::boxm2_vecf_middle_fat_pocket(vcl_string const& geo
     vcl_cout << "FATAL! - geometry file path not valid = " << geometry_file << '\n';
     return;
   }
-  // construct paths to component scene xml files
+  // construct paths to component geometry files
   vcl_map<vcl_string, vcl_string> middle_fat_pocket_map;
   vcl_string component, path;
   while(istr >> component >> path)
@@ -100,6 +100,7 @@ void boxm2_vecf_middle_fat_pocket::apply_deformation_params(){
 bool boxm2_vecf_middle_fat_pocket::inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const{
   return pocket_.inverse_vector_field(p, inv_v);
 }
+
 //for debug purposes can be removed 
 void boxm2_vecf_middle_fat_pocket::print_vf_centroid_scan(double off_coef) const{
   bvgl_spline_region_3d<double> base = pocket_.base();
@@ -110,10 +111,20 @@ void boxm2_vecf_middle_fat_pocket::print_vf_centroid_scan(double off_coef) const
   c = c+ off;
   double h = pocket_.max_norm_distance();
   double dh = h/100.0;
-  for(double t = 0.0; t<h; t+=dh){
+  for(double t = h; t<2.0*h; t+=dh){
     vgl_point_3d<double> p = c + t*n;
+   vgl_point_3d<double> cp = pocket_.closest_point(p);
     vgl_vector_3d<double> vf(0.0, 0.0, 0.0);    
-    bool valid = pocket_.inverse_vector_field(p, vf);
+    bool valid = pocket_.vector_field(cp, vf);
     vcl_cout << t << ' ' << vf.x() << ' ' << vf.y() << ' ' << vf.z() << ' ' << valid << '\n';
   }
+}
+bool boxm2_vecf_middle_fat_pocket::closest_inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const{
+  vgl_point_3d<double> cp = pocket_.closest_point(p);
+  vgl_vector_3d<double> forward_vf;
+  if( pocket_.vector_field(cp, forward_vf)){
+    inv_v = -forward_vf;
+    return true;
+  }
+  return false;
 }

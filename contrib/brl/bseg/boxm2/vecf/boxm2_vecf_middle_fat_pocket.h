@@ -53,6 +53,9 @@ class boxm2_vecf_middle_fat_pocket : public boxm2_vecf_geometry_base{
 
   virtual bool inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const;
 
+  //: find the forward vector field for the closest point on *this
+  bool closest_inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& vf) const;
+
   //: for debug purposes
   void print_vf_centroid_scan(double off_coef) const;
  private:

@@ -26,10 +26,12 @@ void test_middle_fat_pocket()
   vcl_string rand_pts_path = geo_base_path + "random_pocket_points.txt";
   boxm2_vecf_middle_fat_pocket fpoc(geo_path);
   boxm2_vecf_middle_fat_pocket_params fparams;
-  fparams.lambda_ = 0.95;
+  fparams.lambda_ = 0.85;
   fpoc.set_params(fparams);
+  fpoc.apply_deformation_params();
+  fpoc.print_vf_centroid_scan(0.0);
+#if 0
   boxm2_vecf_middle_fat_pocket def_poc = fpoc.deform();
-#if 1
   vgl_pointset_3d<double> ptset = def_poc.random_pointset(100000);
   vcl_ofstream ostr(rand_pts_path.c_str());
   if(ostr){

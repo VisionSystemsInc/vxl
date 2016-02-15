@@ -189,6 +189,35 @@ bool bvgl_scaled_shape_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const& 
 }
 
 template <class Type>
+bool bvgl_scaled_shape_3d<Type>::vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& vf) const{
+  Type dist;
+  if(!cross_sections_[0].signed_distance(p, dist))
+    return false;
+  unsigned n = static_cast<unsigned>(cross_sections_.size()), index = 0;
+
+  Type csect_separation_dist = tolerance_;//undeformed shape
+
+  if(dist<-tolerance_){//tolerance below the bottom of the base
+    return false;
+  }
+  
+  if(dist>(max_norm_distance_+tolerance_)){//tolerance above the apex
+    return false;
+  }
+  Type dindex = vcl_floor(dist/csect_separation_dist);
+  if(dindex<Type(0))
+    index =0;
+  else
+    index = static_cast<unsigned>(dindex);
+  if(index >= n)
+    index = n-1;
+  Type dn = max_norm_distance_/static_cast<Type>(n-1);
+  vgl_vector_3d<Type> dv = Type(index)*dn*base_.normal();
+
+  return cross_sections_[index].vector_field(p, vf, dv);
+}
+
+template <class Type>
 vgl_box_3d<Type> bvgl_scaled_shape_3d<Type>::bounding_box() const{
   vgl_box_3d<Type> bb = base_.bounding_box();
   // assume the scale monotonically decreases so bounding box is defined by the base

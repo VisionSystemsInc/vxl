@@ -92,7 +92,10 @@ class bvgl_spline_region_3d
   //: inverse vector  field for the scale transformation
   bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv, Type tolerance = Type(-1)) const;
 
-  //: scale the boundary isotropically around the centroid and translate by vector tv
+  //: forward vector field
+  bool vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& vf, vgl_vector_3d<Type> const& tv) const;
+
+                    //: scale the boundary isotropically around the centroid and translate by vector tv
   // useful for generalized cylinder applications
   bvgl_spline_region_3d<Type> scale(Type s,vgl_vector_3d<Type> const& tv) const;
 

@@ -290,6 +290,31 @@ bool bvgl_spline_region_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const&
   inv = p3d-p;
   return true;
 }
+template <class Type>
+bool bvgl_spline_region_3d<Type>::vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& vf, vgl_vector_3d<Type> const& tv) const{
+// map target point to plane coordinates
+  Type u, v;
+  if(!this->world_to_plane(p, u, v, tolerance_))
+    return false;
+  vgl_point_2d<double> c = this->centroid_2d();
+  Type dvx = u-c.x(), dvy = v-c.y();
+  // rotate around the centroid by the negative rotation angle
+  Type sang = -sang_;
+  Type rdvx = cang_*dvx - sang*dvy;
+  Type rdvy = sang*dvx + cang_*dvy;
+  // anisotropic scaling
+  Type srdvx = su_*rdvx, srdvy = sv_*rdvy;
+  // rotate back to original plane coordinate frame
+  Type rinv_srdvx =  cang_*srdvx + sang*srdvy;
+  Type rinv_srdvy = -sang*srdvx + cang_*srdvy;
+  Type uinv = rinv_srdvx + c.x(), vinv = rinv_srdvy + c.y();
+  // convert back to 3d coordinates, i.e. the source point corresponding to the target
+  vgl_point_3d<Type> p3d;
+  this->plane_to_world(uinv, vinv, p3d);
+  // the difference is the inverse vector field
+  vf = (p3d-p) + tv;
+  return true;
+}
 
 template <class Type>
 bvgl_spline_region_3d<Type> bvgl_spline_region_3d<Type>::scale(Type su, Type sv, vgl_vector_3d<Type> const& tv,

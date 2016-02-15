@@ -78,6 +78,9 @@ class bvgl_scaled_shape_3d
   //: inverse vector field corresponding to the deformation
   bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const;
 
+  //: forward vector field
+  bool vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& vf) const;
+
   // returns false if the point is not within tolerance of any cross section
   bool nearest_cross_section_index(vgl_point_3d<Type> const& p3d, unsigned& index) const;
 
