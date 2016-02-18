@@ -86,6 +86,7 @@ class bvgl_spline_region_3d
   //: set parameters for scaling for efficiency. apply these calls before computing vector field values
   // if |L1| == 0 then the principal axis is u.
   void set_principal_eigenvector(vgl_vector_3d<Type> const& L1);
+  void set_principal_offset(Type principal_offset){principal_offset_ = principal_offset;}
   void set_deformation_eigenvalues(Type su, Type sv){su_ = su; sv_ = sv;}
   void set_offset_vector(vgl_vector_3d<Type> const& tv){tv_ = tv;}
 
@@ -122,6 +123,7 @@ class bvgl_spline_region_3d
   //cache plane coordinate vectors for convenience
   vgl_vector_3d<Type> u_vec_;
   vgl_vector_3d<Type> v_vec_;
+  Type principal_offset_;
   // parameters for deformation
   Type su_; //first principal eigenvalue
   Type sv_; //second principal eigenvalue

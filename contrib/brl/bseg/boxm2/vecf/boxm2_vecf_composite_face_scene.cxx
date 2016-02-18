@@ -18,15 +18,30 @@ boxm2_vecf_composite_face_scene::boxm2_vecf_composite_face_scene(vcl_string cons
   mandible_skin_coupling_box_.add(p0); mandible_skin_coupling_box_.add(p1); mandible_skin_coupling_box_.add(p2);
   mandible_skin_coupling_box_.add(p3); mandible_skin_coupling_box_.add(p4);
   // points defining the coupled field regions for the skin to the middle fat pocket
+#if 1
   vgl_point_3d<double> fp0(58.9,-3.52, 52.65); vgl_point_3d<double> fp1(31.63,-39.0, 44.62);
   vgl_point_3d<double> fp2(69.68, 23.3, -7.1); vgl_point_3d<double> fp3(59.74, -24.98, -33.65);
   vgl_point_3d<double> fp4(41.34, -9.6, 87.54);vgl_point_3d<double> fp5(42.2, -56.64, 69.57);
   vgl_point_3d<double> fp6(86.76, 11.98, 25.09);vgl_point_3d<double> fp7(75.9, -51.5, 15.36);
+
   middle_fat_pocket_skin_coupling_box_.add(fp0);   middle_fat_pocket_skin_coupling_box_.add(fp1);
   middle_fat_pocket_skin_coupling_box_.add(fp2);   middle_fat_pocket_skin_coupling_box_.add(fp3);
   middle_fat_pocket_skin_coupling_box_.add(fp4);   middle_fat_pocket_skin_coupling_box_.add(fp5);
   middle_fat_pocket_skin_coupling_box_.add(fp6);   middle_fat_pocket_skin_coupling_box_.add(fp7);
-
+#else
+  vgl_point_3d<double> fp0(48.252353668213,-8.134105682373,84.791580200195);
+  vgl_point_3d<double> fp1(50.227447509766,-19.818675994873,82.815269470215);
+  vgl_point_3d<double> fp2(69.978309631348,-18.322017669678,68.044876098633);
+  vgl_point_3d<double> fp3(71.953407287598,-2.248519897461,67.758796691895);
+  vgl_point_3d<double> fp4(48.252353668213,-8.134105682373,80.791580200195);
+  vgl_point_3d<double> fp5(50.227447509766,-19.818675994873,78.815269470215);
+  vgl_point_3d<double> fp6(69.978309631348,-18.322017669678,65.044876098633);
+  vgl_point_3d<double> fp7(71.953407287598,-2.248519897461,63.758796691895);
+  middle_fat_pocket_skin_coupling_box_.add(fp0);   middle_fat_pocket_skin_coupling_box_.add(fp1);
+  middle_fat_pocket_skin_coupling_box_.add(fp2);   middle_fat_pocket_skin_coupling_box_.add(fp3);
+  middle_fat_pocket_skin_coupling_box_.add(fp4);   middle_fat_pocket_skin_coupling_box_.add(fp5);
+  middle_fat_pocket_skin_coupling_box_.add(fp6);   middle_fat_pocket_skin_coupling_box_.add(fp7);
+#endif
   vcl_ifstream istr(face_scene_paths.c_str());
   // construct paths to component scene xml files
   vcl_map<vcl_string, vcl_string> scene_path_map;
@@ -150,6 +165,10 @@ bool  boxm2_vecf_composite_face_scene::inverse_vector_field(vgl_point_3d<double>
     if(mandible_skin_coupling_box_.contains(target_pt)){
       skin_valid = mandible_->coupled_vector_field(target_pt, skin_inv_vf);
       in_mouth = mouth_geo_.in(target_pt);
+    }else if(middle_fat_pocket_skin_coupling_box_.contains(target_pt)){
+      skin_valid = middle_fat_pocket_->coupled_vector_field(target_pt, skin_inv_vf);
+      if(!skin_valid)
+        skin_valid = skin_->inverse_vector_field(target_pt, skin_inv_vf);
     }else
       skin_valid = skin_->inverse_vector_field(target_pt, skin_inv_vf);
   }
@@ -167,12 +186,12 @@ bool  boxm2_vecf_composite_face_scene::inverse_vector_field(vgl_point_3d<double>
   }else if(mandible_valid){
     anatomy_type="mandible";
     inv_vf.set(mandible_inv_vf.x(), mandible_inv_vf.y(), mandible_inv_vf.z());
-  }else if(middle_fat_pocket_valid){
-    anatomy_type="middle_fat_pocket";
-    inv_vf.set(middle_fat_pocket_inv_vf.x(), middle_fat_pocket_inv_vf.y(), middle_fat_pocket_inv_vf.z());
   }else if(skin_valid){
     anatomy_type="skin";
     inv_vf.set(skin_inv_vf.x(), skin_inv_vf.y(), skin_inv_vf.z());
+  }else if(middle_fat_pocket_valid){
+    anatomy_type="middle_fat_pocket";
+    inv_vf.set(middle_fat_pocket_inv_vf.x(), middle_fat_pocket_inv_vf.y(), middle_fat_pocket_inv_vf.z());
   }else if(cranium_valid){
     anatomy_type="cranium";
     inv_vf.set(cranium_inv_vf.x(), cranium_inv_vf.y(), cranium_inv_vf.z());

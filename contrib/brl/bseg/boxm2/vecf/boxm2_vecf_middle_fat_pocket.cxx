@@ -95,6 +95,7 @@ void boxm2_vecf_middle_fat_pocket::apply_deformation_params(){
   pocket_.set_lambda(params_.lambda_);
   pocket_.set_gamma(params_.gamma_);
   pocket_.set_principal_eigenvector(params_.principal_eigenvector_);
+  pocket_.set_principal_offset(params_.principal_offset_);
   pocket_.apply_parameters_to_cross_sections();
 }
 bool boxm2_vecf_middle_fat_pocket::inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const{

@@ -233,7 +233,9 @@ void boxm2_vecf_middle_fat_pocket_scene::inverse_vector_field(vcl_vector<vgl_vec
   vcl_cout << "computed " << cnt << " pts out of "<< nt << " for middle_fat_pocket vector field in " << t.real()/1000.0 << " sec.\n";
 }
 
-
+bool boxm2_vecf_middle_fat_pocket_scene::coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
+  return middle_fat_pocket_geo_.closest_inverse_vector_field(target_pt, inv_vf);
+}
 
 //
 // interpolate data around the inverted position of the target in the source reference frame. Interpolation weights are based

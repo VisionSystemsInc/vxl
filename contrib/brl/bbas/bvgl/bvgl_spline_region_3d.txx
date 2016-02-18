@@ -302,8 +302,11 @@ bool bvgl_spline_region_3d<Type>::vector_field(vgl_point_3d<Type> const& p, vgl_
   Type sang = -sang_;
   Type rdvx = cang_*dvx - sang*dvy;
   Type rdvy = sang*dvx + cang_*dvy;
+  // principal offset
+  rdvx -= principal_offset_;
   // anisotropic scaling
   Type srdvx = su_*rdvx, srdvy = sv_*rdvy;
+  srdvx += principal_offset_;
   // rotate back to original plane coordinate frame
   Type rinv_srdvx =  cang_*srdvx + sang*srdvy;
   Type rinv_srdvy = -sang*srdvx + cang_*srdvy;

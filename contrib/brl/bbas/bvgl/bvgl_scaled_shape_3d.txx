@@ -161,6 +161,7 @@ void bvgl_scaled_shape_3d<Type>::apply_parameters_to_cross_sections(){
     cross_sections_[i].set_principal_eigenvector(L1_);
     cross_sections_[i].set_deformation_eigenvalues(su, sv);
     cross_sections_[i].set_offset_vector(mul*dv);
+    cross_sections_[i].set_principal_offset(principal_offset_);
   }
 }
 template <class Type>
@@ -211,9 +212,9 @@ bool bvgl_scaled_shape_3d<Type>::vector_field(vgl_point_3d<Type> const& p, vgl_v
     index = static_cast<unsigned>(dindex);
   if(index >= n)
     index = n-1;
-  Type dn = max_norm_distance_/static_cast<Type>(n-1);
+  Type dn = (max_nd_-max_norm_distance_)/static_cast<Type>(n-1);
+  if(dn<Type(0)) dn = -dn;
   vgl_vector_3d<Type> dv = Type(index)*dn*base_.normal();
-
   return cross_sections_[index].vector_field(p, vf, dv);
 }
 

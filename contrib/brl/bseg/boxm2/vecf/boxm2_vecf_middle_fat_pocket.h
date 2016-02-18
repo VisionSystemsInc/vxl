@@ -48,7 +48,7 @@ class boxm2_vecf_middle_fat_pocket : public boxm2_vecf_geometry_base{
   }
   //: apply deformation parameters to the scaled shape. reduces overhead in computing
   // the inverse vector field since the same parameters are used for each call to
-  // ::inverse_vector_fieldx
+  // ::inverse_vector_field
   void apply_deformation_params();
 
   virtual bool inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const;

@@ -73,6 +73,7 @@ class bvgl_scaled_shape_3d
   //exponent factor for second eigenvalue, i.e. l2 = lambda_^gamma, l3 = 1/(l1*l2)
   void set_gamma(Type gamma){gamma_ = gamma;}
   void set_principal_eigenvector(vgl_vector_3d<Type> const& L1){L1_ = L1;}
+  void set_principal_offset(Type principal_offset){principal_offset_ = principal_offset;}
   void apply_parameters_to_cross_sections();
 
   //: inverse vector field corresponding to the deformation
@@ -107,6 +108,7 @@ class bvgl_scaled_shape_3d
   Type gamma_;  
   vgl_vector_3d<Type> L1_;
   Type max_nd_;
+  Type principal_offset_;
   // nominal attributes
   scale_type stype_;
   Type tolerance_;

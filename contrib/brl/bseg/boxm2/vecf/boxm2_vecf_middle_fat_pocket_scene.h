@@ -46,12 +46,13 @@ class boxm2_vecf_middle_fat_pocket_scene : public boxm2_vecf_articulated_scene
   //: map middle_fat_pocket data to the target scene
   void map_to_target(boxm2_scene_sptr target_scene);
 
-  //: compute an inverse vector field for rotation of middle_fat_pocket
+  //: compute an inverse vector field for deformation of  middle_fat_pocket
   void inverse_vector_field(vcl_vector<vgl_vector_3d<double> >& vfield, vcl_vector<bool>& valid) const;
 
   virtual bool inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
   virtual bool apply_vector_field(cell_info const& target_cell, vgl_vector_3d<double> const& inv_vf);
 
+  bool coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const;
 
   //: test the anat_type (MIDDLE_FAT_POCKET) of the voxel that contains a global point
   bool is_type_global(vgl_point_3d<double> const& global_pt, anat_type type) const;
