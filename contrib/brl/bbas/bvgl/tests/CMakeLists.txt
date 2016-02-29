@@ -11,6 +11,8 @@ SET(bvgl_test_sources
   test_spline_region.cxx
   test_poly_region.cxx
   test_scaled_shape.cxx
+  test_k_nearest_neighbors.cxx
+  test_knn_index_3d.cxx
 )
 
 #Make sure expat library is found
@@ -30,8 +32,9 @@ ADD_TEST(bvgl_test_gen_cylinder           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_al
 ADD_TEST(bvgl_test_grid_index_3d          ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_grid_index_3d)	
 ADD_TEST(bvgl_test_spline_region          ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_spline_region)
 ADD_TEST(bvgl_test_poly_region            ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_poly_region)
-ADD_TEST(bvgl_test_scaled_shape           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_scaled_shape)             
-
+ADD_TEST(bvgl_test_scaled_shape           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_scaled_shape)
+ADD_TEST(bvgl_test_k_nearest_neighbors    ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_k_nearest_neighbors)
+ADD_TEST(bvgl_test_knn_index_3d           ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_knn_index_3d)	
 IF(EXPAT_FOUND)
   ADD_TEST(bvgl_test_labelme_parser       ${EXECUTABLE_OUTPUT_PATH}/bvgl_test_all test_bvgl_labelme_parser)
 ENDIF(EXPAT_FOUND)

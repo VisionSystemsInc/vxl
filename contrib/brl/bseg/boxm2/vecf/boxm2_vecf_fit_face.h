@@ -31,6 +31,9 @@ class boxm2_vecf_fit_face{
   // canthi, forehead, jaw
   bool read_anchor_file(vcl_string const& path);
 
+  //: load face params with existing transformation
+  bool load_composite_face_params(vcl_string const& params_path);
+
   //: add a labeled point to lpts_
   bool add_labeled_point(boxm2_vecf_labeled_point lp);
 
@@ -42,6 +45,9 @@ class boxm2_vecf_fit_face{
 
   //: transform face according to the computed affine transform
   bool transform_face(vcl_string const& source_face_path, vcl_string const& target_face_path) const;
+
+  //: inverse transform face
+  bool inverse_transform_face(vcl_string const& source_face_path, vcl_string const& target_face_path) const;
 
   //: return current parameter settings
   boxm2_vecf_composite_face_params params() const {return params_;}

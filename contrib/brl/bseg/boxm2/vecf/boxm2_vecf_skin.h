@@ -13,6 +13,7 @@
 #include <vgl/vgl_pointset_3d.h>
 #include <vgl/vgl_box_3d.h>
 #include <bvgl/bvgl_grid_index_3d.h>
+#include <bvgl/bvgl_knn_index_3d.h>
 #include "boxm2_vecf_geometry_base.h"
 #include "boxm2_vecf_skin_params.h"
 class boxm2_vecf_skin: public boxm2_vecf_geometry_base{
@@ -20,7 +21,7 @@ class boxm2_vecf_skin: public boxm2_vecf_geometry_base{
  boxm2_vecf_skin(): nbins_(25), has_appearance_(false){}
  boxm2_vecf_skin(vcl_string const& geometry_file, unsigned nbins = 25);
 
- boxm2_vecf_skin(vgl_pointset_3d<double> const& ptset,unsigned nbins = 25): ptset_(ptset), nbins_(nbins), has_appearance_(false){}
+ boxm2_vecf_skin(vgl_pointset_3d<double> const& ptset,unsigned nbins = 25): nbins_(nbins), has_appearance_(false){}
 
  void read_skin(vcl_istream& istr, unsigned comma_count=2);
 
@@ -42,8 +43,9 @@ class boxm2_vecf_skin: public boxm2_vecf_geometry_base{
  private:
  unsigned nbins_;
  bool has_appearance_;
- bvgl_grid_index_3d index_;
- vgl_pointset_3d<double> ptset_;
+ //bvgl_grid_index_3d<double> index_;
+ bvgl_knn_index_3d<double> index_;
+ // vgl_pointset_3d<double> ptset_;
  vcl_vector<double> appearance_;
  boxm2_vecf_skin_params params_;
 };

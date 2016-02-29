@@ -49,11 +49,15 @@ boxm2_vecf_skin::boxm2_vecf_skin(vcl_string const& geometry_file, unsigned nbins
 void boxm2_vecf_skin::read_skin(vcl_istream& cstr, unsigned comma_count){
   double surface_dist_thresh = 1.0;
   if(!has_appearance_){
-    cstr >> ptset_;
-    index_ = bvgl_grid_index_3d(nbins_, nbins_, nbins_, ptset_, surface_dist_thresh);
+    vgl_pointset_3d<double> ptset;
+    cstr >> ptset;
+    //index_ = bvgl_grid_index_3d<double>(nbins_, nbins_, nbins_, ptset_, surface_dist_thresh);
+    index_.set_pointset(ptset);
+    index_.set_thresh(surface_dist_thresh);
   }else{
-    vcl_vector<vgl_point_3d<double> > pts;
-    vcl_vector<vgl_vector_3d<double> > norms;
+    //vcl_vector<vgl_point_3d<double> > pts;
+    //vcl_vector<vgl_vector_3d<double> > norms;
+    vgl_pointset_3d<double>& pts = index_.ptset();
     unsigned char c;
     double x, y, z, nx, ny, nz, a;
     if(comma_count == 3){
@@ -64,10 +68,14 @@ void boxm2_vecf_skin::read_skin(vcl_istream& cstr, unsigned comma_count){
         }
         appearance_.push_back(a);
         vgl_point_3d<double> p(x, y, z);
-        pts.push_back(p);
+        pts.add_point(p);
+        //pts.push_back(p);
       }
-      ptset_.set_points(pts);
-      index_ = bvgl_grid_index_3d(nbins_, nbins_, nbins_, ptset_, appearance_,surface_dist_thresh);
+      //ptset_.set_points(pts);
+      //index_ = bvgl_grid_index_3d<double>(nbins_, nbins_, nbins_, ptset_, appearance_,surface_dist_thresh);
+      index_.set_scalars(appearance_);
+      index_.set_thresh(surface_dist_thresh);
+      index_.create();
     }else if(comma_count == 6){
       while(cstr >> x >> c >> y >> c >> z >> c >> nx >> c >> ny >> c >> nz >> c >> a){
         if(c!=','){
@@ -76,28 +84,33 @@ void boxm2_vecf_skin::read_skin(vcl_istream& cstr, unsigned comma_count){
         }
         appearance_.push_back(a);
         vgl_point_3d<double> p(x, y, z);
-        pts.push_back(p);
+        //pts.push_back(p);
         vgl_vector_3d<double> n(nx, ny, nz);
-        norms.push_back(n);
+        //norms.push_back(n);
+        pts.add_point_with_normal(p, n);
       }
-      ptset_.set_points_with_normals(pts, norms);
-      index_ = bvgl_grid_index_3d(nbins_, nbins_, nbins_, ptset_, appearance_, surface_dist_thresh);
+      //ptset_.set_points_with_normals(pts, norms);
+      //index_ = bvgl_grid_index_3d<double>(nbins_, nbins_, nbins_, ptset_, appearance_, surface_dist_thresh);
+      index_.set_scalars(appearance_);
+      index_.set_thresh(surface_dist_thresh);
+      index_.create();
     }
   }
 }
 
 void boxm2_vecf_skin::display_vrml(vcl_ofstream& ostr) const{
   bvrml_write::write_vrml_header(ostr);
-  unsigned n = ptset_.npts();
+  const vgl_pointset_3d<double>& pst = index_.const_ptset();
+  unsigned n = pst.npts();
   unsigned skip = 1;
   if(n>100000)
     skip = 100;
   float r = 3.0f, h = 0.1f;
   for(unsigned i = 0; i<n; i+=skip){
-    vgl_point_3d<double> p = ptset_.p(i);
+    vgl_point_3d<double> p = pst.p(i);
     vgl_vector_3d<double> n;
-    if(ptset_.has_normals())
-      n = ptset_.n(i);
+    if(pst.has_normals())
+      n = pst.n(i);
     else{
       n = vgl_vector_3d<double>(p.x(), p.y(), p.z());
       n/= n.length();

@@ -169,11 +169,13 @@ bool  boxm2_vecf_composite_face_scene::inverse_vector_field(vgl_point_3d<double>
       skin_valid = middle_fat_pocket_->coupled_vector_field(target_pt, skin_inv_vf);
       if(!skin_valid)
         skin_valid = skin_->inverse_vector_field(target_pt, skin_inv_vf);
-    }else
+    }else 
       skin_valid = skin_->inverse_vector_field(target_pt, skin_inv_vf);
   }
   if(middle_fat_pocket_){
     middle_fat_pocket_valid = middle_fat_pocket_->inverse_vector_field(target_pt, middle_fat_pocket_inv_vf);
+    if(middle_fat_pocket_valid&&skin_valid)
+      skin_valid = false;
   }
   bool not_valid = (!mandible_valid&&!cranium_valid&&!skin_valid&&!middle_fat_pocket_valid);
   if(not_valid){

@@ -73,6 +73,10 @@ class bvgl_spline_region_3d
 
   //: plane normal
   vgl_vector_3d<Type> normal() const{ return unit_normal_;}
+
+  //: plane
+  vgl_plane_3d<Type> plane() const {return plane_;}
+
   //: bounding box methods
   vgl_box_2d<Type> bounding_box_2d() const;
   vgl_box_3d<Type> bounding_box() const;
@@ -80,8 +84,8 @@ class bvgl_spline_region_3d
   //: accessors
   vcl_vector<vgl_point_3d<Type> > knots() const {return spline_3d_.knots();}
   vcl_vector<vgl_point_2d<Type> > knots_2d() const {return spline_2d_.knots();}
-  const vgl_plane_3d<Type>& plane() const{return plane_;}
-
+  
+  vgl_point_3d<Type> origin() const {return origin_;}
 
   //: set parameters for scaling for efficiency. apply these calls before computing vector field values
   // if |L1| == 0 then the principal axis is u.
@@ -89,14 +93,13 @@ class bvgl_spline_region_3d
   void set_principal_offset(Type principal_offset){principal_offset_ = principal_offset;}
   void set_deformation_eigenvalues(Type su, Type sv){su_ = su; sv_ = sv;}
   void set_offset_vector(vgl_vector_3d<Type> const& tv){tv_ = tv;}
-
   //: inverse vector  field for the scale transformation
   bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv, Type tolerance = Type(-1)) const;
 
-  //: forward vector field
+  //: forward vector field, used to couple the deformation field to adjacent structures
   bool vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& vf, vgl_vector_3d<Type> const& tv) const;
 
-                    //: scale the boundary isotropically around the centroid and translate by vector tv
+  //: scale the boundary isotropically around the centroid and translate by vector tv
   // useful for generalized cylinder applications
   bvgl_spline_region_3d<Type> scale(Type s,vgl_vector_3d<Type> const& tv) const;
 

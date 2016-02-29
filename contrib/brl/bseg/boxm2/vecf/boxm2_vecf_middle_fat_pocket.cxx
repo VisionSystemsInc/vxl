@@ -75,7 +75,10 @@ boxm2_vecf_middle_fat_pocket::boxm2_vecf_middle_fat_pocket(vcl_string const& geo
   pistr.close();
   base_ = bvgl_spline_region_3d<double>(knots, params_.normal_, params_.origin_, params_.tolerance_);
   pocket_ = bvgl_scaled_shape_3d<double>(base_, params_.max_norm_distance_, params_.scale_at_midpt_, params_.scale_at_max_, params_.tolerance_);
-  this->apply_deformation_params();
+  if(params_.fit_to_subject_)
+    this->apply_scale_params();
+  else
+    this->apply_deformation_params();
 }
 
 boxm2_vecf_middle_fat_pocket::boxm2_vecf_middle_fat_pocket(bvgl_scaled_shape_3d<double> const& ss3d, boxm2_vecf_middle_fat_pocket_params const& params)
@@ -91,6 +94,10 @@ boxm2_vecf_middle_fat_pocket boxm2_vecf_middle_fat_pocket::deform() const{
   return boxm2_vecf_middle_fat_pocket(sshape, params_);
 }
 
+void boxm2_vecf_middle_fat_pocket::apply_scale_params(){
+  pocket_.set_aniso_scale(params_.su_, params_.sv_, params_.sw_);
+  pocket_.apply_parameters_to_cross_sections();
+}
 void boxm2_vecf_middle_fat_pocket::apply_deformation_params(){
   pocket_.set_lambda(params_.lambda_);
   pocket_.set_gamma(params_.gamma_);

@@ -213,6 +213,16 @@ bool boxm2_vecf_fit_face::set_trans(){
   return true;
 }
 
+bool boxm2_vecf_fit_face::load_composite_face_params(vcl_string const& params_path){
+  vcl_ifstream istr(params_path.c_str());
+  if(!istr){
+    vcl_cout << "Can't open parameter path " << params_path << '\n';
+    return false;
+  }
+  istr >> params_;
+  return true;
+}
+
 bool boxm2_vecf_fit_face::transform_face(vcl_string const& source_face_path, vcl_string const& target_face_path) const{
   vgl_pointset_3d<double> src_ptset, trg_ptset;
   vcl_ifstream sistr(source_face_path.c_str());
@@ -233,3 +243,22 @@ bool boxm2_vecf_fit_face::transform_face(vcl_string const& source_face_path, vcl
   return true;
 }
 
+bool boxm2_vecf_fit_face::inverse_transform_face(vcl_string const& source_face_path, vcl_string const& target_face_path) const{
+  vgl_pointset_3d<double> src_ptset, trg_ptset;
+  vcl_ifstream sistr(source_face_path.c_str());
+    if(!sistr)
+      return false;
+    sistr >> src_ptset;
+ 
+  sistr.close();
+
+  trg_ptset = params_.trans_.preimage(src_ptset);
+  
+  vcl_ofstream tostr(target_face_path.c_str());
+    if(!tostr)
+      return false;
+    tostr << trg_ptset;
+ 
+  tostr.close();
+  return true;
+}

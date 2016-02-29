@@ -23,18 +23,21 @@ class bvgl_scaled_shape_3d
  public:
   enum scale_type {LINEAR, QUADRATIC};
   //: Default constructor (creates empty scaled_shape_3d)
- bvgl_scaled_shape_3d():tolerance_(Type(0.5)), scale_at_midpt_(Type(1)), scale_at_max_(Type(1)), max_norm_distance_(Type(0)), stype_(LINEAR){};
-
+ bvgl_scaled_shape_3d():tolerance_(Type(0.5)), scale_at_midpt_(Type(1)), scale_at_max_(Type(1)), max_norm_distance_(Type(0)),
+    stype_(LINEAR){reset_def_params(); reset_scale_params();}
+  
   //: Construct using spline knots (must be closed curve)
  bvgl_scaled_shape_3d(bvgl_spline_region_3d<Type> const& region, Type max_norm_distance, Type scale_at_max, Type tolerance):
   base_(region), max_norm_distance_(max_norm_distance), scale_at_max_(scale_at_max),scale_at_midpt_(Type(0.5)*scale_at_max_),
-    tolerance_(tolerance), stype_(LINEAR){
+  tolerance_(tolerance), stype_(LINEAR){
+    reset_def_params(); reset_scale_params();
     this->compute_cross_sections();
     vcl_cout << cross_sections_.size() << '\n';
   }
+
  bvgl_scaled_shape_3d(bvgl_spline_region_3d<Type> const& region, Type max_norm_distance, Type scale_at_midpt,Type scale_at_max, Type tolerance):
-  base_(region), max_norm_distance_(max_norm_distance), scale_at_midpt_(scale_at_midpt), scale_at_max_(scale_at_max),
-    tolerance_(tolerance), stype_(QUADRATIC){
+  base_(region), max_norm_distance_(max_norm_distance), scale_at_midpt_(scale_at_midpt), scale_at_max_(scale_at_max),tolerance_(tolerance),stype_(QUADRATIC){
+    reset_def_params(); reset_scale_params();
     this->compute_cross_sections();
     vcl_cout << cross_sections_.size() << '\n';
   }
@@ -63,27 +66,41 @@ class bvgl_scaled_shape_3d
   //: The volume of the region
   Type volume() const;
 
+  //: ansiotropically scale the shape
+  bvgl_scaled_shape_3d<Type> anisotropic_scale(Type su, Type sv, Type sw, vgl_vector_3d<Type> const& L1 = vgl_vector_3d<Type>(0.0, 0.0, 0.0)) const;
+
+  //: isotropically scale the shape about the centroids stacked along the normal to the base plane
+  bvgl_scaled_shape_3d<Type> scale(Type s);
+
   //: deform *this shape.
   // Two of the deformation axes, L1 and L2, lie in the base plane and L3 is along the plane normal
   // Specifying L1 determines the in plane rotation needed to align the L1 direction with the u plane axis
   bvgl_scaled_shape_3d<Type> deform(Type lambda, Type gamma, vgl_vector_3d<Type> const& L1) const;
-                                    
+
+  void reset_def_params(){lambda_ = Type(1); gamma_ = Type(0); L1_ = vgl_vector_3d<Type>(Type(0), Type(0), Type(0)); principal_offset_= Type(0);}
+  void reset_scale_params(){su_ = Type(0); sv_ = Type(0); sw_=Type(0);}
+  //: set scale parameters
+  void set_aniso_scale(Type su, Type sv, Type sw){su_ = su; sv_ = sv; sw_ = sw; reset_def_params();}
   //: set deformation parameters
-  void set_lambda(Type lambda){lambda_=lambda;}//principal eigenvalue l1
+  void set_lambda(Type lambda){lambda_=lambda;reset_scale_params();}//principal eigenvalue l1
   //exponent factor for second eigenvalue, i.e. l2 = lambda_^gamma, l3 = 1/(l1*l2)
-  void set_gamma(Type gamma){gamma_ = gamma;}
-  void set_principal_eigenvector(vgl_vector_3d<Type> const& L1){L1_ = L1;}
-  void set_principal_offset(Type principal_offset){principal_offset_ = principal_offset;}
+  void set_gamma(Type gamma){gamma_ = gamma;reset_scale_params();}
+  void set_principal_eigenvector(vgl_vector_3d<Type> const& L1){L1_ = L1;reset_scale_params();}
+  void set_principal_offset(Type principal_offset){principal_offset_ = principal_offset;reset_scale_params();}
   void apply_parameters_to_cross_sections();
 
   //: inverse vector field corresponding to the deformation
   bool inverse_vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& inv) const;
 
-  //: forward vector field
+  //: forward vector field, used to couple to adjacent structures
   bool vector_field(vgl_point_3d<Type> const& p, vgl_vector_3d<Type>& vf) const;
 
-  // returns false if the point is not within tolerance of any cross section
+
+  //: returns false if the point is not within tolerance of any cross section
   bool nearest_cross_section_index(vgl_point_3d<Type> const& p3d, unsigned& index) const;
+
+  //: finds nearest cross section without boundary tests
+  void nearest_cross_section_index_unbounded(vgl_point_3d<Type> const& p3d, unsigned& index) const;
 
   vgl_box_3d<Type> bounding_box() const;
 
@@ -103,6 +120,10 @@ class bvgl_scaled_shape_3d
   void set_max_norm_distance(Type max_nd){max_norm_distance_ = max_nd;}
 
  private:
+  // scale parameters
+  Type su_;
+  Type sv_;
+  Type sw_;
   // deformation parameters
   Type lambda_; 
   Type gamma_;  

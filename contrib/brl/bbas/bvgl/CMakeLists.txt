@@ -25,10 +25,12 @@ SET(bvgl_sources
  bvgl_param_curve.h                      # EMPTY FILE bvgl_param_curve.cxx
  bvgl_cross_section.h                    bvgl_cross_section.cxx
  bvgl_gen_cylinder.h                     bvgl_gen_cylinder.cxx
- bvgl_grid_index_3d.h                    bvgl_grid_index_3d.cxx
+ bvgl_grid_index_3d.h                    #bvgl_grid_index_3d.cxx
  bvgl_spline_region_3d.h                 bvgl_poly_region_3d.txx
  bvgl_poly_region_3d.h                   bvgl_poly_region_3d.txx
  bvgl_scaled_shape_3d.h                  bvgl_scaled_shape_3d.txx       
+ bvgl_k_nearest_neighbors_3d.h
+ bvgl_knn_index_3d.h
 )
 AUX_SOURCE_DIRECTORY(Templates bvgl_sources)
 
@@ -47,7 +49,7 @@ ENDIF(EXPAT_FOUND)
 ADD_LIBRARY(bvgl ${bvgl_sources})
 INSTALL_TARGETS(/lib bvgl)
 INSTALL_NOBASE_HEADER_FILES(/include/vxl/contrib/brl/bbas/bvgl ${bvgl_sources})
-TARGET_LINK_LIBRARIES(bvgl bvrml vsol vgl_algo vgl_io vgl vnl_algo vnl vil vbl)
+TARGET_LINK_LIBRARIES(bvgl bvgl_nabo bvrml vsol vgl_algo vgl_io vgl vnl_algo vnl vil vbl)
 IF(EXPAT_FOUND)
 TARGET_LINK_LIBRARIES(bvgl expatpp)
 ENDIF(EXPAT_FOUND)
@@ -58,3 +60,5 @@ ENDIF( BUILD_TESTING )
 
 # geometric algorithm related
 add_subdirectory(algo)
+# nabo k nearest neigbor and kD tree library
+add_subdirectory(nabo)

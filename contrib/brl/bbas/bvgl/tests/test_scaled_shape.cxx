@@ -78,6 +78,22 @@ static void test_scaled_shape()
   vgl_point_3d<double> tpt(56.0, -28.0, 85.0);
   vgl_point_3d<double> cp = ss3d.closest_point(tpt);
   double volume = ss3d.volume();
+  vcl_cout << "Volume before uniform scaling " << volume << " mm^3\n";
+  bvgl_scaled_shape_3d<double> ss3d_scaled = ss3d.scale(1.1);
+   volume = ss3d_scaled.volume();
+  vcl_cout << "Volume after scaling " << volume << " mm^3  max norm distance " << ss3d_scaled.max_norm_distance() << '\n';
+  ss3d.set_aniso_scale(1.1, 1.1, 1.1);
+  ss3d.apply_parameters_to_cross_sections();
+  const vcl_vector<bvgl_spline_region_3d<double> >& csects_scal = ss3d_scaled.cross_sections();
+  vgl_point_3d<double> p_targ_scl = (csects_scal[csects_scal.size()-1].knots())[0];
+  vgl_vector_3d<double> inv_scl;
+  bool good_scl = ss3d.inverse_vector_field(p_targ_scl, inv_scl);
+  const vcl_vector<bvgl_spline_region_3d<double> >& csects = ss3d.cross_sections();
+  vgl_point_3d<double> p_source_act = (csects[csects.size()-1].knots())[0];
+  vgl_point_3d<double> p_source_scl = p_targ_scl + inv_scl;
+  double dif_scl = (p_source_scl-p_source_act).length();
+  TEST_NEAR("Compare scaling to inverse VF", dif_scl, 0.0, 0.001);
+
   vcl_cout << "Volume before deformation " << volume << " mm^3\n";
   double lambda = 0.85, gamma = 0.2;
   //double lambda = 1.0, gamma = 0.2;
@@ -94,10 +110,9 @@ static void test_scaled_shape()
   vgl_point_3d<double> p_targ = (csects_def[csects_def.size()-1].knots())[0];
   vgl_vector_3d<double> inv;
   bool good = ss3d.inverse_vector_field(p_targ, inv);
-  const vcl_vector<bvgl_spline_region_3d<double> >& csects = ss3d.cross_sections();
-  vgl_point_3d<double> p_source_act = (csects[csects.size()-1].knots())[0];
   vgl_point_3d<double> p_source = p_targ + inv;
   double dif = (p_source-p_source_act).length();
+  TEST_NEAR("Compare deformation to inverse VF", dif, 0.0, 0.001);
 #if 0
   vgl_pointset_3d<double> ptset = ss3d_deformed.random_pointset(100000);
   vcl_ofstream ostr(display_random_path.c_str());

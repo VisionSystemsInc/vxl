@@ -12,6 +12,8 @@ ADD_EXECUTABLE( boxm2_vecf_test_all
   test_mouth.cxx
   test_middle_fat_pocket.cxx
   test_fat_pocket_scene.cxx
+  test_fit_face.cxx
+  test_fit_fat_pocket.cxx
 )
 TARGET_LINK_LIBRARIES(boxm2_vecf_test_all testlib  boxm2_vecf brdb vpgl_algo vpgl_pro vil_pro sdet vnl vgl vil vul vpl )
 
@@ -31,6 +33,8 @@ ADD_TEST( boxm2_vecf_test_composite_face      ${EXECUTABLE_OUTPUT_PATH}/boxm2_ve
 ADD_TEST( boxm2_vecf_test_mouth      ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_mouth  )
 ADD_TEST( boxm2_vecf_test_middle_fat_pocket   ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_middle_fat_pocket  )
 ADD_TEST( boxm2_vecf_test_fat_pocket_scene   ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_fat_pocket_scene  )
+ADD_TEST( boxm2_vecf_test_fit_face   ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_fit_face  )
+ADD_TEST( boxm2_vecf_test_fit_fat_pocket   ${EXECUTABLE_OUTPUT_PATH}/boxm2_vecf_test_all  test_fit_fat_pocket  )
 
 #ADD_EXECUTABLE( boxm2_vecf_test_include test_include.cxx )
 #TARGET_LINK_LIBRARIES( boxm2_vecf_test_include boxm2_vecf )

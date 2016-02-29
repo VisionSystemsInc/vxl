@@ -61,6 +61,7 @@ SET(boxm2_vecf_sources
     boxm2_vecf_middle_fat_pocket_scene.h    boxm2_vecf_middle_fat_pocket_scene.cxx
     boxm2_vecf_middle_fat_pocket_articulation.h   boxm2_vecf_middle_fat_pocket_articulation.cxx       
     boxm2_vecf_geometry_base.h
+    boxm2_vecf_fit_fat_pocket.h             boxm2_vecf_fit_fat_pocket.cxx
 )
 
 AUX_SOURCE_DIRECTORY(Templates boxm2_vecf_sources)

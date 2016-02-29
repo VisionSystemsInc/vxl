@@ -5,7 +5,7 @@
 #include "bvgl_scaled_shape_3d.h"
 #include <vcl_cmath.h>
 #include <vcl_limits.h>
-
+#include <vgl/vgl_distance.h>
 template <class Type>
 Type bvgl_scaled_shape_3d<Type>::linear_scale(Type w) const{
   // how does the scale of the base vary with the normal parameter
@@ -66,9 +66,24 @@ bool bvgl_scaled_shape_3d<Type>::nearest_cross_section_index(vgl_point_3d<Type> 
   return true;
 }
 template <class Type>
+void bvgl_scaled_shape_3d<Type>::nearest_cross_section_index_unbounded(vgl_point_3d<Type> const& p3d, unsigned& index) const{
+  unsigned n =static_cast<unsigned>(cross_sections_.size()); 
+  vgl_plane_3d<Type> pl = base_.plane();
+  Type alg_dist = pl.a()*p3d.x() + pl.b()*p3d.y() + pl.c()*p3d.z() + pl.d();
+  if(alg_dist <= Type(0)){
+    index = unsigned(0);
+    return;
+  }
+  Type dindex = vcl_floor(alg_dist/tolerance_);
+  index = static_cast<unsigned>(dindex);
+  if(index >= n)
+    index = n-1;
+}
+
+template <class Type>
 vgl_point_3d<Type>  bvgl_scaled_shape_3d<Type>::closest_point(vgl_point_3d<Type> const& p) const{
   unsigned index;
-  this->nearest_cross_section_index(p, index);
+  this->nearest_cross_section_index_unbounded(p, index);
   return cross_sections_[index].closest_point(p);
 }
 
@@ -131,8 +146,7 @@ Type bvgl_scaled_shape_3d<Type>::volume() const{
  return vol;
 }
 template <class Type>
-bvgl_scaled_shape_3d<Type> bvgl_scaled_shape_3d<Type>::deform(Type lambda, Type gamma, vgl_vector_3d<Type> const& L1)const{
-  Type su = lambda, sv = vcl_pow(lambda,-gamma), sw = Type(1)/(su*sv);
+bvgl_scaled_shape_3d<Type> bvgl_scaled_shape_3d<Type>::anisotropic_scale(Type su, Type sv, Type sw, vgl_vector_3d<Type> const& L1) const{
   unsigned n = static_cast<unsigned>(cross_sections_.size());
   Type dn = max_norm_distance_/static_cast<Type>(n-1);
   Type max_nd = max_norm_distance_*sw;
@@ -149,8 +163,23 @@ bvgl_scaled_shape_3d<Type> bvgl_scaled_shape_3d<Type>::deform(Type lambda, Type 
   return ret;
 }
 template <class Type>
+bvgl_scaled_shape_3d<Type> bvgl_scaled_shape_3d<Type>::deform(Type lambda, Type gamma, vgl_vector_3d<Type> const& L1)const{
+  Type su = lambda, sv = vcl_pow(lambda,-gamma), sw = Type(1)/(su*sv);
+  return anisotropic_scale(su, sv, sw, L1);
+}
+template <class Type>
+bvgl_scaled_shape_3d<Type> bvgl_scaled_shape_3d<Type>::scale(Type s){
+  Type su = s, sv = s, sw = s;
+  return anisotropic_scale(su, sv, sw);
+}
+template <class Type>
 void bvgl_scaled_shape_3d<Type>::apply_parameters_to_cross_sections(){
-  Type su = lambda_, sv = vcl_pow(lambda_,-gamma_), sw = Type(1)/(su*sv);
+  Type su=su_, sv = sv_, sw = sw_;
+  if((su*sv*sw)==Type(0)){
+    su = lambda_;
+    sv = vcl_pow(lambda_,-gamma_);
+    sw = Type(1)/(su*sv);
+  }
   max_nd_ = max_norm_distance_*sw;
   unsigned n = static_cast<unsigned>(cross_sections_.size());
   Type dn = max_norm_distance_/static_cast<Type>(n-1);
@@ -205,7 +234,7 @@ bool bvgl_scaled_shape_3d<Type>::vector_field(vgl_point_3d<Type> const& p, vgl_v
   if(dist>(max_norm_distance_+tolerance_)){//tolerance above the apex
     return false;
   }
-  Type dindex = vcl_floor(dist/csect_separation_dist);
+  Type dindex = vcl_ceil(dist/csect_separation_dist);//changed to ceil (2/28)
   if(dindex<Type(0))
     index =0;
   else

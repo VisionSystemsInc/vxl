@@ -41,7 +41,7 @@ class boxm2_vecf_cranium : public boxm2_vecf_geometry_base{
 
  private:
  unsigned nbins_;
- bvgl_grid_index_3d index_;
+ bvgl_grid_index_3d<double> index_;
  vgl_pointset_3d<double> ptset_;
  boxm2_vecf_cranium_params params_;
 };

@@ -24,7 +24,13 @@ class boxm2_vecf_middle_fat_pocket : public boxm2_vecf_geometry_base{
   boxm2_vecf_middle_fat_pocket(vcl_string const& geometry_file);
   boxm2_vecf_middle_fat_pocket(bvgl_scaled_shape_3d<double> const& ss3d, boxm2_vecf_middle_fat_pocket_params const& params);
 
-  void set_params(boxm2_vecf_middle_fat_pocket_params const& params){ params_ = params; this->apply_deformation_params();}
+  void set_params(boxm2_vecf_middle_fat_pocket_params const& params){ params_ = params;
+    if(params_.fit_to_subject_)
+      this->apply_scale_params();
+    else
+      this->apply_deformation_params();
+  }
+
   boxm2_vecf_middle_fat_pocket_params params() const {return params_;}
 
   vgl_box_3d<double> bounding_box() const{
@@ -51,12 +57,18 @@ class boxm2_vecf_middle_fat_pocket : public boxm2_vecf_geometry_base{
   // ::inverse_vector_field
   void apply_deformation_params();
 
+  //: for an inverse vector field with anisotropic scaling (see previous function comment)
+  void apply_scale_params();
+
   virtual bool inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& inv_v) const;
 
   //: find the forward vector field for the closest point on *this
   bool closest_inverse_vector_field(vgl_point_3d<double> const& p, vgl_vector_3d<double>& vf) const;
 
-  //: for debug purposes
+  //: accessors
+  const bvgl_scaled_shape_3d<double>& pocket_shape() const{return pocket_;}
+
+    //: for debug purposes
   void print_vf_centroid_scan(double off_coef) const;
  private:
   void read_middle_fat_pocket(vcl_istream& istr);

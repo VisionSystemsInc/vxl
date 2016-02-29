@@ -16,10 +16,10 @@ void bvgl_spline_region_3d<Type>::plane_to_world(Type u, Type v, vgl_point_3d<Ty
 }
 template <class Type>
 bool bvgl_spline_region_3d<Type>::world_to_plane(vgl_point_3d<Type> p3d, Type& u, Type& v, Type tolerance) const{
-  u = Type(0); v = Type(0);
+  u = Type(0); v = Type(0); Type roundoff = Type(1)/Type(1000);
   vgl_point_3d<Type> cp = vgl_closest_point(plane_, p3d);
   Type len = (p3d-cp).length();
-  if(len>tolerance)
+  if(len>(tolerance+roundoff))
     return false;
   vgl_vector_3d<Type> plane_vec = cp-origin_;
   u = dot_product(plane_vec, u_vec_);
@@ -29,7 +29,8 @@ bool bvgl_spline_region_3d<Type>::world_to_plane(vgl_point_3d<Type> p3d, Type& u
 
 template <class Type>
 bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type> > const& knots, Type tolerance):
-  tolerance_(tolerance),cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0))){
+  tolerance_(tolerance),cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0)))
+{
   if(knots.size()<3){
           vcl_cout << "FATAL - two few points to construct spline region\n";
           return;
@@ -104,7 +105,8 @@ bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vcl_vector<vgl_point_3d<Type>
 }
 template <class Type>
 bvgl_spline_region_3d<Type>::bvgl_spline_region_3d(vgl_pointset_3d<Type> const& ptset, Type tolerance):
-  cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0))){
+  cang_(Type(1)), sang_(Type(0)), su_(Type(1)), sv_(Type(1)), tv_(vgl_vector_3d<Type>(Type(0), Type(0), Type(0)))
+{
   vcl_vector<vgl_point_3d<Type> > knots = ptset.points();
   *this = bvgl_spline_region_3d<Type>(knots, tolerance);
 }
@@ -167,7 +169,7 @@ bool bvgl_spline_region_3d<Type>::in(vgl_point_3d<Type> const& p3d) const{
 
   vgl_point_2d<Type> p2d(u, v);
   return poly_2d_.contains(p2d);
-}    
+}
 
 template <class Type>
 vgl_point_3d<Type>  bvgl_spline_region_3d<Type>::closest_point(vgl_point_3d<Type> const& p) const{
@@ -176,8 +178,6 @@ vgl_point_3d<Type>  bvgl_spline_region_3d<Type>::closest_point(vgl_point_3d<Type
     return cp;
   return vgl_closest_point(spline_3d_,p);
 }
-
-
 
 template <class Type>
 bool bvgl_spline_region_3d<Type>::signed_distance(vgl_point_3d<Type> const& p, Type& dist) const{
@@ -276,9 +276,13 @@ bool bvgl_spline_region_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const&
   // rotate around the centroid by the negative rotation angle
   Type sang = -sang_;
   Type rdvx = cang_*dvx - sang*dvy;
+  // principal offset
+  rdvx -= principal_offset_;
   Type rdvy = sang*dvx + cang_*dvy;
   // undo anisotropic scaling
   Type srdvx = su_inv*rdvx, srdvy = sv_inv*rdvy;
+  // restore principal offset
+  rdvx += principal_offset_;
   // rotate back to original plane coordinate frame
   Type rinv_srdvx =  cang_*srdvx + sang*srdvy;
   Type rinv_srdvy = -sang*srdvx + cang_*srdvy;
@@ -287,7 +291,7 @@ bool bvgl_spline_region_3d<Type>::inverse_vector_field(vgl_point_3d<Type> const&
   vgl_point_3d<Type> p3d;
   this->plane_to_world(uinv, vinv, p3d);
   // the difference is the inverse vector field
-  inv = p3d-p;
+  inv = p3d - p;
   return true;
 }
 template <class Type>
@@ -306,6 +310,7 @@ bool bvgl_spline_region_3d<Type>::vector_field(vgl_point_3d<Type> const& p, vgl_
   rdvx -= principal_offset_;
   // anisotropic scaling
   Type srdvx = su_*rdvx, srdvy = sv_*rdvy;
+  //restore principal offset
   srdvx += principal_offset_;
   // rotate back to original plane coordinate frame
   Type rinv_srdvx =  cang_*srdvx + sang*srdvy;
@@ -326,7 +331,10 @@ bvgl_spline_region_3d<Type> bvgl_spline_region_3d<Type>::scale(Type su, Type sv,
   // bad practice, but harmless in this case. saves repeating code for the eigenvector rotation
   // cang and sang will be reset to their original values
   bvgl_spline_region_3d<Type>* nconst = const_cast<bvgl_spline_region_3d<Type>* >(this);
-  nconst->set_principal_eigenvector(L1);
+  if(L1.length()==Type(0))
+    nconst->set_principal_eigenvector(u_vec_);
+  else
+    nconst->set_principal_eigenvector(L1);
   // negate the angle since the cross section is to be rotated in the opposite sense
   Type sang = -sang_;
   vgl_point_2d<double> c = this->centroid_2d();
