@@ -307,12 +307,15 @@ static void test_math()
              << "B. Fix VXL so that it can cope with the lack of a quiet NaN.\n" << std::endl;
   }
   // Create Inf and -Inf:
-  const float pinf_f =   std::numeric_limits<float>::infinity();
-  const float ninf_f = - std::numeric_limits<float>::infinity();
-  const double pinf_d =   std::numeric_limits<double>::infinity();
-  const double ninf_d = - std::numeric_limits<double>::infinity();
-  const long double pinf_q =  std::numeric_limits<long double>::infinity();
-  const long double ninf_q = -std::numeric_limits<long double>::infinity();
+  const float pinf_f =   vcl_numeric_limits<float>::infinity();
+  const float ninf_f = - vcl_numeric_limits<float>::infinity();
+  const double pinf_d =   vcl_numeric_limits<double>::infinity();
+  const double ninf_d = - vcl_numeric_limits<double>::infinity();
+
+  const long double pinf_q =  vcl_numeric_limits<long double>::infinity();
+
+  const long double ninf_q = -vcl_numeric_limits<long double>::infinity();
+
 
   // Create NaN
   const float qnan_f = std::numeric_limits<float>::quiet_NaN();
