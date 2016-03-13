@@ -19,7 +19,7 @@
 #include <vcl_cassert.h>
 #include <vsl/vsl_vector_io.h>
 #include "volm_utils.h"
-
+#include <functional>
 std::map<std::string, depth_map_region::orientation> create_orient_map()
 {
   std::map<std::string, depth_map_region::orientation> m;

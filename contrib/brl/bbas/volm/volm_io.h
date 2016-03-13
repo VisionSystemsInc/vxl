@@ -23,7 +23,7 @@
 #include <iomanip>
 #include "volm_category_io.h"
 #include "volm_export.h"
-
+#include <functional>
 class volm_weight;
 //: A class to hold xml file io methods for volumetric matchers
 // Units are in meters
@@ -202,7 +202,7 @@ class volm_rationale
   std::string score_file;
 
   static bool write_top_matches(std::multiset<std::pair<float, volm_rationale>, std::greater<std::pair<float, volm_rationale> > >& top_matches, std::string& filename);
-  static bool read_top_matches(std::multiset<std::pair<float, volm_rationale>, std::greater<std::pair<float, volm_rationale> > >& top_matches, std::string& filename);
+  static bool read_top_matches(std::multiset<std::pair<float, volm_rationale>, std::greater<std::pair<float, volm_rationale> >>& top_matches, std::string& filename);
 };
 
 bool operator>(const std::pair<float, volm_rationale>& a, const std::pair<float, volm_rationale>& b);

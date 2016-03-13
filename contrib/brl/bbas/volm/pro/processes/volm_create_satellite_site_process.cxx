@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <vcl_compiler.h>
+#include <functional>
 #include <iostream>
 #include <cstdio> // for std::FILE and std::fopen()
 
