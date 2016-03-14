@@ -10,6 +10,7 @@ typedef vnl_vector_fixed<unsigned char, 16> uchar16;
 
 #define COPY_PARENT_DATA 1
 
+// return the tree bits corresponding to full refinement for a given tree depth
 uchar16 boxm2_refine_block_multi_data::fully_refined(int depth, int& data_size){
   uchar16 ret; data_size = 0;
   ret.fill((unsigned char)(0));
@@ -274,7 +275,7 @@ bool boxm2_refine_block_multi_data::match_refine(std::vector<std::string> const&
         int required_depth = depths_to_match(ix, iy, iz);
         int cur_depth = cur_tree.depth();
         //if the tree refinement is the same,just update the data pointer bits
-        if(cur_depth == required_depth){
+        if(required_depth <0 || cur_depth == required_depth){
           cur_tree.set_data_ptr(dataIndex, false);
           std::memcpy(tree_bits.data_block(), cur_tree.get_bits(), 16);
           dataSize += cur_tree.num_cells();
@@ -336,6 +337,7 @@ bool boxm2_refine_block_multi_data::match_refine(std::vector<std::string> const&
 // if the symbol COPY_PARENT_DATA is defined as non-zero the parent data will be copied
 // otherwise the cell data is set to zero
 int boxm2_refine_block_multi_data::move_data(boct_bit_tree& unrefined_tree,
+
                                                       boct_bit_tree& refined_tree,
                                                       std::vector<std::size_t> const& type_sizes,
                                                       std::vector<char*>& new_bufs)

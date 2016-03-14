@@ -7,6 +7,7 @@ DECLARE(test_bvgl_intersection);
 DECLARE(test_bvgl_labelme_parser);
 DECLARE(test_gen_cylinder);
 DECLARE(test_grid_index_3d);
+DECLARE(test_spline_region);
 
 void
 register_tests()
@@ -18,6 +19,7 @@ register_tests()
   REGISTER(test_bvgl_labelme_parser);
   REGISTER(test_gen_cylinder);
   REGISTER(test_grid_index_3d);
+  REGISTER(test_spline_region);
 }
 
 DEFINE_MAIN;
