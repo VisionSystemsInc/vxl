@@ -15,7 +15,7 @@
 #include "../boxm2_vecf_middle_fat_pocket_params.h"
 #include "../boxm2_vecf_fit_fat_pocket.h"
 
-#define BUILD_FIT_FAT_POCKET
+//#define BUILD_FIT_FAT_POCKET
 void test_fit_fat_pocket()
 {
 #ifdef BUILD_FIT_FAT_POCKET

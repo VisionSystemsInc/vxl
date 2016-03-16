@@ -7,7 +7,7 @@
 #include <vcl_string.h>
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_vector_3d.h>
-#define TEST_POLY_REGION 1
+#define TEST_POLY_REGION 0
 //: Test changes
 static void test_poly_region()
 {

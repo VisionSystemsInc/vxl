@@ -18,7 +18,7 @@
 #include "../boxm2_vecf_mandible.h"
 #include "../boxm2_vecf_mandible_scene.h"
 #include "../boxm2_vecf_spline_field.h"
-#define BUILD_TEST_MANDIBLE
+//#define BUILD_TEST_MANDIBLE
 void test_mandible()
 {
 #ifdef BUILD_TEST_MANDIBLE

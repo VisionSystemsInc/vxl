@@ -16,7 +16,7 @@
 #include <boxm2/boxm2_scene.h>
 #include <boxm2/io/boxm2_cache.h>
 
-#define BUILD_TEST_MIDDLE_FAT_POCKET
+//#define BUILD_TEST_MIDDLE_FAT_POCKET
 void test_middle_fat_pocket()
 {
 #ifdef BUILD_TEST_MIDDLE_FAT_POCKET

@@ -23,7 +23,7 @@
   cfscene.set_target_box(bb);
 #endif
 
-#define BUILD_TEST_COMPOSITE_FACE
+//#define BUILD_TEST_COMPOSITE_FACE
 void test_composite_face()
 {
 #ifdef BUILD_TEST_COMPOSITE_FACE

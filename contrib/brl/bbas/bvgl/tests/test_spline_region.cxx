@@ -8,7 +8,7 @@
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_vector_3d.h>
 #include <cmath>
-#define TEST_SPLINE_REGION 1
+#define TEST_SPLINE_REGION 0
 //: Test changes
 static void test_spline_region()
 {

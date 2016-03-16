@@ -15,7 +15,7 @@
 #include <boxm2/io/boxm2_cache.h>
 #include <vgl/algo/vgl_h_matrix_3d.h>
 
-#define BUILD_TEST_FIT_FACE
+//#define BUILD_TEST_FIT_FACE
 void test_fit_face()
 {
 #ifdef BUILD_TEST_FIT_FACE

@@ -9,7 +9,7 @@
 #include <fstream>
 #include <vgl/vgl_point_3d.h>
 #include <vgl/vgl_vector_3d.h>
-#define TEST_SCALED_SHAPE 1
+#define TEST_SCALED_SHAPE 0
 //: Test changes
 static void test_scaled_shape()
 {

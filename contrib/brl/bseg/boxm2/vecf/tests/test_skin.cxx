@@ -16,7 +16,7 @@
 #include <boxm2/boxm2_scene.h>
 #include <boxm2/io/boxm2_cache.h>
 
-#define BUILD_TEST_SKIN
+//#define BUILD_TEST_SKIN
 void test_skin()
 {
 #ifdef BUILD_TEST_SKIN
