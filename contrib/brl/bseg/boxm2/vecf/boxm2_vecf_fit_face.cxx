@@ -1,4 +1,4 @@
-#include <vcl_fstream.h>
+#include <fstream>
 #include "boxm2_vecf_labeled_point.h"
 #include "boxm2_vecf_fit_face.h"
 #include <vgl/vgl_vector_3d.h>
@@ -8,9 +8,9 @@
 #include <vgl/vgl_pointset_3d.h>
 #include <vgl/algo/vgl_h_matrix_3d_compute_affine.h>
 #include <bvrml/bvrml_write.h>
-#include <vcl_algorithm.h>
-#include <vcl_limits.h>
-#include <vcl_iomanip.h>
+#include <algorithm>
+#include <limits>
+#include <iomanip>
 #include <vnl/vnl_matrix_fixed.h>
 void boxm2_vecf_fit_face::fill_smid_map(){
   smid_map_["left_lateral_canthus"]=LEFT_LATERAL_CANTHUS;
@@ -28,7 +28,7 @@ void boxm2_vecf_fit_face::fill_smid_map(){
 bool boxm2_vecf_fit_face::add_labeled_point(boxm2_vecf_labeled_point lp){
   std::map<std::string, mids>::iterator iit = smid_map_.find(lp.label_);
   if(iit == smid_map_.end() ){
-    vcl_cout << "Measurement label " << lp.label_ << " doesn't exist\n";
+    std::cout << "Measurement label " << lp.label_ << " doesn't exist\n";
     return false;
   }
   lpts_[iit->second] = lp;
@@ -57,7 +57,7 @@ bool boxm2_vecf_fit_face::read_anchor_file(std::string const& path){
   std::map<std::string, std::vector<vgl_point_3d<double> > > anchors;
   bool good = boxm2_vecf_labeled_point::read_points(path, anchors);
   if(!good){
-    vcl_cout << "Parse of file " << path << " failed\n";
+    std::cout << "Parse of file " << path << " failed\n";
     return false;
   }
   // now that the file is parsed the labeled points can be added to the
@@ -73,7 +73,7 @@ bool boxm2_vecf_fit_face::read_anchor_file(std::string const& path){
       x += pit->x(); y += pit->y(); z += pit->z();
     }
     if(np == 0.0){
-    vcl_cout << "No points for label  " << lab << "\n";
+    std::cout << "No points for label  " << lab << "\n";
     return false;
     }
     x /= np;      y /= np;  z /= np;
@@ -120,7 +120,7 @@ bool boxm2_vecf_fit_face::compute_auxillary_points(){
   vgl_point_3d<double> fore_int;
   bool success = vgl_intersection(ray, pl, fore_int);
   if(!success){
-    vcl_cout << "Intersection of ray with forehead plane - failed\n";
+    std::cout << "Intersection of ray with forehead plane - failed\n";
     return false;
   }
   boxm2_vecf_labeled_point lpint(fore_int, "forehead_intersection");
@@ -197,25 +197,35 @@ bool boxm2_vecf_fit_face::set_trans(){
   bool success = hca.compute(source_pts, target_pts, params_.trans_);
   if(!success) return false;
   //for debug purposes
-  vcl_cout << params_.trans_ << '\n'<< vcl_flush;
+  std::cout << params_.trans_ << '\n'<< std::flush;
   vnl_matrix_fixed<double, 3, 3> R, S;
   params_.trans_.polar_decomposition(S, R);
-  vcl_cout << "Rotation part\n " << R << '\n'<< vcl_flush;
-  vcl_cout << "Symmetric part\n " << S << '\n'<< vcl_flush;
+  std::cout << "Rotation part\n " << R << '\n'<< std::flush;
+  std::cout << "Symmetric part\n " << S << '\n'<< std::flush;
 
   unsigned n = static_cast<unsigned>(source_pts.size());
   for(unsigned i = 0; i<n; ++i){
     vgl_homg_point_3d<double> hts = params_.trans_(source_pts[i]);
     vgl_point_3d<double> ts(hts), t(target_pts[i]);
-    vcl_cout << vcl_setprecision(3) << ts << ' ' << t << ' ' << (t-ts).length() << '\n'<< vcl_flush;
+    std::cout << std::setprecision(3) << ts << ' ' << t << ' ' << (t-ts).length() << '\n'<< std::flush;
   }
 
   return true;
 }
 
+bool boxm2_vecf_fit_face::load_composite_face_params(std::string const& params_path){
+  std::ifstream istr(params_path.c_str());
+  if(!istr){
+    std::cout << "Can't open parameter path " << params_path << '\n';
+    return false;
+  }
+  istr >> params_;
+  return true;
+}
+
 bool boxm2_vecf_fit_face::transform_face(std::string const& source_face_path, std::string const& target_face_path) const{
   vgl_pointset_3d<double> src_ptset, trg_ptset;
-  vcl_ifstream sistr(source_face_path.c_str());
+  std::ifstream sistr(source_face_path.c_str());
     if(!sistr)
       return false;
     sistr >> src_ptset;
@@ -224,10 +234,30 @@ bool boxm2_vecf_fit_face::transform_face(std::string const& source_face_path, st
 
   trg_ptset = params_.trans_(src_ptset);
 
-  vcl_ofstream tostr(target_face_path.c_str());
+  std::ofstream tostr(target_face_path.c_str());
     if(!tostr)
       return false;
     tostr << trg_ptset;
+    tostr.close();
+  return true;
+}
+
+bool boxm2_vecf_fit_face::inverse_transform_face(std::string const& source_face_path, std::string const& target_face_path) const{
+  vgl_pointset_3d<double> src_ptset, trg_ptset;
+  std::ifstream sistr(source_face_path.c_str());
+    if(!sistr)
+      return false;
+    sistr >> src_ptset;
+
+    sistr.close();
+
+  trg_ptset = params_.trans_.preimage(src_ptset);
+
+  std::ofstream tostr(target_face_path.c_str());
+    if(!tostr)
+      return false;
+    tostr << trg_ptset;
+
     tostr.close();
   return true;
 }

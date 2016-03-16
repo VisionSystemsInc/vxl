@@ -7,7 +7,7 @@
 // \author J.L. Mundy
 // \date   20 Dec 2015
 //
-#include <vcl_iostream.h>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <vgl/vgl_box_3d.h>
@@ -25,7 +25,7 @@ class boxm2_vecf_mouth{
   boxm2_vecf_mouth(std::vector<vgl_point_3d<double> >  const& knots);
   boxm2_vecf_mouth(vgl_pointset_3d<double>  const& ptset);
 
-  void read_mouth(vcl_istream& istr);
+  void read_mouth(std::istream& istr);
 
   void set_params(boxm2_vecf_mouth_params const& params){ params_ = params;}
 
@@ -41,7 +41,7 @@ class boxm2_vecf_mouth{
   bool in(vgl_point_3d<double> const& pt) const;
 
   //:for debug purposes
-  void display_vrml(vcl_ofstream& ostr) const;
+  void display_vrml(std::ofstream& ostr) const;
   void rotate_inf();
   vgl_pointset_3d<double> random_pointset(unsigned n_pts) const;
  private:
@@ -52,7 +52,7 @@ class boxm2_vecf_mouth{
   boxm2_vecf_mouth_params params_;
   vgl_rotation_3d<double> rot_;
 };
-vcl_ostream&  operator << (vcl_ostream& s, boxm2_vecf_mouth const& pr);
-vcl_istream&  operator >> (vcl_istream& s, boxm2_vecf_mouth& pr);
+std::ostream&  operator << (std::ostream& s, boxm2_vecf_mouth const& pr);
+std::istream&  operator >> (std::istream& s, boxm2_vecf_mouth& pr);
 
 #endif// boxm2_vecf_mouth

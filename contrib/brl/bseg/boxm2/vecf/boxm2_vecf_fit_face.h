@@ -12,8 +12,8 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <vcl_iostream.h>
-#include <vcl_fstream.h>
+#include <iostream>
+#include <fstream>
 #include "boxm2_vecf_composite_face_params.h"
 #include "boxm2_vecf_labeled_point.h"
 #include <vgl/vgl_vector_3d.h>
@@ -32,6 +32,9 @@ class boxm2_vecf_fit_face{
   // canthi, forehead, jaw
   bool read_anchor_file(std::string const& path);
 
+  //: load face params with existing transformation
+  bool load_composite_face_params(std::string const& params_path);
+
   //: add a labeled point to lpts_
   bool add_labeled_point(boxm2_vecf_labeled_point lp);
 
@@ -43,6 +46,9 @@ class boxm2_vecf_fit_face{
 
   //: transform face according to the computed affine transform
   bool transform_face(std::string const& source_face_path, std::string const& target_face_path) const;
+
+  //: inverse transform face
+  bool inverse_transform_face(std::string const& source_face_path, std::string const& target_face_path) const;
 
   //: return current parameter settings
   boxm2_vecf_composite_face_params params() const {return params_;}

@@ -151,7 +151,7 @@ vgl_pointset_3d<double> boxm2_vecf_mouth::random_pointset(unsigned n_pts) const{
     }else niter++;
   }
   if(n_req !=0)
-    vcl_cout << "Warning! Insufficient number of points " << pts.npts() << " instead of " << n_pts << '\n';
+    std::cout << "Warning! Insufficient number of points " << pts.npts() << " instead of " << n_pts << '\n';
 
   return pts;
 }

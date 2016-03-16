@@ -116,7 +116,7 @@ void boxm2_vecf_articulated_scene::extract_target_block_data(boxm2_scene_sptr ta
   // caution fill target block only works for unrefined target scenes
   // should not be used after refinement!!!!
   if(has_background_){
-    std::cout<< " Darkening background "<<vcl_endl;
+    std::cout<< " Darkening background "<<std::endl;
     this->fill_target_block();
   }
 #endif
@@ -139,7 +139,7 @@ void boxm2_vecf_articulated_scene::extract_unrefined_cell_info(){
         unrefined_cell_info cinf;
         cinf.linear_index_ = lindex;
         cinf.ix_ = ix; cinf.iy_ = iy; cinf.iz_ = iz;
-        cinf.pt_.set(x+0.5, y+0.5, z+0.5);
+        cinf.pt_.set(x+0.5*targ_dims_.x(), y+0.5*targ_dims_.y(), z+0.5*targ_dims_.z());
         unrefined_cell_info_[lindex]=cinf;
       }
     }

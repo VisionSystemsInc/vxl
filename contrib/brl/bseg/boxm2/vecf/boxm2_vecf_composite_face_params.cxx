@@ -14,12 +14,12 @@ void boxm2_vecf_composite_face_params::compute_auxillary_pts(){
   vgl_plane_3d<double> pl(mid_forehead_normal_, mid_forehead_);
   bool success = vgl_intersection(ray, pl, forehead_intersection_);
   if(!success){
-    vcl_cout << "Intersection of ray with forehead plane - failed\n";
+    std::cout << "Intersection of ray with forehead plane - failed\n";
   }
 }
 std::ostream&  operator << (std::ostream& s, boxm2_vecf_composite_face_params const& prc){
   if(!s){
-    vcl_cout << "Bad parameter file stream\n";
+    std::cout << "Bad parameter file stream\n";
     return s;
   }
   // bad practice --- but easy
@@ -29,7 +29,7 @@ std::ostream&  operator << (std::ostream& s, boxm2_vecf_composite_face_params co
 }
 std::istream&  operator >> (std::istream& s, boxm2_vecf_composite_face_params& pr){
   if(!s){
-    vcl_cout << "Bad parameter file stream\n";
+    std::cout << "Bad parameter file stream\n";
     return s;
   }
   std::string st;

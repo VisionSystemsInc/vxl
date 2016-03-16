@@ -62,7 +62,7 @@ void boxm2_vecf_skin_scene::cache_cell_centers_from_anatomy_labels(){
       if(!skin){
         if(skin_geo_.has_appearance()){
           double a = 0.0;
-          double d = skin_geo_.surface_distance(p, a);
+          double d = skin_geo_.distance(p, a);
           params_.app_[0]=static_cast<unsigned char>(a);
         }else
           params_.app_[0]=params_.skin_intensity_;
@@ -79,12 +79,13 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(std::string const& scene_file): box
   boxm2_lru_cache::create(base_model_);
   vul_timer t;
   this->rebuild();
-  vcl_cout << "Create skin scene in " << t.real()/1000.0 << "seconds\n";
+  std::cout << "Create skin scene in " << t.real()/1000.0 << "seconds\n";
 }
 
+
 boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(std::string const& scene_file, std::string const& geometry_file):
-  boxm2_vecf_articulated_scene(scene_file){
-  skin_geo_ = boxm2_vecf_skin(geometry_file);
+  boxm2_vecf_articulated_scene(scene_file),skin_geo_(boxm2_vecf_skin(geometry_file)){
+  //skin_geo_ = boxm2_vecf_skin(geometry_file); //assignment fails due to knn (FIXME)
   source_model_exists_=false;
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
@@ -101,12 +102,14 @@ boxm2_vecf_skin_scene::boxm2_vecf_skin_scene(std::string const& scene_file, std:
   boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
   boxm2_surface_distance_refine<boxm2_vecf_skin>(skin_geo_, base_model_, prefixes, nrad);
   this->rebuild();
+  if(skin_geo_.has_appearance())
+    this->repaint_skin();
 }
 
 void boxm2_vecf_skin_scene::rebuild(){
-this->extract_block_data();
-this->cache_cell_centers_from_anatomy_labels();
-//this->cache_neighbors();
+  this->extract_block_data();
+  this->cache_cell_centers_from_anatomy_labels();
+  //this->cache_neighbors();
 }
 void boxm2_vecf_skin_scene::cache_neighbors(){
   this->find_cell_neigborhoods();
@@ -125,7 +128,7 @@ void boxm2_vecf_skin_scene::build_skin(){
     const vgl_point_3d<double>& cell_center = cit->cell_center_;
     unsigned indx = cit->data_index_;
     double a = 0.0;
-    double d = skin_geo_.surface_distance(cell_center, a);
+    double d = skin_geo_.distance(cell_center, a);
     unsigned char apc = static_cast<unsigned char>(a);
     double d_thresh = len_coef*cit->side_length_;
     if(d < d_thresh){
@@ -170,7 +173,7 @@ void boxm2_vecf_skin_scene::find_cell_neigborhoods(){
         indices.push_back(indx_n);
       }
   }
-  vcl_cout << "Find skin cell neighborhoods in " << static_cast<double>(t.real())/1000.0 << " sec.\n";
+  std::cout << "Find skin cell neighborhoods in " << static_cast<double>(t.real())/1000.0 << " sec.\n";
 }
 
 void boxm2_vecf_skin_scene::paint_skin(){
@@ -184,7 +187,22 @@ void boxm2_vecf_skin_scene::paint_skin(){
     nobs_data_[indx] = nobs;
   }
 }
-
+void boxm2_vecf_skin_scene::repaint_skin(){
+  unsigned ns = static_cast<unsigned>(skin_cell_centers_.size());
+  double len_coef = params_.neighbor_radius();
+  for(unsigned i = 0; i<ns; ++i){
+    unsigned indx = skin_cell_data_index_[i];
+    const vgl_point_3d<double>& p = skin_cell_centers_[i];
+    double a = 0.0;
+    double d = skin_geo_.distance(p, a);
+    unsigned char apc = static_cast<unsigned char>(a);
+    double d_thresh = len_coef*8.0;
+    if(d < d_thresh){
+      params_.app_[0]=apc;
+      app_data_[indx] = params_.app_;
+    }
+  }
+}
 bool boxm2_vecf_skin_scene::is_type_data_index(unsigned data_index, boxm2_vecf_skin_scene::anat_type type) const{
 
    if(type == SKIN){
@@ -199,7 +217,7 @@ bool boxm2_vecf_skin_scene::is_type_global(vgl_point_3d<double> const& global_pt
   bool success =  blk_->data_index(global_pt, indx);
   if (!success){
     //#if _DEBUG
-    //    vcl_cout<<"point "<<global_pt<< " was out of eye scene bounding box "<<vcl_endl;
+    //    std::cout<<"point "<<global_pt<< " was out of eye scene bounding box "<<std::endl;
     //#endif
     return false;
 }
@@ -217,7 +235,8 @@ bool boxm2_vecf_skin_scene::find_nearest_data_index(boxm2_vecf_skin_scene::anat_
   return true;
 }
 bool boxm2_vecf_skin_scene::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
-  vgl_point_3d<double> rp = target_pt-params_.offset_;
+  skin_geo_.inverse_vector_field(target_pt, inv_vf);
+  vgl_point_3d<double> rp = target_pt + inv_vf;
   if(!source_bb_.contains(rp))
     return false;
   unsigned dindx = 0;
@@ -225,7 +244,6 @@ bool boxm2_vecf_skin_scene::inverse_vector_field(vgl_point_3d<double> const& tar
     return false;
   if(!is_type_data_index(dindx, SKIN))
     return false;
-  inv_vf.set(rp.x() - target_pt.x(), rp.y() - target_pt.y(), rp.z() - target_pt.z());
   return true;
 }
 void boxm2_vecf_skin_scene::inverse_vector_field(std::vector<vgl_vector_3d<double> >& vf,
@@ -243,7 +261,7 @@ void boxm2_vecf_skin_scene::inverse_vector_field(std::vector<vgl_vector_3d<doubl
     valid[i]=true;
     vf[i].set(inv_vf.x(), inv_vf.y(), inv_vf.z());
   }
-  vcl_cout << "computed " << cnt << " pts out of "<< nt << " for skin vector field in " << t.real()/1000.0 << " sec.\n";
+  std::cout << "computed " << cnt << " pts out of "<< nt << " for skin vector field in " << t.real()/1000.0 << " sec.\n";
 }
 
 
@@ -337,7 +355,7 @@ void boxm2_vecf_skin_scene::apply_vector_field_to_target(std::vector<vgl_vector_
     }
     valid_count++;
   }
-  vcl_cout << "Apply skin vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
+  std::cout << "Apply skin vector field to " << valid_count << " out of " << n << " cells in " << t.real()/1000.0 << " sec.\n";
 }
 
 int boxm2_vecf_skin_scene::prerefine_target_sub_block(vgl_point_3d<double> const& sub_block_pt, unsigned pt_index){
@@ -419,7 +437,7 @@ void boxm2_vecf_skin_scene::inverse_vector_field_unrefined(std::vector<vgl_point
   this->inverse_vector_field(invf, valid);
   this->apply_vector_field_to_target(invf, valid);
   target_data_extracted_  = true;
-  vcl_cout << "Map to target in " << t.real()/1000.0 << " secs\n";
+  std::cout << "Map to target in " << t.real()/1000.0 << " secs\n";
 }
 
 
@@ -429,7 +447,7 @@ bool boxm2_vecf_skin_scene::set_params(boxm2_vecf_articulated_params const& para
     params_ = boxm2_vecf_skin_params(params_ref);
    return true;
   }catch(std::exception e){
-    vcl_cout<<" Can't downcast skin parameters! PARAMETER ASSIGNMENT PHAILED!"<<vcl_endl;
+    std::cout<<" Can't downcast skin parameters! PARAMETER ASSIGNMENT PHAILED!"<<std::endl;
     return false;
   }
 }
@@ -438,7 +456,7 @@ bool boxm2_vecf_skin_scene::set_params(boxm2_vecf_articulated_params const& para
 // find the skin cell locations in the target volume
 void boxm2_vecf_skin_scene::determine_target_box_cell_centers(){
   if(!blk_){
-    vcl_cout << "Null source block -- FATAL!\n";
+    std::cout << "Null source block -- FATAL!\n";
     return;
   }
 
@@ -446,12 +464,12 @@ void boxm2_vecf_skin_scene::determine_target_box_cell_centers(){
   if(target_blk_){
     box_cell_centers_ = target_blk_->cells_in_box(offset_box);
   }else{
-   vcl_cout << "Null target block -- FATAL!\n";
+   std::cout << "Null target block -- FATAL!\n";
     return;
   }
 }
 
-void boxm2_vecf_skin_scene::export_point_cloud(vcl_ostream& ostr) const{
+void boxm2_vecf_skin_scene::export_point_cloud(std::ostream& ostr) const{
   vgl_pointset_3d<double> ptset;
   unsigned n = static_cast<unsigned>(skin_cell_centers_.size());
   for(unsigned i = 0; i<n; ++i)
@@ -459,7 +477,7 @@ void boxm2_vecf_skin_scene::export_point_cloud(vcl_ostream& ostr) const{
   ostr << ptset;
 }
 
-void boxm2_vecf_skin_scene::export_point_cloud_with_appearance(vcl_ostream& ostr) const{
+void boxm2_vecf_skin_scene::export_point_cloud_with_appearance(std::ostream& ostr) const{
   boxm2_data_traits<BOXM2_MOG3_GREY>::datatype app;
   unsigned n = static_cast<unsigned>(skin_cell_centers_.size());
   for(unsigned i = 0; i<n; ++i){

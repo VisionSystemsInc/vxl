@@ -5,7 +5,7 @@
 
 #include <vcl_compiler.h>
 #include <iostream>
-#include <limits>
+
 
 void
 bvgl_grid_index_3d
@@ -129,7 +129,7 @@ bool bvgl_grid_index_3d::closest_point(vgl_point_3d<double> const& p, vgl_point_
   double scalar = 0.0;
   return this->closest_point(p, pc, scalar);
 }
-double bvgl_grid_index_3d::surface_distance(vgl_point_3d<double> const& p, double& scalar) const{
+double bvgl_grid_index_3d::distance(vgl_point_3d<double> const& p, double& scalar) const{
   vgl_point_3d<double> pc;
   bool good = this->closest_point(p, pc, scalar);
   if(!good)
@@ -137,8 +137,8 @@ double bvgl_grid_index_3d::surface_distance(vgl_point_3d<double> const& p, doubl
   return (p-pc).length();
 }
 //: the distance from p to the closest point or optionally its normal plane
-double bvgl_grid_index_3d::surface_distance(vgl_point_3d<double> const& p) const{
+double bvgl_grid_index_3d::distance(vgl_point_3d<double> const& p) const{
   double scalar = 0.0;
-  return this->surface_distance(p, scalar);
+  return this->distance(p, scalar);
 }
 

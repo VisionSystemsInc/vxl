@@ -22,7 +22,14 @@ void boxm2_vecf_composite_face_articulation::initialize(){
   // initial params has the member trans_ that is an initial guess to
   // the global affine transformation between the source and target scenes
   boxm2_vecf_composite_face_params params = initial_params_;
+  params.middle_fat_pocket_params_.fit_to_subject_ = false;
   default_articulation.push_back(params);
+  // test fat pocket
+  params.middle_fat_pocket_params_.lambda_ = 0.7;
+  params.middle_fat_pocket_params_.principal_offset_ = 10.0;
+  default_articulation.push_back(params);
+  // test mandible open close
+#if 0
   params.mandible_params_.jaw_opening_angle_rad_ = 0.05;
   default_articulation.push_back(params);
   params.mandible_params_.jaw_opening_angle_rad_ = 0.1;
@@ -57,6 +64,7 @@ void boxm2_vecf_composite_face_articulation::initialize(){
   default_articulation.push_back(params);
   params.mandible_params_.jaw_opening_angle_rad_ = 0.05;
   default_articulation.push_back(params);
+#endif
   play_sequence_map_["default"] = default_articulation;
   this->set_play_sequence("default") ;
 }

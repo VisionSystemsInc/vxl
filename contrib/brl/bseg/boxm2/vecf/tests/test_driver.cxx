@@ -11,6 +11,10 @@ DECLARE( test_cranium);
 DECLARE( test_skin);
 DECLARE( test_composite_face);
 DECLARE( test_mouth);
+DECLARE( test_middle_fat_pocket);
+DECLARE( test_fat_pocket_scene);
+DECLARE( test_fit_face );
+DECLARE( test_fit_fat_pocket );
 void register_tests()
 {
 
@@ -24,6 +28,10 @@ void register_tests()
   REGISTER( test_skin );
   REGISTER( test_composite_face );
   REGISTER( test_mouth );
+  REGISTER( test_middle_fat_pocket );
+  REGISTER( test_fat_pocket_scene );
+  REGISTER( test_fit_face );
+  REGISTER( test_fit_fat_pocket );
 }
 
 DEFINE_MAIN;

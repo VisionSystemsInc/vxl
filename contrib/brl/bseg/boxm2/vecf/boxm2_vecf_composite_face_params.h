@@ -14,6 +14,7 @@
 #include "boxm2_vecf_cranium_params.h"
 #include "boxm2_vecf_skin_params.h"
 #include "boxm2_vecf_mouth_params.h"
+#include "boxm2_vecf_middle_fat_pocket_params.h"
 #include <vgl/algo/vgl_h_matrix_3d.h>
 class boxm2_vecf_composite_face_params : public boxm2_vecf_articulated_params{
  public:
@@ -35,6 +36,7 @@ boxm2_vecf_composite_face_params():  offset_(vgl_vector_3d<double>(0.0, 0.0, 0.0
   boxm2_vecf_cranium_params cranium_params_;
   boxm2_vecf_skin_params skin_params_;
   boxm2_vecf_mouth_params mouth_params_;
+  boxm2_vecf_middle_fat_pocket_params middle_fat_pocket_params_;
   //
   // ==== parameters forfitting the face to a subject ======
   //

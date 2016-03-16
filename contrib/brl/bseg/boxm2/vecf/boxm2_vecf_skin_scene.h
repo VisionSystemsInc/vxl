@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <vcl_iosfwd.h>
+#include <iosfwd>
 #include <vgl/algo/vgl_rotation_3d.h>
 #include "boxm2_vecf_skin_params.h"
 #include "boxm2_vecf_skin.h"
@@ -86,9 +86,9 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
 
   void create_anatomy_labels();
 
-  void export_point_cloud(vcl_ostream& ostr) const;
+  void export_point_cloud(std::ostream& ostr) const;
 
-  void export_point_cloud_with_appearance(vcl_ostream& ostr) const;
+  void export_point_cloud_with_appearance(std::ostream& ostr) const;
 
   //should be implemented on params class
   bool vfield_params_change_check(const boxm2_vecf_skin_params& params){return false;}
@@ -104,6 +104,8 @@ class boxm2_vecf_skin_scene : public boxm2_vecf_articulated_scene
  void build_skin();
  //: assign appearance to parts of the skin
  void paint_skin();
+ //: assign appearance from skin point cloud with appearance
+ void repaint_skin();
 
   //: members
   // =============  skin ===============

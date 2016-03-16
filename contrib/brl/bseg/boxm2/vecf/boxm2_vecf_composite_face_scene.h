@@ -7,6 +7,7 @@
 #include "boxm2_vecf_mandible_scene.h"
 #include "boxm2_vecf_cranium_scene.h"
 #include "boxm2_vecf_skin_scene.h"
+#include "boxm2_vecf_middle_fat_pocket_scene.h"
 #include "boxm2_vecf_articulated_params.h"
 #include "boxm2_vecf_composite_face_params.h"
 #include "boxm2_vecf_articulated_scene.h"
@@ -63,12 +64,14 @@ public:
 
  private:
   vgl_box_3d<double> target_box_;
-  vgl_box_3d<double> coupling_box_;
+  vgl_box_3d<double> mandible_skin_coupling_box_;
+  vgl_box_3d<double> middle_fat_pocket_skin_coupling_box_;
   boxm2_vecf_mouth mouth_geo_;
   boxm2_vecf_composite_face_params params_;
   boxm2_vecf_articulated_scene_sptr mandible_;
   boxm2_vecf_articulated_scene_sptr cranium_;
   boxm2_vecf_articulated_scene_sptr skin_;
+  boxm2_vecf_articulated_scene_sptr middle_fat_pocket_;
   std::vector<cell_info> target_cell_centers_;       // cell centers in the refined target block
 };
 

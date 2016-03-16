@@ -105,14 +105,14 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(std::string const& scene_fi
   boxm2_lru_cache::create(base_model_);
   this->extract_block_data();
   this->cache_cell_centers_from_anatomy_labels();
-  //mandible_geo_.set_params(params_);
+  mandible_geo_.set_params(params_);
 }
 boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(std::string const& scene_file, std::string const& geometry_file):
   boxm2_vecf_articulated_scene(scene_file),mandible_base_(0),
   left_ramus_(0), left_angle_(0), body_(0), right_angle_(0), right_ramus_(0), intrinsic_change_(false)
 {
   mandible_geo_ = boxm2_vecf_mandible(geometry_file);
-  //mandible_geo_.set_params(params_);
+  mandible_geo_.set_params(params_);
   this->extrinsic_only_ = true;
   target_blk_ = 0;
   target_data_extracted_ = false;
@@ -141,7 +141,7 @@ boxm2_vecf_mandible_scene::boxm2_vecf_mandible_scene(std::string const& scene_fi
     return;
   }
   params_file >> this->params_;
-  //mandible_geo_.set_params(params_); fix with muscles
+  mandible_geo_.set_params(params_);
   this->extrinsic_only_ = true;
   target_blk_ = 0;
   target_data_extracted_ = false;
@@ -308,8 +308,8 @@ bool boxm2_vecf_mandible_scene::find_nearest_data_index(boxm2_vecf_mandible_scen
 }
 
 bool boxm2_vecf_mandible_scene::inverse_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
-  //if(!mandible_geo_.inverse_vector_field(target_pt, inv_vf)) fix with muscles
-   // return false;
+  if(!mandible_geo_.inverse_vector_field(target_pt, inv_vf))
+    return false;
   vgl_point_3d<double> rp = target_pt + inv_vf;
   if(!source_bb_.contains(rp))
     return false;
@@ -322,8 +322,8 @@ bool boxm2_vecf_mandible_scene::inverse_vector_field(vgl_point_3d<double> const&
 }
 
 bool boxm2_vecf_mandible_scene::coupled_vector_field(vgl_point_3d<double> const& target_pt, vgl_vector_3d<double>& inv_vf) const{
- // if(!mandible_geo_.inverse_vector_field(target_pt, inv_vf)) fix with muscles
-    //return false;
+  if(!mandible_geo_.inverse_vector_field(target_pt, inv_vf))
+    return false;
   return true;// for now the coupled vector field extends through all of target space
 }
 
@@ -422,8 +422,8 @@ void boxm2_vecf_mandible_scene::inverse_vector_field_unrefined(std::vector<vgl_p
   for(unsigned vf_index = 0; vf_index<n; ++vf_index){
     const vgl_point_3d<double>& p = unrefined_target_pts[vf_index];
     vgl_vector_3d<double> inv_vf;
-    //if(!mandible_geo_.inverse_vector_field(p, inv_vf)) fix with muscles
-     // continue;
+    if(!mandible_geo_.inverse_vector_field(p, inv_vf))
+      continue;
     vgl_point_3d<double> rot_p_in_source = p + inv_vf;
     if(!source_bb_.contains(rot_p_in_source))
       continue;
@@ -545,8 +545,7 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<double> c
 
   // rotate the target box in source by the inverse rotation
   // the box is rotated about its centroid
-//  vgl_orient_box_3d<double> target_obox(target_box_in_source, mandible_geo_.inv_rot().as_quaternion());
-  vgl_orient_box_3d<double> target_obox;//fix with muscles
+  vgl_orient_box_3d<double> target_obox(target_box_in_source, mandible_geo_.inv_rot().as_quaternion());
   vgl_box_3d<double> rot_target_box_in_source = target_obox.enclosing_box();
   vgl_box_3d<double> int_box = vgl_intersection(source_bb_, rot_target_box_in_source);
   if(int_box.is_empty())
@@ -604,7 +603,7 @@ bool boxm2_vecf_mandible_scene::set_params(boxm2_vecf_articulated_params const& 
     boxm2_vecf_mandible_params const& params_ref = dynamic_cast<boxm2_vecf_mandible_params const &>(params);
     intrinsic_change_ = this->vfield_params_change_check(params_ref);
     params_ = boxm2_vecf_mandible_params(params_ref);
-    //mandible_geo_.set_params(params_); fix with muscles
+    mandible_geo_.set_params(params_);
 #if _DEBUG
     std::cout<< "intrinsic change? "<<intrinsic_change_<<std::endl;
 #endif

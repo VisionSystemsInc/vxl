@@ -33,7 +33,7 @@ class boxm2_vecf_composite_face_articulation : public boxm2_vecf_scene_articulat
      params_ = play_sequence_map_[seq_id];
      return true;
    }else{
-     vcl_cout<<"could not find play sequance "<<seq_id<<" in map. choosing default one"<<vcl_endl;
+     std::cout<<"could not find play sequance "<<seq_id<<" in map. choosing default one"<<std::endl;
      params_=play_sequence_map_["default"];
      return false;
    }

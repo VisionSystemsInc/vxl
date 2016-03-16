@@ -7,6 +7,7 @@
 #include <testlib/testlib_test.h>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vul/vul_timer.h>
 #include "../boxm2_vecf_skin_params.h"
 #include "../boxm2_vecf_skin_scene.h"
@@ -19,11 +20,12 @@
 void test_skin()
 {
 #ifdef BUILD_TEST_SKIN
-  std::string pc_dir = "c:/Users/mundy/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/skull/";
-  std::string scene_dir = "c:/Users/mundy/VisionSystems/Janus/experiments/vector_flow/skin/";
+  std::string pc_dir = "d:/VisionSystems/Janus/RelevantPapers/FacialMusclesExpression/skull/";
+  std::string scene_dir = "d:/VisionSystems/Janus/experiments/vector_flow/skin/";
   std::string skin_scene_path = scene_dir + "skin.xml";
   //std::string skin_scene_path = scene_dir + "skin_orig.xml";
   std::string vrml_path = pc_dir + "skin_vrml.wrl";
+
   if(!vul_file::exists(skin_scene_path))
     {
       std::cout<<"skin scene file does not exist"<<std::endl;

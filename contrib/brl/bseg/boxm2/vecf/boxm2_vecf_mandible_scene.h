@@ -74,7 +74,6 @@ class boxm2_vecf_mandible_scene : public boxm2_vecf_articulated_scene
  //: set up pointers to source block databases particular to this subclass
  void extract_block_data();
 
-
  //: interpolate the alpha and appearance data around the vector field source location
  void interpolate_vector_field(vgl_point_3d<double> const& src, unsigned sindx, unsigned dindx, unsigned tindx,
                                 std::vector<vgl_point_3d<double> > & cell_centers,
