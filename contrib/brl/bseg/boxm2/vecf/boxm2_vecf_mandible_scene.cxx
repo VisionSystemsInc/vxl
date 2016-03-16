@@ -572,7 +572,6 @@ int boxm2_vecf_mandible_scene::prerefine_target_sub_block(vgl_point_3d<double> c
 void boxm2_vecf_mandible_scene::map_to_target(boxm2_scene_sptr target_scene){
   vul_timer t;
   // initially extract unrefined target data
-
   if(!target_data_extracted_)
     this->extract_target_block_data(target_scene);
   this->extract_unrefined_cell_info();//on articulated_scene

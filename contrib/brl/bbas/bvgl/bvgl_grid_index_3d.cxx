@@ -21,6 +21,7 @@ bvgl_grid_index_3d
   if(iz>=nz_)
     iz = nz_-1;
 }
+
 bvgl_grid_index_3d::bvgl_grid_index_3d(unsigned nx, unsigned ny, unsigned nz, vgl_pointset_3d<double> ptset, double thresh):
   nx_(nx), ny_(ny), nz_(nz), has_normals_(ptset.has_normals()), npts_(0), thresh_(thresh), has_scalars_(false){
   p_grid_ = vbl_array_3d<std::vector<vgl_point_3d<double> > >(nx, ny, nz);

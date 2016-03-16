@@ -16,7 +16,7 @@
 #include <boxm2/boxm2_scene.h>
 #include <boxm2/io/boxm2_cache.h>
 
-#define BUILD_TEST_CRANIUM
+//#define BUILD_TEST_CRANIUM
 void test_cranium()
 {
 #ifdef BUILD_TEST_CRANIUM
