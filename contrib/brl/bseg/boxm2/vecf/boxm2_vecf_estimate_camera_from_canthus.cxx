@@ -2,7 +2,7 @@
 
 bool boxm2_vecf_estimate_camera_from_canthus::estimate_camera(vgl_vector_2d<double> t){
   std::map<std::string,vgl_point_2d<double> >::iterator it;
-  std::string fields [] =  {"image_shape","left_iris_part_0","left_iris_part_1","right_iris_part_0","right_iris_part_1","nose_ridge_part_0","left_medial_canthus","right_medial_canthus","left_lateral_canthus","right_lateral_canthus"};
+  std::string fields [] =  {"image_shape","left_iris_part_0","left_iris_part_1","right_iris_part_0","right_iris_part_1","nose_ridge_part_0","left_medial_canthus","right_medial_canthus","left_lateral_canthus","right_lateral_canthus","left_pupil","right_pupil"};
   std::vector<std::string> field_array;
   field_array.assign(fields,fields + sizeof(fields)/sizeof(fields[0]));
   unsigned count_missing = 0;
@@ -39,17 +39,38 @@ bool boxm2_vecf_estimate_camera_from_canthus::estimate_camera(vgl_vector_2d<doub
 
   vgl_point_2d<double> nr_0 = dlib_part_map_["nose_ridge_part_0"];
 
+  vgl_point_2d<double> rp = dlib_part_map_["right_pupil"];
+  vgl_point_2d<double> lp = dlib_part_map_["left_pupil"];
+
+
+
 #define sq(a) (a) * (a)
 #define len(a,b) std::sqrt( sq(a.y() - b.y() ) + sq( a.x() - b.x() ) )
   double left_iris_radius = len(l_i0,l_i1)/2.0;
   double right_iris_radius = len(r_i0,r_i1)/2.0;
   std::cout<<" iris radii: "<<left_iris_radius<<" "<<right_iris_radius<<std::endl;
   double max_iris_radius = left_iris_radius > right_iris_radius ? left_iris_radius : right_iris_radius;
-  scale_ =  iris_nominal_ / max_iris_radius;
-  double  s =  1./ scale_;
+
+
   phi_ = atan( (llc.y() - rlc.y()) / (llc.x() - rlc.x()));
-  double l_cc = len(llc,rlc);
-  std::cout<<"l_cc "<< l_cc<<" , "<<std::sqrt( sq( l_cc /( this->canthus_line_length_ * s) ) - sq( sin(phi_) ) ) <<std::endl;
+  double l_cc = len(llc,rlc); //lateral canthus line length
+
+  double d_lcmc = len(lmc,llc); // length of left medial canthus - left lateral canthus
+  double d_lcp  = len(lp,llc); // length of pupil -  left lateral canthus
+
+  double alpha_mc       = atan((lmc.y() -llc.y() ) / (llc.x() - lmc.x()))+ phi_; // positive angle of pupil - canthus line
+  double alpha_pupil    = atan((lp.y() - llc.y() ) / (llc.x() - lp.x())) + phi_;
+  double x_mc = llc.x() - d_lcmc * cos(alpha_mc);
+  double x_p  = llc.x() - d_lcp  * cos(alpha_pupil) ;
+
+  double delta  = (x_p - x_mc) / (llc.x() - x_mc);
+
+  double lambda = asin( (delta - 0.51787) / 0.487 );
+  vcl_cout<<"delta "<<delta<<" lambda "<<lambda<<vcl_endl;
+
+  scale_ =  iris_nominal_  / left_iris_radius;
+  double s = 1.0/scale_;
+  std::cout<<"l_cc "<< l_cc<<" , "<<std::sqrt( sq( l_cc /( this->canthus_line_length_ * s) ) - sq( sin(phi_) ) ) << std::endl;
   double cos_psi = ( 1./cos(phi_) * std::sqrt( sq( l_cc /( this->canthus_line_length_ * s) ) - sq( sin(phi_) ) ) );
     psi_ = acos(cos_psi) ;
     std::cout<<" cos of phi and psi is "<< cos(phi_)<<" "<<cos_psi<<std::endl;
@@ -116,7 +137,7 @@ bool boxm2_vecf_estimate_camera_from_canthus::parse_files(std::string& left_dlib
   this->add_dlib_part(pts_l[7], "left_iris_part_1");
   this->add_dlib_part(pts_l[8], "left_lateral_canthus");
   this->add_dlib_part(pts_l[9], "left_medial_canthus");
-
+  this->add_dlib_part(pts_l[10],"left_pupil");
 
   std::vector< vgl_point_2d<double> > pts_r;
   while(rfile){
@@ -133,6 +154,7 @@ bool boxm2_vecf_estimate_camera_from_canthus::parse_files(std::string& left_dlib
   this->add_dlib_part(pts_r[7], "right_iris_part_1");
   this->add_dlib_part(pts_r[8], "right_lateral_canthus");
   this->add_dlib_part(pts_r[9], "right_medial_canthus");
+  this->add_dlib_part(pts_r[10],"right_pupil");
 
   std::vector< vgl_point_2d<double> > pts_alfw;
   while(alfw_file){
